@@ -38,6 +38,8 @@ class User(AbstractBaseUser):
     is_admin = models.BooleanField(default=False)
     is_buyer = models.BooleanField(default=True)
 
+    purchases_paid_by = models.ForeignKey("self", on_delete=models.PROTECT, default=None, null=True, blank=True)
+
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -53,7 +55,7 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         # __unicode__ on Python 2
-        return self.email
+        return "{} ({})".format(self.display_name, self.email)
 
     def has_perm(self, perm, obj=None):
         "Does the user have a specific permission?"
@@ -77,17 +79,42 @@ class Category(models.Model):
     def __str__(self):
         return "{}".format(self.name)
 
+    def get_number_products(self):
+        return self.get_products().count()
+
+    get_number_products.short_description = "Number of products"
+
     def get_products(self):
         return Product.objects.filter(category__pk=self.pk)
+
+    class Meta:
+        verbose_name_plural = "Categories"
 
 class Product(models.Model):
     name = models.CharField(max_length=40, unique=True, blank=False)
     price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False)
     amount = models.CharField(max_length=10, blank=False)
-    category = models.ForeignKey(Category, null=False)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, null=False)
 
     def __str__(self):
-        return "{}, Price: {}".format(self.name, self.price)
+        return "{} ({}, {})".format(self.name, self.amount, self.price)
+
+class Invoice(models.Model):
+    pass
+
+class Purchase(models.Model):
+    user = models.ForeignKey(User, on_delete=models.PROTECT, null=False)
+    # Don't save product reference as foreign key, b/c it could be changed after purchase
+    product_category = models.CharField(max_length=30, blank=False)
+    product_name = models.CharField(max_length=40, blank=False)
+    product_price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False)
+    product_amount = models.CharField(max_length=10, blank=False)
+    quantity = models.PositiveIntegerField(default=1, null=False, blank=False)
+
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, blank=True, null=True)
+
+    def __str__(self):
+        return "{}x {} by {}".format(self.quantity, self.product_name, self.user.display_name)
 
 
 # Create your models here.

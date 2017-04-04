@@ -5,49 +5,59 @@
 {% block bootstrap3_title %}Purchase as {{ user.display_name }}{% endblock %}
 
 {% block navbar_extension %}
-    <form class="navbar-form navbar-right">
-        <div class="form-group">
-            <div class="input-group" style="width: 150px;">
-            <span class="input-group-btn">
-            <button type="button" class="btn btn-default btn-number" disabled="disabled" data-type="minus"
-                    data-field="quantity">
-            <span class="glyphicon glyphicon-minus"></span>
-            </button>
-            </span>
-                <input type="text" style="text-align: center;" name="quantity" class="form-control input-number"
-                       value="1" min="1">
-                <span class="input-group-btn">
-            <button type="button" class="btn btn-default btn-number" data-type="plus" data-field="quantity">
-            <span class="glyphicon glyphicon-plus"></span>
-            </button>
-            </span>
-            </div>
-        </div>
-        <button type="submit" class="btn btn-success">Submit</button>
-    </form>
+
 {% endblock %}
 
 {% block content %}
 
-    <ul class="nav nav-tabs">
-        <li role="presentation" class="active"><a href="#">Purchase as {{ user.display_name }}</a></li>
-        <li role="presentation"><a href="#">History of {{ user.display_name }}</a></li>
+    <ul class="nav nav-pills nav-stacked col-sm-3 col-lg-2 text-center" style="margin-top: 20px;">
+        <li><a href="{% url 'user_list' %}"><span class="glyphicon glyphicon-home pull-left"
+                                                  aria-hidden="true"></span> Home</a></li>
+        <li class="active"><a href="#a"><span class="glyphicon glyphicon-shopping-cart pull-left"
+                                              aria-hidden="true"></span> Purchase as {{ user.display_name }}</a></li>
+        <li><a href="#b"><span class="glyphicon glyphicon-th-list pull-left"
+                               aria-hidden="true"></span> History of {{ user.display_name }}</a></li>
+        <hr/>
+        <form class="" id="purchase_form" style="margin-top: 15px;">
+            {% csrf_token %}
+            <input type="hidden" name="user_id" value="{{ user.pk }}">
+            <div class="form-group">
+                <div class="input-group" style="">
+            <span class="input-group-btn">
+            <button type="button" class="btn btn-default btn-number" disabled="disabled" data-type="minus"
+                    data-field="product_quantity">
+            <span class="glyphicon glyphicon-minus"></span>
+            </button>
+            </span>
+                    <input type="text" style="text-align: center;" name="product_quantity"
+                           class="form-control input-number"
+                           value="1" min="1">
+                    <span class="input-group-btn">
+            <button type="button" class="btn btn-default btn-number" data-type="plus" data-field="product_quantity">
+            <span class="glyphicon glyphicon-plus"></span>
+            </button>
+            </span>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Submit</button>
+        </form>
     </ul>
 
-    <div class="btn-group-horizontal" data-toggle="buttons">
+
+    <div class="btn-group-horizontal col-sm-9 col-lg-10" data-toggle="buttons">
         {% for category in categories %}
             {% if category.get_products %}
                 <h4>{{ category.name }}</h4>
                 <hr/>
                 {% for prod in category.get_products %}
                     <label class="btn btn-default" style="width: 190px;">
-                        <input type="radio" name="product" id="{{ prod.pk }}"> {{ prod.name }} <br/>
+                        <input type="radio" form="purchase_form" name="product_id" id="product{{ prod.pk }}"
+                               value="{{ prod.pk }}" required> {{ prod.name }} <br/>
                         ({{ prod.amount }}, {{ prod.price }} €)
                     </label>
                 {% endfor %}
             {% endif %}
         {% endfor %}
     </div>
-
 
 {% endblock %}
