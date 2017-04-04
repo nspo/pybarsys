@@ -1,0 +1,53 @@
+{% extends 'barsys/base.html' %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}Purchase as {{ user.display_name }}{% endblock %}
+
+{% block navbar_extension %}
+    <form class="navbar-form navbar-right">
+        <div class="form-group">
+            <div class="input-group" style="width: 150px;">
+            <span class="input-group-btn">
+            <button type="button" class="btn btn-default btn-number" disabled="disabled" data-type="minus"
+                    data-field="quantity">
+            <span class="glyphicon glyphicon-minus"></span>
+            </button>
+            </span>
+                <input type="text" style="text-align: center;" name="quantity" class="form-control input-number"
+                       value="1" min="1">
+                <span class="input-group-btn">
+            <button type="button" class="btn btn-default btn-number" data-type="plus" data-field="quantity">
+            <span class="glyphicon glyphicon-plus"></span>
+            </button>
+            </span>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success">Submit</button>
+    </form>
+{% endblock %}
+
+{% block content %}
+
+    <ul class="nav nav-tabs">
+        <li role="presentation" class="active"><a href="#">Purchase as {{ user.display_name }}</a></li>
+        <li role="presentation"><a href="#">History of {{ user.display_name }}</a></li>
+    </ul>
+
+    <div class="btn-group-horizontal" data-toggle="buttons">
+        {% for category in categories %}
+            {% if category.get_products %}
+                <h4>{{ category.name }}</h4>
+                <hr/>
+                {% for prod in category.get_products %}
+                    <label class="btn btn-default" style="width: 190px;">
+                        <input type="radio" name="product" id="{{ prod.pk }}"> {{ prod.name }} <br/>
+                        ({{ prod.amount }}, {{ prod.price }} €)
+                    </label>
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    </div>
+
+
+{% endblock %}

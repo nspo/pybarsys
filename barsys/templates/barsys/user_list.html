@@ -1,0 +1,27 @@
+{% extends 'barsys/base.html' %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}User list{% endblock %}
+
+{% block content %}
+
+    <div class="container-fluid">
+        <div class="row">
+            {% for user in users %}
+                <div class="col-sm-4 col-md-3 col-lg-5ths" style="text-align: center; margin-bottom: 8px;">
+                    <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default" style="width: 230px; margin-bottom: 10px;">{{ user.display_name }}</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+
+    <div class="btn-group-horizontal" data-toggle="buttons">
+        {% for user in users %}
+            <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default" style="width: 230px; margin-bottom: 10px;">{{ user.display_name }}</a>
+        {% endfor %}
+    </div>
+
+
+{% endblock %}
