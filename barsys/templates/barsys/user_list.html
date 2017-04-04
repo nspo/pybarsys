@@ -6,11 +6,42 @@
 
 {% block content %}
 
-    <div class="btn-group-horizontal">
-        {% for user in users %}
-            <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default"
-               style="width: 230px; margin-bottom: 10px;">{{ user.display_name }}</a>
-        {% endfor %}
+    <div class="row row-offcanvas row-offcanvas-left">
+
+        <!-- sidebar -->
+        <div class="col-xs-6 col-sm-2 sidebar-offcanvas" id="sidebar" role="navigation">
+            <ul class="nav">
+                <li class="active"><a href="#">Home</a></li>
+                <li><a href="#">Link 1</a></li>
+                <li><a href="#">Link 2</a></li>
+                <li><a href="#">Link 3</a></li>
+            </ul>
+        </div>
+
+        <!-- main area -->
+        <div class="col-xs-12 col-sm-10">
+
+
+            <h4><span class="glyphicon glyphicon-star" aria-hidden="true"></span></h4>
+            <hr/>
+            <div class="btn-group-horizontal">
+                {% for user in favorites %}
+                    <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default"
+                       style="width: 230px; margin-bottom: 10px;">{{ user.display_name }}</a>
+                {% endfor %}
+            </div>
+
+
+            <h4><span class="glyphicon glyphicon-user" aria-hidden="true"></span> All users</h4>
+            <hr/>
+            <div class="btn-group-horizontal">
+                {% for user in all_users %}
+                    <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default"
+                       style="width: 230px; margin-bottom: 10px;">{{ user.display_name }}</a>
+                {% endfor %}
+            </div>
+
+        </div>
     </div>
 
 {% endblock %}

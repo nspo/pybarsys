@@ -1,9 +1,0 @@
-{% if products %}
-    <ul>
-    {% for product in products %}
-        <li><a href="{% url 'product_detail' product.id %}">{{ product.name }} ({{ product.price }})</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No products are available.</p>
-{% endif %}
