@@ -18,25 +18,27 @@
         <li><a href="#b"><span class="glyphicon glyphicon-th-list pull-left"
                                aria-hidden="true"></span> History of {{ user.display_name }}</a></li>
         <hr/>
-        <form class="" id="purchase_form" style="margin-top: 15px;">
+        <form method="POST" id="purchase_form" style="margin-top: 15px;">
             {% csrf_token %}
             <input type="hidden" name="user_id" value="{{ user.pk }}">
             <div class="form-group">
-                <div class="input-group" style="">
-            <span class="input-group-btn">
-            <button type="button" class="btn btn-default btn-number" disabled="disabled" data-type="minus"
-                    data-field="product_quantity">
-            <span class="glyphicon glyphicon-minus"></span>
-            </button>
-            </span>
-                    <input type="text" style="text-align: center;" name="product_quantity"
-                           class="form-control input-number"
-                           value="1" min="1">
+                <div class="input-group">
                     <span class="input-group-btn">
-            <button type="button" class="btn btn-default btn-number" data-type="plus" data-field="product_quantity">
-            <span class="glyphicon glyphicon-plus"></span>
-            </button>
-            </span>
+                        <button type="button" class="btn btn-default btn-number"
+                                onclick="javascript:decreaseQuantity();">
+                            {% bootstrap_icon "minus" %}
+                        </button>
+                    </span>
+
+                    <input type="text" style="text-align: center;" id="quantity" name="quantity"
+                           class="form-control input-number" value="1">
+
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-default btn-number"
+                                onclick="javascript:increaseQuantity();">
+                            {% bootstrap_icon "plus" %}
+                        </button>
+                    </span>
                 </div>
             </div>
             <button type="submit" class="btn btn-success">Submit</button>
@@ -51,8 +53,8 @@
                 <hr/>
                 {% for prod in category.get_products %}
                     <label class="btn btn-default" style="width: 190px;">
-                        <input type="radio" form="purchase_form" name="product_id" id="product{{ prod.pk }}"
-                               value="{{ prod.pk }}" required> {{ prod.name }} <br/>
+                        <input type="radio" form="purchase_form" name="product_id"
+                               value="{{ prod.pk }}" required> {{ prod.name }}<br/>
                         ({{ prod.amount }}, {{ prod.price }} €)
                     </label>
                 {% endfor %}
@@ -60,4 +62,20 @@
         {% endfor %}
     </div>
 
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript">
+        function increaseQuantity() {
+            var currentValue = parseInt($('#quantity').val());
+            $('#quantity').val(currentValue + 1);
+        }
+
+        function decreaseQuantity() {
+            var currentValue = parseInt($('#quantity').val());
+            if (currentValue > 1) {
+                $('#quantity').val(currentValue - 1);
+            }
+        }
+    </script>
 {% endblock %}

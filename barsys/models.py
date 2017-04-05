@@ -40,6 +40,10 @@ class User(AbstractBaseUser):
 
     purchases_paid_by = models.ForeignKey("self", on_delete=models.PROTECT, default=None, null=True, blank=True)
 
+    # Dates
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_date = models.DateTimeField(auto_now=True)
+
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -100,7 +104,9 @@ class Product(models.Model):
         return "{} ({}, {})".format(self.name, self.amount, self.price)
 
 class Invoice(models.Model):
-    pass
+    # Dates
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_date = models.DateTimeField(auto_now=True)
 
 class Purchase(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=False)
@@ -113,8 +119,12 @@ class Purchase(models.Model):
 
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, blank=True, null=True)
 
+    # Dates
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_date = models.DateTimeField(auto_now=True)
+
     def __str__(self):
-        return "{}x {} by {}".format(self.quantity, self.product_name, self.user.display_name)
+        return "{}x {} ({})".format(self.quantity, self.product_name, self.user.display_name)
 
 
 # Create your models here.

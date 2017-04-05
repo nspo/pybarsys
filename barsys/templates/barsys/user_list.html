@@ -7,20 +7,20 @@
 {% block content %}
 
     <ul class="nav nav-pills nav-stacked col-sm-3 col-lg-2 text-center" style="margin-top: 20px;">
-        <li class="active"><a href="{% url 'user_list' %}"><span class="glyphicon glyphicon-home pull-left"
-                                                                 aria-hidden="true"></span> Home</a></li>
-        <li><a href="#a"><span class="glyphicon glyphicon-shopping-cart pull-left" aria-hidden="true"></span> MultiBuy </a></li>
-        <li><a href="#a"><span class="glyphicon glyphicon-th-list pull-left" aria-hidden="true"></span> Last
-            purchases</a></li>
+        <li class="active"><a href="{% url 'user_list' %}">{% bootstrap_icon "home" extra_classes="pull-left" %}
+            Home</a></li>
+        <li><a href="#a">{% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} MultiBuy </a></li>
+        <li><a href="#a">{% bootstrap_icon "th-list" extra_classes="pull-left" %} Last purchases</a></li>
         <ul class="nav">
-            <li>1x Hoepfner (Peter)</li>
-            <li>SECOND</li>
+            {% for purchase in last_purchases %}
+                <li>{{ purchase }}</li>
+            {% endfor %}
         </ul>
 
         <li id="stats_beer" style="display: block;"
-            onclick="javascript:toggle_visibility(['stats_beer', 'stats_coffee']);"><a href="#b"><span
-                class="glyphicon glyphicon-forward pull-left" aria-hidden="true"></span> Biertrinker der Woche <span
-                class="glyphicon glyphicon-forward pull-right" aria-hidden="true"></span></a>
+            onclick="javascript:toggle_visibility(['stats_beer', 'stats_coffee']);"><a
+                href="#b">{% bootstrap_icon "forward" extra_classes="pull-left" %} Biertrinker der
+            Woche {% bootstrap_icon "forward" extra_classes="pull-right" %}</a>
             <ul class="nav">
                 <li>FIRST</li>
                 <li>SECOND</li>
@@ -28,9 +28,8 @@
         </li>
 
         <li id="stats_coffee" style="display: none;"
-            onclick="javascript:toggle_visibility(['stats_coffee', 'stats_beer']);"><a href="#b"><span
-                class="glyphicon glyphicon-forward pull-left" aria-hidden="true"></span> Lerner
-            der Woche <span class="glyphicon glyphicon-forward pull-right" aria-hidden="true"></span></a>
+            onclick="javascript:toggle_visibility(['stats_coffee', 'stats_beer']);"><a href="#b">{% bootstrap_icon "forward" extra_classes="pull-left" %} Lerner der
+            Woche {% bootstrap_icon "forward" extra_classes="pull-right" %}</a>
             <ul class="nav">
                 <li>lsFFDdsf</li>
                 <li>fDSDf</li>
