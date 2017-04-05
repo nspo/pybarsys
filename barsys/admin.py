@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Group
 
-from barsys.models import Category, Product, User, Purchase, Invoice
+from barsys.models import Category, Product, User, Purchase, Invoice, StatsDisplay
 
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ["name", "get_number_products"]
@@ -32,6 +32,12 @@ class UserAdmin(admin.ModelAdmin):
 admin.site.register(User, UserAdmin)
 
 admin.site.register(Invoice)
+
+class StatsDisplayAdmin(admin.ModelAdmin):
+    list_display = ["title", "example_row", "filter_category", "filter_product", "sort_by_and_show",
+                    "show_by_default"]
+    readonly_fields = ["example_row"]
+admin.site.register(StatsDisplay, StatsDisplayAdmin)
 
 if admin.site.is_registered(Group):
     admin.site.unregister(Group)

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import Http404
 from django.shortcuts import get_list_or_404, get_object_or_404, redirect
-from .models import Product, Category, User, Purchase
+from .models import Product, Category, User, Purchase, StatsDisplay
 from .forms import SingleUserSinglePurchaseForm
 
 
@@ -42,5 +42,7 @@ def user_list(request):
     except Purchase.DoesNotExist:
         return Http404("Could not request last purchases")
 
-    context = {"favorites": users, "all_users": users, "last_purchases": last_purchases}
+    sidebar_stats_elements = StatsDisplay.get_renderable()
+
+    context = {"favorites": users, "all_users": users, "last_purchases": last_purchases, "sidebar_stats_elements": sidebar_stats_elements}
     return render(request, 'barsys/user_list.html', context)

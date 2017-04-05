@@ -1,0 +1,16 @@
+{% extends 'barsys/base.html' %}
+
+{% load bootstrap3 %}
+
+{% block content %}
+
+    <!-- sidebar -->
+    <ul class="nav nav-pills nav-stacked col-sm-3 text-center" style="margin-top: 20px; padding-right: 0;">
+        {% block sidebar_content %}{% endblock %}
+    </ul>
+
+    <!-- main area -->
+    <div class="col-xs-12 col-sm-9" style="padding-right: 0;">
+        {% block main_content %}{% endblock %}
+    </div>
+{% endblock %}

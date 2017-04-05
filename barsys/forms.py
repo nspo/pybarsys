@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Product, User
+from .models import Product, User, StatsDisplay
 
 
 class SingleUserSinglePurchaseForm(forms.Form):
@@ -23,7 +23,7 @@ class SingleUserSinglePurchaseForm(forms.Form):
     def clean_user_id(self):
         user_id = self.cleaned_data["user_id"]
         try:
-            user = User.objects.get(pk=user_id) # more needed
+            user = User.objects.get(pk=user_id,is_active=True,is_buyer=True)
             return user_id
         except User.DoesNotExist:
             raise ValidationError("Invalid user ID")

@@ -1,0 +1,17 @@
+{# Template snippet for one stats element that can be rendered in a sidebar #}
+{% load bootstrap3 %}
+
+<li id="{{ data.stats_id }}" style="{% if data.show_by_default %}display: block;{% else %}display: none;{% endif %}"
+    onclick="javascript:toggle_visibility(['{{ data.stats_id }}', '{{ data.toggle_other_on }}']);"><a
+        href="#b">{% bootstrap_icon "forward" extra_classes="pull-left" %} {{ data.title }}</a>
+    <table class="table table-striped table-sidebar">
+        <tbody>
+        {% for row in data.rows %}
+            <tr>
+                <td class="td-small">{{ row.left }}</td>
+                <td class="td-big">{{ row.right }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</li>

@@ -2,9 +2,27 @@
 
 }*/
 
-body {
-    /*background-color: #e5f1f6;*/
+table.table-sidebar {
+    text-align: left; table-layout: fixed; margin-bottom: 0;
 }
+
+table.table-sidebar td {
+    padding-top: 0;
+}
+
+table.table-sidebar td.td-small {
+    width: 17%;
+    text-align: right;
+}
+
+table.table-sidebar td.td-big {
+    width: 83%;
+    /* Write ... in lines that are too long */
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    overflow:hidden;
+}
+
 
 hr {
     margin-top: 5px;
