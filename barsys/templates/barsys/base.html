@@ -13,8 +13,6 @@
 
 {% block bootstrap3_content %}
 
-
-
     <div class="container-fluid">
         {% for error_message in error_messages %}
             <div class="alert alert-danger alert-dismissible" role="alert">
@@ -33,7 +31,7 @@
 
         {% autoescape off %}{% bootstrap_messages %}{% endautoescape %}
 
-            {% block content %}(no content){% endblock %}
+        {% block content %}(no content){% endblock %}
     </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>

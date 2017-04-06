@@ -1,0 +1,26 @@
+{% extends 'barsys/with_sidebar_base.html' %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}History of {{ user.display_name }}{% endblock %}
+
+{% block sidebar_content %}
+    <li><a href="{% url 'user_list'%}"><span class="glyphicon glyphicon-home pull-left"
+                                              aria-hidden="true"></span> Home</a></li>
+    <li><a href="{% url 'user_purchase' user.id %}"><span class="glyphicon glyphicon-shopping-cart pull-left"
+                                          aria-hidden="true"></span> Purchase as {{ user.display_name }}</a></li>
+    <li class="active"><a href="{% url 'user_history' user.id %}"><span class="glyphicon glyphicon-th-list pull-left"
+                           aria-hidden="true"></span> History of {{ user.display_name }}</a></li>
+    <hr/>
+{% endblock %}
+{% block main_content %}
+    {% for category_name, products in categories %}
+    <h4><span class="glyphicon glyphicon-star" aria-hidden="true"></span> {{ category_name }}</h4>
+    <hr/>
+    <ul>
+    {% for product in products %}
+        <li>{{ product.product_name }} ({{ product.product_amount }}): {{ product.total_quantity }}</li>
+    {% endfor %}
+    </ul>
+    {% endfor %}
+{% endblock %}

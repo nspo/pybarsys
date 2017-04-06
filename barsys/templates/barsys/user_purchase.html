@@ -1,28 +1,22 @@
-{% extends 'barsys/base.html' %}
+{% extends 'barsys/with_sidebar_base.html' %}
 
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}Purchase as {{ user.display_name }}{% endblock %}
 
-{% block navbar_extension %}
-
-{% endblock %}
-
-{% block content %}
-
-    <ul class="nav nav-pills nav-stacked col-sm-3 col-lg-2 text-center" style="margin-top: 20px;">
-        <li><a href="{% url 'user_list' %}"><span class="glyphicon glyphicon-home pull-left"
-                                                  aria-hidden="true"></span> Home</a></li>
-        <li class="active"><a href="#a"><span class="glyphicon glyphicon-shopping-cart pull-left"
-                                              aria-hidden="true"></span> Purchase as {{ user.display_name }}</a></li>
-        <li><a href="#b"><span class="glyphicon glyphicon-th-list pull-left"
-                               aria-hidden="true"></span> History of {{ user.display_name }}</a></li>
-        <hr/>
-        <form method="POST" id="purchase_form" style="margin-top: 15px;">
-            {% csrf_token %}
-            <input type="hidden" name="user_id" value="{{ user.pk }}">
-            <div class="form-group">
-                <div class="input-group">
+{% block sidebar_content %}
+    <li><a href="{% url 'user_list' %}"><span class="glyphicon glyphicon-home pull-left"
+                                              aria-hidden="true"></span> Home</a></li>
+    <li class="active"><a href="{% url 'user_purchase' user.id %}"><span class="glyphicon glyphicon-shopping-cart pull-left"
+                                          aria-hidden="true"></span> Purchase as {{ user.display_name }}</a></li>
+    <li><a href="{% url 'user_history' user.id %}"><span class="glyphicon glyphicon-th-list pull-left"
+                           aria-hidden="true"></span> History of {{ user.display_name }}</a></li>
+    <hr/>
+    <form method="POST" id="purchase_form" style="margin-top: 15px;">
+        {% csrf_token %}
+        <input type="hidden" name="user_id" value="{{ user.pk }}">
+        <div class="form-group">
+            <div class="input-group">
                     <span class="input-group-btn">
                         <button type="button" class="btn btn-default btn-number"
                                 onclick="javascript:decreaseQuantity();">
@@ -30,23 +24,22 @@
                         </button>
                     </span>
 
-                    <input type="text" style="text-align: center;" id="quantity" name="quantity"
-                           class="form-control input-number" value="1">
+                <input type="text" style="text-align: center;" id="quantity" name="quantity"
+                       class="form-control input-number" value="1">
 
-                    <span class="input-group-btn">
+                <span class="input-group-btn">
                         <button type="button" class="btn btn-default btn-number"
                                 onclick="javascript:increaseQuantity();">
                             {% bootstrap_icon "plus" %}
                         </button>
                     </span>
-                </div>
             </div>
-            <button type="submit" class="btn btn-success">Submit</button>
-        </form>
-    </ul>
-
-
-    <div class="btn-group-horizontal col-sm-9 col-lg-10" data-toggle="buttons">
+        </div>
+        <button type="submit" class="btn btn-success">Submit</button>
+    </form>
+{% endblock %}
+{% block main_content %}
+    <div class="btn-group-horizontal" data-toggle="buttons">
         {% for category in categories %}
             {% if category.get_products %}
                 <h4>{{ category.name }}</h4>
@@ -61,7 +54,6 @@
             {% endif %}
         {% endfor %}
     </div>
-
 {% endblock %}
 
 {% block extra_js %}

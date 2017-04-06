@@ -98,13 +98,18 @@ class Category(models.Model):
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=40, unique=True, blank=False)
+    """ name of Product is not unique, because there can be other products with the same name but different amount"""
+    name = models.CharField(max_length=40, blank=False)
     price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False)
     amount = models.CharField(max_length=10, blank=False)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, null=False)
 
     def __str__(self):
         return "{} ({}, {})".format(self.name, self.amount, self.price)
+
+    class Meta:
+        unique_together = ["name", "amount"]
+        ordering = ["category__name", "name", "amount"]
 
 
 class Invoice(models.Model):
