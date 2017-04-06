@@ -5,28 +5,48 @@
 {% block bootstrap3_title %}History of {{ user.display_name }}{% endblock %}
 
 {% block sidebar_content %}
-    <li><a href="{% url 'user_list'%}"><span class="glyphicon glyphicon-home pull-left"
+    <li><a href="{% url 'user_list' %}"><span class="glyphicon glyphicon-home pull-left"
                                               aria-hidden="true"></span> Home</a></li>
     <li><a href="{% url 'user_purchase' user.id %}"><span class="glyphicon glyphicon-shopping-cart pull-left"
-                                          aria-hidden="true"></span> Purchase as {{ user.display_name }}</a></li>
-    <li class="active"><a href="{% url 'user_history' user.id %}"><span class="glyphicon glyphicon-th-list pull-left"
-                           aria-hidden="true"></span> History of {{ user.display_name }}</a></li>
+                                                          aria-hidden="true"></span> Purchase as {{ user.display_name }}
+    </a></li>
+    <li class="active"><a
+            href="{% url 'user_history' user.id %}">{% bootstrap_icon "th-list" extra_classes="pull-left" %} History
+        of {{ user.display_name }}</a></li>
     <hr/>
 {% endblock %}
 {% block main_content %}
     {% for category_name, products in categories %}
-    <h4><span class="glyphicon glyphicon-star" aria-hidden="true"></span> {{ category_name }}</h4>
-    <table class="table table-striped">
-    <tbody>
-    {% for product in products %}
-        <tr>
-            <td style="width: 250px;"><strong>{{ product.product_name }} ({{ product.product_amount }})</strong></td>
-            <td style="width:50px;">{{ product.total_quantity }}</td>
-            <td>| {% for i in ''|center:product.total_quantity %} | {% endfor %}</td>{# Hack to iterate of int #}
-        </tr>
+        <h4>{% bootstrap_icon "chevron-down" %} {{ category_name }}</h4>
+        <table class="table table-striped">
+            <tbody>
+            {% for product in products %}
+                <tr>
+                    <td style="width: 250px;"><strong>{{ product.product_name }} ({{ product.product_amount }})</strong>
+                    </td>
+                    <td style="width:50px;">{{ product.total_quantity }}</td>
+                    <td>{% for i in ''|center:product.total_quantity %}| {% endfor %}</td>
+                    {# Hack to iterate over int #}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     {% endfor %}
-    </tbody>
-    </table>
 
-    {% endfor %}
+    <h4>{% bootstrap_icon "list" %} Last purchases </h4>
+    {% if last_purchases %}
+    <table class="table table-striped">
+        <tbody>
+        {% for purchase in last_purchases %}
+            <tr>
+                <td style="width: 180px;">{{ purchase.created_date }}</td>
+                <td> {{ purchase.quantity }}x {{ purchase.product_name }} ({{ purchase.product_amount }})</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        {{ user.display_name }} does not have recent purchases
+    {% endif %}
+
 {% endblock %}

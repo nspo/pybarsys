@@ -2,7 +2,11 @@ from django.db import models
 from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
 )
+from collections import defaultdict
 from django.db.models import F
+import datetime
+from django.utils import timezone
+from django.db.models import DecimalField
 
 
 class UserManager(BaseUserManager):
@@ -29,17 +33,29 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+    # Active buyers
+    def filter_buyers(self):
+        return self.filter(is_active=True, is_buyer=True)
+
+    # Active favorite buyers
+    def filter_favorites(self):
+        return self.filter_buyers().filter(is_favorite=True)
+
 
 class User(AbstractBaseUser):
     email = models.EmailField(max_length=255, unique=True, blank=False)
 
     display_name = models.CharField(max_length=40, unique=True, blank=False)
 
-    is_active = models.BooleanField(default=True)
-    is_admin = models.BooleanField(default=False)
-    is_buyer = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, help_text="User account is activated")
+    is_admin = models.BooleanField(default=False, help_text="User may login as admin")
+    is_buyer = models.BooleanField(default=True, help_text="User may buy products")
+    is_favorite = models.BooleanField(default=False, help_text="User is shown under favorites")
 
-    purchases_paid_by = models.ForeignKey("self", on_delete=models.PROTECT, default=None, null=True, blank=True)
+    purchases_paid_by = models.ForeignKey("self", on_delete=models.PROTECT, default=None, null=True, blank=True,
+                                          help_text="Someone else is responsible to pay for all purchases made "
+                                                    "by this user. Invoices are sent to the responsible person and a "
+                                                    "copy is sent to the user itself as a notification.")
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
@@ -99,7 +115,8 @@ class Category(models.Model):
 
 class Product(models.Model):
     """ name of Product is not unique, because there can be other products with the same name but different amount"""
-    name = models.CharField(max_length=40, blank=False)
+    name = models.CharField(max_length=40, blank=False, help_text="Multiple products can have the same name "
+                            "as long as the amount is different")
     price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False)
     amount = models.CharField(max_length=10, blank=False)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, null=False)
@@ -118,6 +135,54 @@ class Invoice(models.Model):
     modified_date = models.DateTimeField(auto_now=True)
 
 
+class PurchaseManager(models.Manager):
+    def purchases_by_category_and_product(self, *args, **kwargs):
+        """ Calculate sum of purchases of each product and group by category and product
+            All necessary filters (e.g. user=this_user) need to be passed as arguments
+        """
+
+        # Purchase quantity as list of dicts
+        purchases_per_product = self.filter(*args, **kwargs).values("product_category", "product_name",
+                                                                    "product_amount") \
+            .annotate(total_quantity=models.Sum("quantity")).order_by("-total_quantity").distinct()
+
+        # Create dict (categories) of list (products)
+        categories = defaultdict(list)
+        for prod in purchases_per_product:
+            categories[prod["product_category"]].append(prod)
+
+        # Create list (categories) of tuples in the format
+        # [(category, [{'product_name': 10, 'total_quantity': 5, ...}, {...}]), ...]
+        return sorted(categories.items())
+
+    def purchases_by_user(self, *args, **kwargs):
+        """ Like purchases_by_category_and_product, but groups by user """
+
+        # Purchase quantity as list of dicts
+        purchases_per_user = self.filter(*args, **kwargs).values("user") \
+            .annotate(total_quantity=models.Sum("quantity")).order_by("-total_quantity").distinct()
+
+        # Create list of tuples in the format (user, total_quantity)
+        users = []
+        for p in purchases_per_user:
+            users.append((User.objects.get(pk=p["user"]), p["total_quantity"]))
+
+        return users
+
+    def cost_by_user(self, *args, **kwargs):
+        """ Calculate total cost of purchases and group by user """
+        cost_per_user = User.objects.filter(*args, **kwargs).\
+            annotate(total_cost=models.Sum(F("purchase__quantity") * F("purchase__product_price"), output_field=DecimalField(decimal_places=2))).\
+            filter(total_cost__gt=0).order_by("-total_cost")
+
+        # Create list of tuples [(user, total_cost), ...]
+        users = []
+        for u in cost_per_user:
+            users.append((u, u.total_cost))
+
+        return users
+
+
 class Purchase(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=False)
     # Don't save product reference as foreign key, b/c it could be changed after purchase
@@ -133,6 +198,8 @@ class Purchase(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
 
+    objects = PurchaseManager()
+
     def __str__(self):
         return "{}x {} ({})".format(self.quantity, self.product_name, self.user.display_name)
 
@@ -141,14 +208,17 @@ class Purchase(models.Model):
 class StatsDisplay(models.Model):
     title = models.CharField(max_length=30, blank=False)
     row_string = models.CharField(max_length=15, blank=True,
-                                  help_text="This is shown on the right side of each stats row in the format "\
-                                  "'[row_string] [user_name]', so one example row could be "\
-                                  "'10x Coffee by Peter' with 'Coffee by' being the ROW_STRING")
+                                  help_text="This is shown on the right side of each stats row in the format "
+                                            "'[row_string] [user_name]', so one example row could be "
+                                            "'10x Coffee by Peter' with 'Coffee by' being the ROW_STRING")
 
     filter_category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True,
                                         help_text="If none, any category is used")
     filter_product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True,
                                        help_text="If none, any product is used")
+
+    time_period = models.DurationField(default=datetime.timedelta(weeks=1), help_text="Duration over which "
+                                                                                      "statistics are to be evaluated in the format 'WEEKS HOURS:MINUTES:SECONDS'")
 
     SORT_BY_NUM_PURCHASES = "NP"
     SORT_BY_TOTAL_COST_SHOW_RANK = "TC"
@@ -162,8 +232,8 @@ class StatsDisplay(models.Model):
     # i.e. only one StatsDisplay can be the chosen one
     # Need to override save() for this
     show_by_default = models.BooleanField(
-        help_text="Whether this should always be shown first. "\
-                  "If not, it can be selected by cycling through the other ones, "\
+        help_text="Whether this should always be shown first. " \
+                  "If not, it can be selected by cycling through the other ones, " \
                   "as long as any one is shown by default.")
 
     def save(self, *args, **kwargs):
@@ -187,45 +257,3 @@ class StatsDisplay(models.Model):
             return "1. {} Peter".format(self.row_string)
         else:
             return "not supported"
-
-    def get_renderable(self=None):
-        """Create a list of dicts for all StatsDisplays that can be rendered by view more easily"""
-        stats_elements = []
-
-        all_displays = StatsDisplay.objects.order_by("-show_by_default")
-        for index, stat in enumerate(all_displays):
-            stats_element = {}
-            stats_element["stats_id"] = "stats_{}".format(stat.pk)
-            stats_element["show_by_default"] = stat.show_by_default
-            stats_element["title"] = stat.title
-
-            # construct query step by step
-            users = User.objects
-            if stat.filter_category:
-                users = users.filter(purchase__product_category=stat.filter_category.name)
-            if stat.filter_product:
-                users = users.filter(purchase__product_name=stat.filter_product.name)
-
-            stats_element["rows"] = []
-            if stat.sort_by_and_show == StatsDisplay.SORT_BY_NUM_PURCHASES:
-                top_five = users.annotate(num_purchases=models.Sum("purchase__quantity")).order_by("-num_purchases")[:5]
-                for user in top_five:
-                    stats_element["rows"].append({"left": "{}x".format(user.num_purchases),
-                                                  "right": "{} {}".format(stat.row_string, user.display_name)})
-            else:
-                top_five = users.annotate(total_cost=models.Sum(F("purchase__quantity")*F("purchase__product_price"))).\
-                    order_by("total_cost")[:5]
-                for u_index, user in enumerate(top_five):
-                    stats_element["rows"].append({"left": "{}.".format(u_index+1),
-                                                  "right": "{} {}".format(stat.row_string, user.display_name)})
-
-            if index + 1 < len(all_displays):
-                # toggle next one on
-                stats_element["toggle_other_on"] = "stats_{}".format(all_displays[index+1].pk)
-            else:
-                # toggle first one on
-                stats_element["toggle_other_on"] = "stats_{}".format(all_displays[0].pk)
-
-            stats_elements.append(stats_element)
-
-        return stats_elements

@@ -9,8 +9,7 @@
                                               aria-hidden="true"></span> Home</a></li>
     <li class="active"><a href="{% url 'user_purchase' user.id %}"><span class="glyphicon glyphicon-shopping-cart pull-left"
                                           aria-hidden="true"></span> Purchase as {{ user.display_name }}</a></li>
-    <li><a href="{% url 'user_history' user.id %}"><span class="glyphicon glyphicon-th-list pull-left"
-                           aria-hidden="true"></span> History of {{ user.display_name }}</a></li>
+    <li><a href="{% url 'user_history' user.id %}">{% bootstrap_icon "th-list" extra_classes="pull-left" %} History of {{ user.display_name }}</a></li>
     <hr/>
     <form method="POST" id="purchase_form" style="margin-top: 15px;">
         {% csrf_token %}

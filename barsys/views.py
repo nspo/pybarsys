@@ -10,7 +10,7 @@ from collections import defaultdict
 
 
 def user_purchase(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
+    user = get_object_or_404(User.objects.filter_buyers(), pk=user_id)
     categories = get_list_or_404(Category)
 
     if request.method == "POST":
@@ -40,39 +40,79 @@ def user_purchase(request, user_id):
 
 
 def user_list(request):
-    users = get_list_or_404(User)
+    all_users = User.objects.filter_buyers()
+    favorite_users = User.objects.filter_favorites()
+
     try:
         last_purchases = Purchase.objects.order_by("-created_date")[:5]
     except Purchase.DoesNotExist:
         return Http404("Could not request last purchases")
 
-    sidebar_stats_elements = StatsDisplay.get_renderable()
+    sidebar_stats_elements = get_renderable_stats_elements()
 
-    context = {"favorites": users, "all_users": users, "last_purchases": last_purchases,
+    context = {"favorites": favorite_users, "all_users": all_users, "last_purchases": last_purchases,
                "sidebar_stats_elements": sidebar_stats_elements}
     return render(request, 'barsys/user_list.html', context)
 
 
 def user_history(request, user_id):
-    user = get_object_or_404(User, pk=user_id, is_active=True, is_buyer=True)
-    midnight = datetime.time(0, 0, 0)
-    prev_monday = timezone.now() - timezone.timedelta(days=timezone.now().weekday())
-    midnight_prev_monday = datetime.datetime.combine(prev_monday, midnight)
+    user = get_object_or_404(User.objects.filter_buyers(), pk=user_id)
 
-    # Purchase quantity as list of dicts
-    purchases_per_product = Purchase.objects.filter(user__pk=user_id,
-                                                    created_date__gte=midnight_prev_monday
-                                                    ).values("product_category", "product_name", "product_amount") \
-        .annotate(total_quantity=models.Sum("quantity")).distinct()
+    # Sum not yet billed product purchases grouped by product_category
+    categories = Purchase.objects.purchases_by_category_and_product(user__pk=user_id, invoice=None)
 
-    # Group product purchases by product_category
-    categories = defaultdict(list)
-    for prod in purchases_per_product:
-        categories[prod["product_category"]].append(prod)
+    last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[:10]
 
-    categories = sorted(categories.items())
-
-    context = {}
+    context = dict()
     context["user"] = user
     context["categories"] = categories
+    context["last_purchases"] = last_purchases
     return render(request, "barsys/user_history.html", context)
+
+
+# Helpers
+
+def get_renderable_stats_elements():
+    """Create a list of dicts for all StatsDisplays that can be rendered by view more easily"""
+    stats_elements = []
+
+    all_displays = StatsDisplay.objects.order_by("-show_by_default")
+    for index, stat in enumerate(all_displays):
+        stats_element = dict()
+        stats_element["stats_id"] = "stats_{}".format(stat.pk)
+        stats_element["show_by_default"] = stat.show_by_default
+        stats_element["title"] = stat.title
+
+        # construct query filters step by step
+        filters = dict()
+        if stat.filter_category:
+            filters["product_category"] = stat.filter_category.name
+        if stat.filter_product:
+            filters["product_name"] = stat.filter_product.name
+
+        # filter by timedelta
+        filters["created_date__gte"] = timezone.now() - stat.time_period
+
+        stats_element["rows"] = []
+        if stat.sort_by_and_show == StatsDisplay.SORT_BY_NUM_PURCHASES:
+            top_five = Purchase.objects.purchases_by_user(**filters)[:5]
+            for user, total_quantity in top_five:
+                stats_element["rows"].append({"left": "{}x".format(total_quantity),
+                                              "right": "{} {}".format(stat.row_string, user.display_name)})
+        else:
+            top_five = Purchase.objects.cost_by_user(**filters)[:5]
+            for u_index, (user, total_cost) in enumerate(top_five):
+                stats_element["rows"].append({"left": "{}.".format(u_index + 1),
+                                              "right": "{} {}".format(stat.row_string, user.display_name)})
+
+        if index + 1 < len(all_displays):
+            # toggle next one on
+            stats_element["toggle_other_on"] = "stats_{}".format(all_displays[index + 1].pk)
+        else:
+            # toggle first one on
+            stats_element["toggle_other_on"] = "stats_{}".format(all_displays[0].pk)
+        # if there is only one display, it's toggled off and on again with one click
+
+        stats_elements.append(stats_element)
+
+    return stats_elements

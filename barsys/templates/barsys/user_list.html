@@ -35,6 +35,9 @@
                style="width: 220px; margin-bottom: 10px;">{{ user.display_name }}</a>
         {% endfor %}
     </div>
+    {% if not favorites %}
+        There are no favorite users.
+    {% endif %}
 
 
     <h4><span class="glyphicon glyphicon-user" aria-hidden="true"></span> All users</h4>
@@ -45,6 +48,9 @@
                style="width: 220px; margin-bottom: 10px;">{{ user.display_name }}</a>
         {% endfor %}
     </div>
+    {% if not all_users %}
+        There are no active users who are allowed to buy.
+    {% endif %}
 {% endblock %}
 
 {% block extra_js %}
