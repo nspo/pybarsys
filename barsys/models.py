@@ -7,6 +7,7 @@ from django.db.models import F
 import datetime
 from django.utils import timezone
 from django.db.models import DecimalField
+from django.utils.translation import ugettext_lazy as _
 
 
 class UserManager(BaseUserManager):
@@ -46,6 +47,7 @@ class User(AbstractBaseUser):
     email = models.EmailField(max_length=255, unique=True, blank=False)
 
     display_name = models.CharField(max_length=40, unique=True, blank=False)
+
 
     is_active = models.BooleanField(default=True, help_text="User account is activated")
     is_admin = models.BooleanField(default=False, help_text="User may login as admin")
@@ -92,6 +94,10 @@ class User(AbstractBaseUser):
     def is_staff(self):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
+        return self.is_admin
+
+    @property
+    def is_superuser(self):
         return self.is_admin
 
 

@@ -1,9 +1,9 @@
 from django.shortcuts import render
-from django.http import Http404
 from django.shortcuts import get_list_or_404, get_object_or_404, redirect
 from .models import Product, Category, User, Purchase
 from .forms import SingleUserSinglePurchaseForm
 from .view_helpers import get_renderable_stats_elements
+from constance import config
 
 
 def user_purchase(request, user_id):
@@ -40,17 +40,14 @@ def user_list(request):
     all_users = User.objects.filter_buyers()
     favorite_users = User.objects.filter_favorites()
 
-    try:
-        last_purchases = Purchase.objects.order_by("-created_date")[:5]
-    except Purchase.DoesNotExist:
-        return Http404("Could not request last purchases")
+    last_purchases = Purchase.objects.order_by("-created_date")[:config.NUM_MAIN_LAST_PURCHASES]
 
     sidebar_stats_elements = get_renderable_stats_elements()
 
     context = {"favorites": favorite_users,
                "all_users": all_users,
                "last_purchases": last_purchases,
-               "sidebar_stats_elements": sidebar_stats_elements}
+               "sidebar_stats_elements": sidebar_stats_elements, }
     return render(request, 'barsys/user_list.html', context)
 
 
@@ -60,7 +57,8 @@ def user_history(request, user_id):
     # Sum not yet billed product purchases grouped by product_category
     categories = Purchase.objects.purchases_by_category_and_product(user__pk=user_id, invoice=None)
 
-    last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[:10]
+    last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[
+                     :config.NUM_USER_PURCHASE_HISTORY]
 
     context = {"user": user,
                "categories": categories,

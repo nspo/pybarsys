@@ -1,16 +1,51 @@
-{% extends 'barsys/base.html' %}
+{% extends 'bootstrap3/bootstrap3.html' %}
 
 {% load bootstrap3 %}
 
-{% block content %}
+{% load static %}
+{% block bootstrap3_extra_head %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+          integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
-    <!-- sidebar -->
-    <ul class="nav nav-pills nav-stacked col-sm-3 text-center" style="margin-top: 20px; padding-right: 0;">
-        {% block sidebar_content %}{% endblock %}
-    </ul>
+    <link rel="stylesheet" type="text/css" href="{% static 'barsys/style.css' %}"/>
+{% endblock %}
 
-    <!-- main area -->
-    <div class="col-xs-12 col-sm-9" style="padding-right: 0;">
-        {% block main_content %}{% endblock %}
+{% block bootstrap3_content %}
+
+    <div class="container-fluid">
+        <!-- sidebar -->
+        <ul class="nav nav-pills nav-stacked col-sm-3 text-center" style="margin-top: 20px; padding-right: 0;">
+            {% block sidebar_content %}{% endblock %}
+        </ul>
+
+        <!-- main area -->
+        <div class="col-xs-12 col-sm-9" id="main_area" style="padding-right: 0;">
+            {% for error_message in error_messages %}
+                <div class="alert alert-danger alert-dismissible" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                            aria-hidden="true">&times;</span>
+                    </button>
+                    <strong>Error:</strong> {{ error_message }}
+                </div>
+            {% endfor %}
+            {% for info_message in info_messages %}
+                <div class="alert alert-info alert-dismissible" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                            aria-hidden="true">&times;</span>
+                    </button>
+                    <strong>Notice:</strong> {{ info_message }}
+                </div>
+            {% endfor %}
+            {% block main_content %}{% endblock %}
+        </div>
     </div>
+
+{#    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>#}
+
+    {# Automatically jump to main_area if on narrow device #}
+    <script type="text/javascript">
+        window.scrollTo(0, document.getElementById("main_area").offsetTop);
+    </script>
+    {% block extra_js %}{% endblock %}
+
 {% endblock %}

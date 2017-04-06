@@ -24,7 +24,10 @@ SECRET_KEY = '&_cx6qdzz^1w%per*z6emn$*&937j-^0@q93g+t9fk7hy%8p(%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["192.168.0.133", "localhost"]
+
+# Constance settings
+CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 
 # Application definition
 
@@ -37,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bootstrap3',
     'barsys.apps.BarsysConfig',
+    'constance',
+    'constance.backends.database',
 ]
 
 MIDDLEWARE = [
@@ -118,3 +123,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Constance settings
+CONSTANCE_CONFIG = {
+    'NUM_USER_PURCHASE_HISTORY': (15, "Number of purchases to show on user history page"),
+    'NUM_MAIN_LAST_PURCHASES': (5, "Number of purchases to show on main page"),
+}
+
+CONSTANCE_CONFIG_FIELDSETS = {
+    'User history': ('NUM_USER_PURCHASE_HISTORY',),
+    'Main page': ('NUM_MAIN_LAST_PURCHASES',),
+}

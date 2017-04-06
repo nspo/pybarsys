@@ -37,6 +37,7 @@ class StatsDisplayAdmin(admin.ModelAdmin):
     list_display = ["title", "example_row", "filter_category", "filter_product", "sort_by_and_show",
                     "show_by_default"]
     readonly_fields = ["example_row"]
+
 admin.site.register(StatsDisplay, StatsDisplayAdmin)
 
 if admin.site.is_registered(Group):

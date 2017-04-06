@@ -7,8 +7,8 @@
 {% block sidebar_content %}
     <li class="active"><a href="{% url 'user_list' %}">{% bootstrap_icon "home" extra_classes="pull-left" %}
         Home</a></li>
-    <li><a href="#a">{% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} MultiBuy </a></li>
-    <li><a href="#a">{% bootstrap_icon "th-list" extra_classes="pull-left" %} Last purchases</a>
+    <li><a href="#">{% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} MultiBuy </a></li>
+    <li><a href="#">{% bootstrap_icon "th-list" extra_classes="pull-left" %} Last purchases</a>
         <table class="table table-striped table-sidebar">
             <tbody>
             {% for purchase in last_purchases %}
@@ -27,7 +27,7 @@
 {% endblock %}
 
 {% block main_content %}
-    <h4><span class="glyphicon glyphicon-star" aria-hidden="true"></span></h4>
+    <h4>{% bootstrap_icon "star" %}</h4>
     <hr/>
     <div class="btn-group-horizontal">
         {% for user in favorites %}
@@ -40,7 +40,7 @@
     {% endif %}
 
 
-    <h4><span class="glyphicon glyphicon-user" aria-hidden="true"></span> All users</h4>
+    <h4>{% bootstrap_icon "user" %} All users</h4>
     <hr/>
     <div class="btn-group-horizontal">
         {% for user in all_users %}
