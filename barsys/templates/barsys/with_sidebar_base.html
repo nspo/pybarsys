@@ -14,12 +14,12 @@
 
     <div class="container-fluid">
         <!-- sidebar -->
-        <ul class="nav nav-pills nav-stacked col-sm-3 text-center" style="margin-top: 20px; padding-right: 0;">
+        <ul class="nav nav-pills nav-stacked col-xs-12 col-sm-4 col-md-3 text-center" style="margin-top: 10px; padding-right: 0;">
             {% block sidebar_content %}{% endblock %}
         </ul>
 
         <!-- main area -->
-        <div class="col-xs-12 col-sm-9" id="main_area" style="padding-right: 0;">
+        <div class="col-xs-12 col-sm-8 col-md-9" style="padding-right: 0;">
             {% for error_message in error_messages %}
                 <div class="alert alert-danger alert-dismissible" role="alert">
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
@@ -42,10 +42,6 @@
 
 {#    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>#}
 
-    {# Automatically jump to main_area if on narrow device #}
-    <script type="text/javascript">
-        window.scrollTo(0, document.getElementById("main_area").offsetTop);
-    </script>
     {% block extra_js %}{% endblock %}
 
 {% endblock %}

@@ -8,7 +8,8 @@
     <li class="active"><a href="{% url 'user_list' %}">{% bootstrap_icon "home" extra_classes="pull-left" %}
         Home</a></li>
     <li><a href="#">{% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} MultiBuy </a></li>
-    <li><a href="#">{% bootstrap_icon "th-list" extra_classes="pull-left" %} Last purchases</a>
+
+    <li class="hidden-xs"><a>{% bootstrap_icon "th-list" extra_classes="pull-left" %} Last purchases</a>
         <table class="table table-striped table-sidebar">
             <tbody>
             {% for purchase in last_purchases %}
@@ -24,6 +25,19 @@
     {% for stats_element in sidebar_stats_elements %}
         {% include 'barsys/snippets/sidebar_stats_element.html' with data=stats_element %}
     {% endfor %}
+
+    <li><a>{% bootstrap_icon "share-alt" extra_classes="pull-left" %} Jump to</a></li>
+
+    {% for line in jump_to_data_lines %}
+    <div class="btn-group btn-group-justified" role="group" style="padding-right: 10px; padding-left: 10px;">
+        {% for title, jump_to_letter in line %}
+            <div class="btn-group" role="group">
+                <a href="#users_{{ jump_to_letter }}"><button type="button" class="btn btn-default" style="font-size: 1.2em;">{{ title }}</button></a>
+            </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
 {% endblock %}
 
 {% block main_content %}
@@ -41,6 +55,7 @@
 
 
     {% for letter, users in all_users.items %}
+        <a name="users_{{ letter }}"></a>
         <h4>{% bootstrap_icon "user" %} {{ letter }}</h4>
         <hr/>
         <div class="btn-group-horizontal">
@@ -52,6 +67,8 @@
     {% endfor %}
 
     {% if not all_users %}
+        <h4>{% bootstrap_icon "user" %} No users</h4>
+        <hr/>
         There are no active users who are allowed to buy.
     {% endif %}
 {% endblock %}
