@@ -16,11 +16,17 @@
 {% block main_content %}
     {% for category_name, products in categories %}
     <h4><span class="glyphicon glyphicon-star" aria-hidden="true"></span> {{ category_name }}</h4>
-    <hr/>
-    <ul>
+    <table class="table table-striped">
+    <tbody>
     {% for product in products %}
-        <li>{{ product.product_name }} ({{ product.product_amount }}): {{ product.total_quantity }}</li>
+        <tr>
+            <td style="width: 250px;"><strong>{{ product.product_name }} ({{ product.product_amount }})</strong></td>
+            <td style="width:50px;">{{ product.total_quantity }}</td>
+            <td>| {% for i in ''|center:product.total_quantity %} | {% endfor %}</td>{# Hack to iterate of int #}
+        </tr>
     {% endfor %}
-    </ul>
+    </tbody>
+    </table>
+
     {% endfor %}
 {% endblock %}
