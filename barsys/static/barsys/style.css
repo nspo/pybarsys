@@ -23,6 +23,25 @@ table.table-sidebar td.td-big {
     overflow:hidden;
 }
 
+.btn-user {
+    width: 220px;
+    margin-bottom: 10px;
+}
+
+.btn-product {
+    width: 175px;
+    margin-bottom: 5px;
+}
+
+.btn-group-letters {
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+.btn-letters {
+    font-size: 1.2em;
+}
+
 
 hr {
     margin-top: 5px;

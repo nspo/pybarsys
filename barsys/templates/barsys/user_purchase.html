@@ -45,7 +45,7 @@
                 <h4>{{ category.name }}</h4>
                 <hr/>
                 {% for prod in category.get_products %}
-                    <label class="btn btn-default" style="width: 175px;">
+                    <label class="btn btn-default btn-product">
                         <input type="radio" form="purchase_form" name="product_id"
                                value="{{ prod.pk }}" required> {{ prod.name }}<br/>
                         ({{ prod.amount }}, {{ prod.price }} €)

@@ -29,13 +29,15 @@
     <li><a>{% bootstrap_icon "share-alt" extra_classes="pull-left" %} Jump to</a></li>
 
     {% for line in jump_to_data_lines %}
-    <div class="btn-group btn-group-justified" role="group" style="padding-right: 10px; padding-left: 10px;">
-        {% for title, jump_to_letter in line %}
-            <div class="btn-group" role="group">
-                <a href="#users_{{ jump_to_letter }}"><button type="button" class="btn btn-default" style="font-size: 1.2em;">{{ title }}</button></a>
-            </div>
-        {% endfor %}
-    </div>
+        <div class="btn-group btn-group-justified btn-group-letters" role="group">
+            {% for title, jump_to_letter in line %}
+                <div class="btn-group" role="group">
+                    <a href="#users_{{ jump_to_letter }}">
+                        <button type="button" class="btn btn-default btn-letters">{{ title }}</button>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
     {% endfor %}
 
 {% endblock %}
@@ -45,7 +47,7 @@
     <hr/>
     <div class="btn-group-horizontal">
         {% for user in favorites %}
-            <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default"
+            <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default btn-user"
                style="width: 220px; margin-bottom: 10px;">{{ user.display_name }}</a>
         {% endfor %}
     </div>
@@ -60,8 +62,8 @@
         <hr/>
         <div class="btn-group-horizontal">
             {% for user in users %}
-                <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default"
-                   style="width: 220px; margin-bottom: 10px;">{{ user.display_name }}</a>
+                <a href="{% url 'user_purchase' user.id %}"
+                   class="btn btn-lg btn-default btn-user">{{ user.display_name }}</a>
             {% endfor %}
         </div>
     {% endfor %}
