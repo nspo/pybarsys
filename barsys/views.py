@@ -4,6 +4,8 @@ from .models import Product, Category, User, Purchase
 from .forms import SingleUserSinglePurchaseForm
 from .view_helpers import get_renderable_stats_elements
 from constance import config
+from itertools import groupby
+from collections import OrderedDict
 
 
 def user_purchase(request, user_id):
@@ -37,7 +39,16 @@ def user_purchase(request, user_id):
 
 
 def user_list(request):
-    all_users = User.objects.filter_buyers()
+    all_users_ungrouped = User.objects.filter_buyers().order_by("display_name")
+
+    # Group by first letter of name
+    all_users = OrderedDict()
+    for k, g in groupby(all_users_ungrouped, key=lambda u: u.display_name[0]):
+        if k in all_users:
+            all_users[k] += g
+        else:
+            all_users[k] = list(g)
+
     favorite_users = User.objects.filter_favorites()
 
     last_purchases = Purchase.objects.order_by("-created_date")[:config.NUM_MAIN_LAST_PURCHASES]

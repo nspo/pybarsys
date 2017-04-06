@@ -40,14 +40,17 @@
     {% endif %}
 
 
-    <h4>{% bootstrap_icon "user" %} All users</h4>
-    <hr/>
-    <div class="btn-group-horizontal">
-        {% for user in all_users %}
-            <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default"
-               style="width: 220px; margin-bottom: 10px;">{{ user.display_name }}</a>
-        {% endfor %}
-    </div>
+    {% for letter, users in all_users.items %}
+        <h4>{% bootstrap_icon "user" %} {{ letter }}</h4>
+        <hr/>
+        <div class="btn-group-horizontal">
+            {% for user in users %}
+                <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default"
+                   style="width: 220px; margin-bottom: 10px;">{{ user.display_name }}</a>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
     {% if not all_users %}
         There are no active users who are allowed to buy.
     {% endif %}
