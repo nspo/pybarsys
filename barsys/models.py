@@ -8,6 +8,7 @@ import datetime
 from django.utils import timezone
 from django.db.models import DecimalField
 from django.utils.translation import ugettext_lazy as _
+import decimal
 
 
 class UserManager(BaseUserManager):
@@ -209,9 +210,19 @@ class Purchase(models.Model):
     def __str__(self):
         return "{}x {} ({})".format(self.quantity, self.product_name, self.user.display_name)
 
+    def cost(self):
+        return self.quantity*self.product_price
 
-# Admin-defined filters that can be shown as stats in frontend
+
+class PurchaseSummary(Purchase):
+    class Meta:
+        proxy = True
+        verbose_name = "Purchase Summary"
+        verbose_name_plural = "Purchases Summary"
+
+
 class StatsDisplay(models.Model):
+    """ Admin-defined filters that can be shown as stats in frontend """
     title = models.CharField(max_length=30, blank=False)
     row_string = models.CharField(max_length=15, blank=True,
                                   help_text="This is shown on the right side of each stats row in the format "
