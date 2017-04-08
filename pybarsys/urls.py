@@ -15,8 +15,16 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
+from barsys.forms import LoginForm
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
+    url(r'^django-admin/', admin.site.urls),
     url(r'^', include('barsys.urls')),
+
+    # user area
+    url(r'^login/$', auth_views.login,
+        {'template_name': 'barsys/userarea/login.html', 'authentication_form': LoginForm},
+        name="user_login"),
+    url(r'^logout/$', auth_views.logout, {'next_page': 'user_login'}, name="user_logout"),
 ]

@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'barsys.apps.BarsysConfig',
     'constance',
     'constance.backends.database',
+    'django_filters',
+    'crispy_forms',
+
 ]
 
 MIDDLEWARE = [
@@ -56,6 +59,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'pybarsys.urls'
+LOGIN_REDIRECT_URL = 'user_home'
 
 TEMPLATES = [
     {
@@ -135,3 +139,5 @@ CONSTANCE_CONFIG_FIELDSETS = {
     'User history': ('NUM_USER_PURCHASE_HISTORY',),
     'Main page': ('NUM_MAIN_LAST_PURCHASES',),
 }
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'

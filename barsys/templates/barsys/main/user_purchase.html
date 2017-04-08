@@ -1,15 +1,15 @@
-{% extends 'barsys/with_sidebar_base.html' %}
+{% extends 'barsys/main/with_sidebar_base.html' %}
 
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}Purchase as {{ user.display_name }}{% endblock %}
 
 {% block sidebar_content %}
-    <li><a href="{% url 'user_list' %}">{% bootstrap_icon "home" extra_classes="pull-left" %} Home</a></li>
+    <li><a href="{% url 'main_user_list' %}">{% bootstrap_icon "home" extra_classes="pull-left" %} Home</a></li>
 
-    <li class="active"><a href="{% url 'user_purchase' user.id %}">
+    <li class="active"><a href="{% url 'main_user_purchase' user.id %}">
         {% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} Purchase as {{ user.display_name }}</a></li>
-    <li><a href="{% url 'user_history' user.id %}">{% bootstrap_icon "th-list" extra_classes="pull-left" %} History
+    <li><a href="{% url 'main_user_history' user.id %}">{% bootstrap_icon "th-list" extra_classes="pull-left" %} History
         of {{ user.display_name }}</a></li>
     <hr/>
     <form method="POST" id="purchase_form" style="margin-top: 15px;">

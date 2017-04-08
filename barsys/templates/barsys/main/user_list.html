@@ -1,11 +1,11 @@
-{% extends 'barsys/with_sidebar_base.html' %}
+{% extends 'barsys/main/with_sidebar_base.html' %}
 
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}User list{% endblock %}
 
 {% block sidebar_content %}
-    <li class="active"><a href="{% url 'user_list' %}">{% bootstrap_icon "home" extra_classes="pull-left" %}
+    <li class="active"><a href="{% url 'main_user_list' %}">{% bootstrap_icon "home" extra_classes="pull-left" %}
         Home</a></li>
     <li><a href="#">{% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} MultiBuy </a></li>
 
@@ -47,7 +47,7 @@
     <hr/>
     <div class="btn-group-horizontal">
         {% for user in favorites %}
-            <a href="{% url 'user_purchase' user.id %}" class="btn btn-lg btn-default btn-user"
+            <a href="{% url 'main_user_purchase' user.id %}" class="btn btn-lg btn-default btn-user"
                style="width: 220px; margin-bottom: 10px;">{{ user.display_name }}</a>
         {% endfor %}
     </div>
@@ -62,7 +62,7 @@
         <hr/>
         <div class="btn-group-horizontal">
             {% for user in users %}
-                <a href="{% url 'user_purchase' user.id %}"
+                <a href="{% url 'main_user_purchase' user.id %}"
                    class="btn btn-lg btn-default btn-user">{{ user.display_name }}</a>
             {% endfor %}
         </div>

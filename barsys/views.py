@@ -6,9 +6,72 @@ from .view_helpers import get_renderable_stats_elements
 from constance import config
 from itertools import groupby
 from collections import OrderedDict
+from .forms import PurchaseForm
+
+from django.views.generic import ListView, edit
+from django.views.generic.detail import DetailView
+
+from django.utils.decorators import method_decorator
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+
+from django_filters.views import FilterView
 
 
-def user_purchase(request, user_id):
+from . import filters
+
+
+# user area test
+@staff_member_required(login_url='user_login')
+def user_home(request):
+    return render(request,"barsys/userarea/home.html")
+
+
+
+
+
+class UserListView(FilterView):
+    filterset_class = filters.UserFilter
+    template_name = 'barsys/userarea/user_list.html'
+
+    paginate_by = 5
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PurchaseListView(ListView):
+    model = Purchase
+    template_name = "barsys/userarea/purchase_list.html"
+    paginate_by = 20
+
+
+class PurchaseDetailView(DetailView):
+    model = Purchase
+    template_name = "barsys/userarea/purchase_detail.html"
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PurchaseCreateView(edit.CreateView):
+    model = Purchase
+    form_class = PurchaseForm
+    template_name = "barsys/userarea/purchase_new.html"
+
+    def get_form(self, form_class=None):
+        form = super(PurchaseCreateView, self).get_form(form_class)
+        form.fields.pop('invoice')
+        return form
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PurchaseUpdateView(edit.UpdateView):
+    model = Purchase
+    form_class = PurchaseForm
+    template_name = "barsys/userarea/purchase_update.html"
+
+
+# user area end
+
+def main_user_purchase(request, user_id):
     user = get_object_or_404(User.objects.filter_buyers(), pk=user_id)
     categories = get_list_or_404(Category)
 
@@ -23,7 +86,7 @@ def user_purchase(request, user_id):
                                 product_category=product.category.name, product_price=product.price,
                                 quantity=form.cleaned_data["quantity"])
             purchase.save()
-            return redirect(user_list)
+            return redirect(main_user_list)
         else:
             context = {"error_messages": ["Invalid form data"]}
     else:
@@ -35,10 +98,10 @@ def user_purchase(request, user_id):
     context["categories"] = categories
     context["form"] = form
 
-    return render(request, "barsys/user_purchase.html", context)
+    return render(request, "barsys/main/user_purchase.html", context)
 
 
-def user_list(request):
+def main_user_list(request):
     all_users_ungrouped = User.objects.filter_buyers().order_by("display_name")
 
     # Group by first letter of name
@@ -97,10 +160,10 @@ def user_list(request):
                "sidebar_stats_elements": sidebar_stats_elements,
                "jump_to_data_lines": jump_to_data_lines,
                "other_auto_jump_goal": True }
-    return render(request, 'barsys/user_list.html', context)
+    return render(request, 'barsys/main/user_list.html', context)
 
 
-def user_history(request, user_id):
+def main_user_history(request, user_id):
     user = get_object_or_404(User.objects.filter_buyers(), pk=user_id)
 
     # Sum not yet billed product purchases grouped by product_category
@@ -112,4 +175,4 @@ def user_history(request, user_id):
     context = {"user": user,
                "categories": categories,
                "last_purchases": last_purchases}
-    return render(request, "barsys/user_history.html", context)
+    return render(request, "barsys/main/user_history.html", context)

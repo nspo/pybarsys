@@ -98,8 +98,20 @@ class UserAdmin(NoEditForeignTablesInlineMixin, admin.ModelAdmin):
         'created_date', 'is_active', 'is_admin', 'is_buyer',
     )
 
-    readonly_fields = ["last_login", "created_date", "modified_date", ]
+    readonly_fields = ["last_login", "created_date", "modified_date",]
+
     no_edit_foreign_tables_in_form = ["purchases_paid_by"]
+
+    def save_model(self, request, obj, form, change):
+        # Override this to set the password to the value in the field if it's
+        # changed.
+        if change:
+            orig_obj = User.objects.get(pk=obj.pk)
+            if obj.password != orig_obj.password:
+                obj.set_password(obj.password)
+        else:
+            obj.set_password(obj.password)
+        obj.save()
 
 
 admin.site.register(User, UserAdmin)

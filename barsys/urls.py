@@ -1,11 +1,22 @@
 from django.conf.urls import url
 
-from . import views
+from . import views, filters
 
 urlpatterns = [
-    url(r'^$', views.user_list, name="user_list"),
-    url(r'^user/list/$', views.user_list, name="user_list"),
+    # main page for purchasing products (main_*)
+    url(r'^$', views.main_user_list, name="root"),
+    url(r'^user/list/$', views.main_user_list, name="main_user_list"),
+    url(r'^user/(?P<user_id>[0-9]+)/purchase/$', views.main_user_purchase, name='main_user_purchase'),
+    url(r'^user/(?P<user_id>[0-9]+)/history/$', views.main_user_history, name='main_user_history'),
 
-    url(r'^user/(?P<user_id>[0-9]+)/purchase/$', views.user_purchase, name='user_purchase'),
-    url(r'^user/(?P<user_id>[0-9]+)/history/$', views.user_history, name='user_history'),
+    # user area (user_*)
+    url(r'^userarea/$', views.user_home, name='user_home'),
+    # Purchase
+    url(r'^userarea/purchase/$',     views.PurchaseListView.as_view(), name="user_purchase_list"),
+    url(r'^userarea/purchase/(?P<pk>[0-9]+)/detail/$', views.PurchaseDetailView.as_view(), name='user_purchase_detail'),
+    url(r'^userarea/purchase/(?P<pk>[0-9]+)/update/$', views.PurchaseUpdateView.as_view(), name='user_purchase_update'),
+    url(r'^userarea/purchase/new/$', views.PurchaseCreateView.as_view(), name='user_purchase_new'),
+
+    # User
+    url(r'^userarea/user/$', views.UserListView.as_view(), name='user_user_list'),
 ]

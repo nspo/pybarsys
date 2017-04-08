@@ -5,10 +5,13 @@ from django.contrib.auth.models import (
 from collections import defaultdict
 from django.db.models import F
 import datetime
+from django.urls import reverse
+
 from django.utils import timezone
 from django.db.models import DecimalField
 from django.utils.translation import ugettext_lazy as _
-import decimal
+from django.core.validators import MinValueValidator
+from decimal import Decimal
 
 
 class UserManager(BaseUserManager):
@@ -48,7 +51,6 @@ class User(AbstractBaseUser):
     email = models.EmailField(max_length=255, unique=True, blank=False)
 
     display_name = models.CharField(max_length=40, unique=True, blank=False)
-
 
     is_active = models.BooleanField(default=True, help_text="User account is activated")
     is_admin = models.BooleanField(default=False, help_text="User may login as admin")
@@ -101,6 +103,12 @@ class User(AbstractBaseUser):
     def is_superuser(self):
         return self.is_admin
 
+    def num_purchases(self):
+        return Purchase.objects.filter(user__pk=self.pk).count()
+
+    class Meta:
+        ordering = ["display_name"]
+
 
 class Category(models.Model):
     name = models.CharField(max_length=30, unique=True, blank=False)
@@ -123,8 +131,9 @@ class Category(models.Model):
 class Product(models.Model):
     """ name of Product is not unique, because there can be other products with the same name but different amount"""
     name = models.CharField(max_length=40, blank=False, help_text="Multiple products can have the same name "
-                            "as long as the amount is different")
-    price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False)
+                                                                  "as long as the amount is different")
+    price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
+                                validators=[MinValueValidator(Decimal('0.01'))])
     amount = models.CharField(max_length=10, blank=False)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, null=False)
 
@@ -178,8 +187,9 @@ class PurchaseManager(models.Manager):
 
     def cost_by_user(self, *args, **kwargs):
         """ Calculate total cost of purchases and group by user """
-        cost_per_user = User.objects.filter(*args, **kwargs).\
-            annotate(total_cost=models.Sum(F("purchase__quantity") * F("purchase__product_price"), output_field=DecimalField(decimal_places=2))).\
+        cost_per_user = User.objects.filter(*args, **kwargs). \
+            annotate(total_cost=models.Sum(F("purchase__quantity") * F("purchase__product_price"),
+                                           output_field=DecimalField(decimal_places=2))). \
             filter(total_cost__gt=0).order_by("-total_cost")
 
         # Create list of tuples [(user, total_cost), ...]
@@ -195,7 +205,8 @@ class Purchase(models.Model):
     # Don't save product reference as foreign key, b/c it could be changed after purchase
     product_category = models.CharField(max_length=30, blank=False)
     product_name = models.CharField(max_length=40, blank=False)
-    product_price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False)
+    product_price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
+                                        validators=[MinValueValidator(Decimal('0.01'))])
     product_amount = models.CharField(max_length=10, blank=False)
     quantity = models.PositiveIntegerField(default=1, null=False, blank=False)
 
@@ -207,11 +218,17 @@ class Purchase(models.Model):
 
     objects = PurchaseManager()
 
+    class Meta:
+        ordering = ["-created_date"]
+
     def __str__(self):
         return "{}x {} ({})".format(self.quantity, self.product_name, self.user.display_name)
 
     def cost(self):
-        return self.quantity*self.product_price
+        return self.quantity * self.product_price
+
+    def get_absolute_url(self):
+        return reverse('user_purchase_detail', kwargs={'pk': self.pk})
 
 
 class PurchaseSummary(Purchase):

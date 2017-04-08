@@ -1,0 +1,20 @@
+{% extends 'barsys/userarea/base.html' %}
+
+{% load bootstrap3 %}
+{% block content %}
+
+    <div class="container">
+
+        <h1>Update purchase</h1>
+        <form method="post" class="form">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            {% buttons %}
+                <button type="submit" class="btn btn-primary">
+                    Save
+                </button>
+            {% endbuttons %}
+        </form>
+
+    </div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'barsys/userarea/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+{% load table_helpers %}
+
+{% block content %}
+
+    <div class="container">
+        <div>
+            <h1>User list</h1>
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Display name</th>
+                        <th>Email</th>
+                        <th>Active?</th>
+                        <th>Buyer?</th>
+                        <th>Admin?</th>
+                        <th>Favorite?</th>
+                        <th>Number of purchases</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for user in object_list %}
+                    <tr>
+                        <td>{{ user.display_name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{% bool_to_icon user.is_active %}</td>
+                        <td>{% bool_to_icon user.is_buyer %}</td>
+                        <td>{% bool_to_icon user.is_admin %}</td>
+                        <td>{% bool_to_icon user.is_favorite %}</td>
+                        <td>{{ user.num_purchases }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+        </div>
+
+        <div>
+            <form method="get" class="form">
+                {{ filter.form|crispy }}
+                {% buttons %}
+                    <button type="submit" class="btn btn-primary">Search</button>
+                {% endbuttons %}
+            </form>
+        </div>
+    </div>
+{% endblock %}

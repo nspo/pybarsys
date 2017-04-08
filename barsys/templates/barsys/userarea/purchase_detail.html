@@ -1,0 +1,27 @@
+{% extends 'barsys/userarea/base.html' %}
+
+{% load bootstrap3 %}
+{% block content %}
+
+    <div class="container">
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Purchase details</h1>
+            <a href="{% url 'user_purchase_update' purchase.pk %}"><button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button></a>
+        </div>
+        <table class="table table-striped">
+            <tbody>
+            <tr><th>Time</th><td>{{ object.created_date }}</td></tr>
+            <tr><th>User</th><td><a href="">{{ object.user.display_name }}</a></td></tr>
+            <tr><th>Quantity</th><td>{{ object.quantity }}</td></tr>
+            <tr><th>Product name</th><td>{{ object.product_name }}</td></tr>
+            <tr><th>Product amount</th><td>{{ object.product_amount }}</td></tr>
+            <tr><th>Product category</th><td>{{ object.product_category }}</td></tr>
+            <tr><th>Product price</th><td>{{ object.product_price }}</td></tr>
+            <tr><th>Cost</th><td>{{ object.cost }}</td></tr>
+            <tr><th>Invoice</th><td>{{ object.invoice }}</td></tr>
+            <tr><th>Last modified</th><td>{{ object.modified_date }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

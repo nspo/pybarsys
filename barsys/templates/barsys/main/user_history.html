@@ -1,17 +1,17 @@
-{% extends 'barsys/with_sidebar_base.html' %}
+{% extends 'barsys/main/with_sidebar_base.html' %}
 
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}History of {{ user.display_name }}{% endblock %}
 
 {% block sidebar_content %}
-    <li><a href="{% url 'user_list' %}"><span class="glyphicon glyphicon-home pull-left"
+    <li><a href="{% url 'main_user_list' %}"><span class="glyphicon glyphicon-home pull-left"
                                               aria-hidden="true"></span> Home</a></li>
-    <li><a href="{% url 'user_purchase' user.id %}"><span class="glyphicon glyphicon-shopping-cart pull-left"
+    <li><a href="{% url 'main_user_purchase' user.id %}"><span class="glyphicon glyphicon-shopping-cart pull-left"
                                                           aria-hidden="true"></span> Purchase as {{ user.display_name }}
     </a></li>
     <li class="active"><a
-            href="{% url 'user_history' user.id %}">{% bootstrap_icon "th-list" extra_classes="pull-left" %} History
+            href="{% url 'main_user_history' user.id %}">{% bootstrap_icon "th-list" extra_classes="pull-left" %} History
         of {{ user.display_name }}</a></li>
     <hr/>
 {% endblock %}
