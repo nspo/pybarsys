@@ -91,7 +91,7 @@ class PurchaseSummaryAdmin(admin.ModelAdmin):
 
 
 class UserAdmin(NoEditForeignTablesInlineMixin, admin.ModelAdmin):
-    list_display = ['display_name', 'email', 'is_active', 'is_admin', 'is_buyer', 'purchases_paid_by']
+    list_display = ['display_name', 'email', 'is_active', 'is_admin', 'is_buyer', 'purchases_paid_by_other']
     search_fields = ["display_name", "email"]
 
     list_filter = (
@@ -100,7 +100,7 @@ class UserAdmin(NoEditForeignTablesInlineMixin, admin.ModelAdmin):
 
     readonly_fields = ["last_login", "created_date", "modified_date",]
 
-    no_edit_foreign_tables_in_form = ["purchases_paid_by"]
+    no_edit_foreign_tables_in_form = ["purchases_paid_by_other"]
 
     def save_model(self, request, obj, form, change):
         # Override this to set the password to the value in the field if it's

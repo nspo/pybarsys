@@ -18,7 +18,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 from django_filters.views import FilterView
 from django.urls import reverse_lazy
-from django.http import HttpResponseRedirect, HttpResponseForbidden
+from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
+import csv
 from django.core import exceptions
 
 from . import filters
@@ -245,6 +246,60 @@ class StatsDisplayDeleteView(CheckedDeleteView):
 
 
 # StatsDisplay END
+# Payment BEGIN
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PaymentListView(FilterView):
+    filterset_class = filters.PaymentFilter
+    template_name = "barsys/userarea/payment_list.html"
+    paginate_by = 10
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PaymentExportView(FilterView):
+    filterset_class = filters.PaymentFilter
+
+    def render_to_response(self, context, **response_kwargs):
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="payments-export.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['created', 'email', 'display_name', 'amount', 'payment_method', 'comment'])
+
+        for obj in self.object_list:
+            writer.writerow(
+                [obj.created_date, obj.user.email, obj.user.display_name, obj.amount, obj.get_payment_method_display(),
+                 obj.comment])
+
+        return response
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PaymentDetailView(DetailView):
+    model = Payment
+    template_name = "barsys/userarea/payment_detail.html"
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PaymentCreateView(edit.CreateView):
+    model = Payment
+    form_class = PaymentForm
+    template_name = "barsys/userarea/payment_new.html"
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PaymentUpdateView(edit.UpdateView):
+    model = Payment
+    form_class = PaymentForm
+    template_name = "barsys/userarea/payment_update.html"
+
+
+class PaymentDeleteView(CheckedDeleteView):
+    model = Payment
+    success_url = reverse_lazy('user_payment_list')
+
+
+# PAYMENT END
 # Statistics BEGIN
 
 
@@ -260,9 +315,9 @@ class PurchaseStatisticsView(FilterView):
         metrics = {
             "num_purchases": models.Count("id"),
             "average_cost": models.Avg(F("quantity") * F("product_price"),
-                                        output_field=DecimalField(decimal_places=2)),
+                                       output_field=DecimalField(decimal_places=2)),
             "average_quantity": models.Avg(F("quantity"),
-                                        output_field=DecimalField(decimal_places=2)),
+                                           output_field=DecimalField(decimal_places=2)),
             "total_quantity": models.Sum(F("quantity")),
             "total_sales": models.Sum(F("quantity") * F("product_price"),
                                       output_field=DecimalField(decimal_places=2)),

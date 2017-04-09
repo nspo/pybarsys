@@ -20,7 +20,14 @@
             <tr><th>Favorite?</th><td>{% bool_to_icon object.is_favorite %}</td></tr>
             <tr><th>Admin?</th><td>{% bool_to_icon object.is_admin %}</td></tr>
 
-            <tr><th>Purchases paid by</th><td>{{ object.purchases_paid_by }}</td></tr>
+            <tr>
+                <th>Purchases paid by other</th>
+                <td>{% if object.purchases_paid_by_other != None %}
+                    <a href="{% url 'user_user_detail' object.purchases_paid_by_other.pk %}">{{ object.purchases_paid_by_other }}</a>
+                {% else %}
+                    No
+                {% endif %}</td>
+            </tr>
 
             <tr><th>Created</th><td>{{ object.created_date }}</td></tr>
             <tr><th>Last modified</th><td>{{ object.modified_date }}</td></tr>

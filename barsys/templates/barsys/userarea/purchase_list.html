@@ -2,6 +2,7 @@
 
 {% load bootstrap3 %}
 {% load crispy_forms_tags %}
+{% load barsys_helpers %}
 {% block content %}
 
     <div class="container">
@@ -33,8 +34,8 @@
                         <td><a href="{% url 'user_user_detail' p.user.pk %}">{{ p.user.display_name }}</a></td>
                         <td>{{ p.quantity }}</td>
                         <td>{{ p.product_name }}</td>
-                        <td>{{ p.product_price }}</td>
-                        <td>{{ p.cost }}</td>
+                        <td>{{ p.product_price|currency }}</td>
+                        <td>{{ p.cost|currency }}</td>
                         <td><a href="{% url 'user_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
                         <td><a href="{% url 'user_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
                         <td><a href="{% url 'user_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>

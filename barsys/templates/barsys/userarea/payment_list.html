@@ -1,0 +1,66 @@
+{% extends 'barsys/userarea/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+{% load barsys_helpers %}
+{% load humanize %}
+
+{% block content %}
+
+    <div class="container">
+        <div>
+            <div>
+                <h1 class="pull-left" style="margin-top: 0;">Payments</h1>
+                <div class="btn-group pull-right" role="group">
+                    <a href="{% url 'user_payment_export' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+                        {% bootstrap_icon 'download' %} Export
+                    </a>
+                    <a href="{% url 'user_payment_new' %}" class="btn btn-primary">
+                        {% bootstrap_icon 'plus' %} Add new payment
+                    </a>
+                </div>
+            </div>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Amount</th>
+                    <th>Payment method</th>
+                    <th>Comment?</th>
+                    <th>{% bootstrap_icon 'info-sign' %}</th>
+                    <th>{% bootstrap_icon 'pencil' %}</th>
+                    <th>{% bootstrap_icon 'trash' %}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for object in object_list %}
+                    <tr>
+                        <td><a href="{% url 'user_payment_detail' object.pk %}">{{ object.created_date }}</a></td>
+                        <td><a href="{% url 'user_user_detail' object.user.pk %}">{{ object.user }}</a></td>
+                        <td>{{ object.amount|currency }}</td>
+                        <td>{{ object.get_payment_method_display }}</td>
+                        <td>{% bool_to_icon object.comment %}</td>
+                        <td><a href="{% url 'user_payment_detail' object.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+                        </td>
+                        <td><a href="{% url 'user_payment_update' object.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                        <td><a href="{% url 'user_payment_delete' object.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p>{{ paginator.count }} results</p>
+            {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+        </div>
+
+        <div class="col-md-6 col-md-offset-3">
+            <h2>Filter</h2>
+            <form method="get" class="form">
+                {{ filter.form|crispy }}
+                {% buttons %}
+                    <button type="submit" class="btn btn-primary">Search</button>
+                {% endbuttons %}
+            </form>
+        </div>
+    </div>
+{% endblock %}

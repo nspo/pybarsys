@@ -19,6 +19,9 @@ def bool_to_icon(value):
 @register.filter(name='currency')
 def currency(value):
     """ Please tell me how to do this the right way """
+    if not value:
+        value = 0
+
     l = settings.LANGUAGE_CODE
     l_split = l.split('-')
     l = l_split[0].lower() + "_" + l_split[1].upper() + ".UTF-8"

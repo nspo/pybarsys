@@ -25,7 +25,8 @@
                 <th>Products</th>
                 <td>
                     <ul class="list-group">{% for product in object.get_products %}
-                        <li class="list-group-item">{{ product.name }}</li>
+                        <li class="list-group-item"><a
+                                href="{% url 'user_product_detail' product.pk %}">{{ product.name }}</a></li>
                     {% endfor %}</ul>
                 </td>
             </tr>

@@ -1,6 +1,5 @@
 {% extends 'barsys/userarea/base.html' %}
-
-
+{% load crispy_forms_tags %}
 {% block content %}
     {% if form.errors %}
 
@@ -31,14 +30,7 @@
 
                             <p class="bs-component">
                             <table>
-                                <tr>
-                                    <td>{{ form.username.label_tag }}</td>
-                                    <td>{{ form.username }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{{ form.password.label_tag }}</td>
-                                    <td>{{ form.password }}</td>
-                                </tr>
+                                {{ form|crispy }}
                             </table>
                             </p>
                             <p class="bs-component">

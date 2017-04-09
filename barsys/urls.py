@@ -40,6 +40,14 @@ urlpatterns = [
     url(r'^userarea/product/(?P<pk>[0-9]+)/update/$', views.ProductUpdateView.as_view(), name='user_product_update'),
     url(r'^userarea/product/(?P<pk>[0-9]+)/delete/$', views.ProductDeleteView.as_view(), name='user_product_delete'),
 
+    # Payment
+    url(r'^userarea/payment/$', views.PaymentListView.as_view(), name='user_payment_list'),
+    url(r'^userarea/payment/export/$', views.PaymentExportView.as_view(), name='user_payment_export'),
+    url(r'^userarea/payment/new/$', views.PaymentCreateView.as_view(), name='user_payment_new'),
+    url(r'^userarea/payment/(?P<pk>[0-9]+)/detail/$', views.PaymentDetailView.as_view(), name='user_payment_detail'),
+    url(r'^userarea/payment/(?P<pk>[0-9]+)/update/$', views.PaymentUpdateView.as_view(), name='user_payment_update'),
+    url(r'^userarea/payment/(?P<pk>[0-9]+)/delete/$', views.PaymentDeleteView.as_view(), name='user_payment_delete'),
+
     # StatsDisplay
     url(r'^userarea/statsdisplay/$', views.StatsDisplayListView.as_view(), name='user_statsdisplay_list'),
     url(r'^userarea/statsdisplay/new/$', views.StatsDisplayCreateView.as_view(), name='user_statsdisplay_new'),

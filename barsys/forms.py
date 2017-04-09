@@ -29,7 +29,7 @@ class UserCreateForm(auth_forms.UserCreationForm):
     class Meta:
         model = User
         fields = (
-            'email', 'display_name', 'password1', 'password2', 'purchases_paid_by', 'is_active', 'is_buyer',
+            'email', 'display_name', 'password1', 'password2', "purchases_paid_by_other", 'is_active', 'is_buyer',
             'is_favorite', 'is_admin')
 
 # Old version of UserUpdateForm. Password changing was not working.
@@ -108,7 +108,7 @@ class UserUpdateForm(UserChangeWithPasswordForm):
     class Meta:
         model = User
         fields = (
-            'email', 'display_name', 'password1', 'password2', 'purchases_paid_by', 'is_active', 'is_buyer',
+            'email', 'display_name', 'password1', 'password2', "purchases_paid_by_other", 'is_active', 'is_buyer',
             'is_favorite', 'is_admin')
 
 
@@ -151,6 +151,12 @@ class CategoryForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
+        exclude = ('', )
+
+
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = Payment
         exclude = ('', )
 
 

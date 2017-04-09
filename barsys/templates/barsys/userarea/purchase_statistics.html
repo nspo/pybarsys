@@ -36,10 +36,10 @@
                 <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
                     <td> Total</td>
                     <td> {{ summary_total.num_purchases|default_if_none:0 }} </td>
-                    <td> {{ summary_total.average_quantity|intcomma|default_if_none:0 }} </td>
-                    <td> {{ summary_total.average_cost|currency|default_if_none:0 }} </td>
+                    <td> {{ summary_total.average_quantity|default_if_none:0|intcomma }} </td>
+                    <td> {{ summary_total.average_cost|default_if_none:0|currency }} </td>
                     <td> {{ summary_total.total_quantity|default_if_none:0 }} </td>
-                    <td> {{ summary_total.total_sales|currency|default_if_none:0 }}</td>
+                    <td> {{ summary_total.total_sales|default_if_none:0|currency }}</td>
                 </tr>
                 </tbody>
             </table>

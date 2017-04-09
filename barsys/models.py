@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.db.models import DecimalField
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 from decimal import Decimal
 
 
@@ -47,6 +48,9 @@ class UserManager(BaseUserManager):
         return self.filter_buyers().filter(is_favorite=True)
 
 
+from django.db.models import Q
+
+
 class User(AbstractBaseUser):
     email = models.EmailField(max_length=255, unique=True, blank=False, help_text="Email is used as username when "
                                                                                   "logging into the user-only area")
@@ -59,10 +63,11 @@ class User(AbstractBaseUser):
     is_buyer = models.BooleanField(default=True, help_text="User may buy products")
     is_favorite = models.BooleanField(default=False, help_text="User is shown under favorites")
 
-    purchases_paid_by = models.ForeignKey("self", on_delete=models.PROTECT, default=None, null=True, blank=True,
-                                          help_text="Someone else is responsible to pay for all purchases made "
-                                                    "by this user. Invoices are sent to the responsible person and a "
-                                                    "copy is sent to the user itself as a notification.")
+    purchases_paid_by_other = models.ForeignKey("self", on_delete=models.PROTECT, default=None, null=True, blank=True,
+                                                help_text="Someone else is responsible to pay for all purchases made "
+                                                          "by this user. Invoices are sent to the responsible person "
+                                                          "and a copy is sent to the user itself as a notification.",
+                                                limit_choices_to=(Q(purchases_paid_by_other=None)))
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
@@ -72,6 +77,10 @@ class User(AbstractBaseUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+
+    def clean(self):
+        if self.purchases_paid_by_other == self:
+            raise ValidationError({'purchases_paid_by_other': "This field cannot be set to the same user"})
 
     def get_full_name(self):
         # The user is identified by their email address
@@ -145,6 +154,9 @@ class Category(models.Model):
             return "There is at least one product in this category"
         else:
             return False
+
+    class Meta:
+        ordering = ["name"]
 
 
 class Product(models.Model):
@@ -261,6 +273,32 @@ class Purchase(models.Model):
 
     def has_invoice(self):
         return self.invoice is not None
+
+
+class Payment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.PROTECT, help_text="User that made this payment")
+    amount = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
+                                 validators=[MinValueValidator(Decimal('0.01'))])
+    comment = models.CharField(max_length=100, blank=True)
+
+    PAYMENT_METHOD_CASH = "CASH"
+    PAYMENT_METHOD_BANK = "BANK"
+    PAYMENT_METHOD_OTHER = "OTHR"
+    PAYMENT_METHOD_CHOICES = ((PAYMENT_METHOD_CASH, "Cash"),
+                              (PAYMENT_METHOD_BANK, "Bank transfer"),
+                              (PAYMENT_METHOD_OTHER, "Other"))
+    payment_method = models.CharField(max_length=4, choices=PAYMENT_METHOD_CHOICES, default=PAYMENT_METHOD_BANK)
+
+    # Dates
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_date = models.DateTimeField(auto_now=True)
+
+    def get_absolute_url(self):
+        return reverse('user_payment_detail', kwargs={'pk': self.pk})
+
+    class Meta:
+        ordering = ["-created_date"]
+
 
 class PurchaseSummary(Purchase):
     class Meta:
