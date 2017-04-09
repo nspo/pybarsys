@@ -28,3 +28,8 @@ def currency(value):
 
     locale.setlocale(locale.LC_ALL, l)
     return locale.currency(value, grouping=True)
+
+
+@register.filter
+def keyvalue(dict, key):
+    return dict.get(key, '')

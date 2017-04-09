@@ -20,7 +20,7 @@ from django_filters.views import FilterView
 from django.urls import reverse_lazy
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
 import csv
-from django.core import exceptions
+from django.core import exceptions, paginator
 
 from . import filters
 
@@ -43,10 +43,35 @@ class UserListView(FilterView):
 class UserDetailView(DetailView):
     model = User
     template_name = "barsys/userarea/user_detail.html"
+    purchases_paginate_by = 5
+    payments_paginate_by = 5
 
     def get_context_data(self, **kwargs):
         context = super(UserDetailView, self).get_context_data(**kwargs)
-        context["unbilled_purchases"] = self.object.get_purchases().filter(invoice=None)
+
+        purchases = self.object.get_purchases().filter()
+
+        purchases_page = self.request.GET.get("purchases_page")
+        purchases_paginator = paginator.Paginator(purchases, self.purchases_paginate_by)
+        # Catch invalid page numbers
+        try:
+            purchases_page_obj = purchases_paginator.page(purchases_page)
+        except (paginator.PageNotAnInteger, paginator.EmptyPage):
+            purchases_page_obj = purchases_paginator.page(1)
+
+        context["purchases_page_obj"] = purchases_page_obj
+
+        payments = self.object.get_payments().filter()
+
+        payments_page = self.request.GET.get("payments_page")
+        payments_paginator = paginator.Paginator(payments, self.payments_paginate_by)
+        try:
+            payments_page_obj = payments_paginator.page(payments_page)
+        except (paginator.PageNotAnInteger, paginator.EmptyPage):
+            payments_page_obj = payments_paginator.page(1)
+
+        context["payments_page_obj"] = payments_page_obj
+
         return context
 
 
@@ -311,34 +336,63 @@ class PaymentDeleteView(CheckedDeleteView):
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PurchaseStatisticsView(FilterView):
+class PurchaseStatisticsByCategoryView(FilterView):
+    filterset_class = filters.PurchaseFilter
+    template_name = "barsys/userarea/purchase_statistics.html"
+    paginate_by = 10
+
+    metrics = {
+        "num_purchases": models.Count("id"),
+        "average_cost": models.Avg(F("quantity") * F("product_price"),
+                                   output_field=DecimalField(decimal_places=2)),
+        "average_quantity": models.Avg(F("quantity"),
+                                       output_field=DecimalField(decimal_places=2)),
+        "total_quantity": models.Sum(F("quantity")),
+        "total_sales": models.Sum(F("quantity") * F("product_price"),
+                                  output_field=DecimalField(decimal_places=2)),
+    }
+
+    def get_context_data(self, **kwargs):
+        context = super(PurchaseStatisticsByCategoryView, self).get_context_data(**kwargs)
+
+        context["grouped_by"] = "product_category"
+        context["grouped_by_title"] = "Category"
+
+        context["summary"] = list(
+            context["filter"].qs
+                .values("product_category")
+                .annotate(**self.metrics)
+                .order_by("-total_sales")
+        )
+
+        context["summary_total"] = dict(
+            context["filter"].qs.aggregate(**self.metrics)
+        )
+
+        return context
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PurchaseStatisticsByProductView(FilterView):
     filterset_class = filters.PurchaseFilter
     template_name = "barsys/userarea/purchase_statistics.html"
     paginate_by = 10
 
     def get_context_data(self, **kwargs):
-        context = super(PurchaseStatisticsView, self).get_context_data(**kwargs)
+        context = super(PurchaseStatisticsByProductView, self).get_context_data(**kwargs)
 
-        metrics = {
-            "num_purchases": models.Count("id"),
-            "average_cost": models.Avg(F("quantity") * F("product_price"),
-                                       output_field=DecimalField(decimal_places=2)),
-            "average_quantity": models.Avg(F("quantity"),
-                                           output_field=DecimalField(decimal_places=2)),
-            "total_quantity": models.Sum(F("quantity")),
-            "total_sales": models.Sum(F("quantity") * F("product_price"),
-                                      output_field=DecimalField(decimal_places=2)),
-        }
+        context["grouped_by"] = "product_name"
+        context["grouped_by_title"] = "Product"
 
         context["summary"] = list(
             context["filter"].qs
-                .values("product_category")
-                .annotate(**metrics)
+                .values("product_name")
+                .annotate(**PurchaseStatisticsByCategoryView.metrics)
                 .order_by("-total_sales")
         )
 
         context["summary_total"] = dict(
-            context["filter"].qs.aggregate(**metrics)
+            context["filter"].qs.aggregate(**PurchaseStatisticsByCategoryView.metrics)
         )
 
         return context

@@ -130,6 +130,9 @@ class User(AbstractBaseUser):
     def get_purchases(self):
         return Purchase.objects.filter(user=self)
 
+    def get_payments(self):
+        return Payment.objects.filter(user=self)
+
 
 class Category(models.Model):
     name = models.CharField(max_length=30, unique=True, blank=False)

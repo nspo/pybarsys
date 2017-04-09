@@ -22,6 +22,7 @@
                     <th>Product name</th>
                     <th>Product price</th>
                     <th>Cost</th>
+                    <th>Invoiced?</th>
                     <th>{% bootstrap_icon 'info-sign' %}</th>
                     <th>{% bootstrap_icon 'pencil' %}</th>
                     <th>{% bootstrap_icon 'trash' %}</th>
@@ -36,6 +37,7 @@
                         <td>{{ p.product_name }}</td>
                         <td>{{ p.product_price|currency }}</td>
                         <td>{{ p.cost|currency }}</td>
+                        <td>{% bool_to_icon p.invoice %}</td>
                         <td><a href="{% url 'user_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
                         <td><a href="{% url 'user_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
                         <td><a href="{% url 'user_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>

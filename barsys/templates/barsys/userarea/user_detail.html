@@ -61,7 +61,7 @@
         </table>
 
         <div>
-            <h1 class="pull-left" style="margin-top: 0;">Unbilled purchases</h1>
+            <h1 class="pull-left" style="margin-top: 0;">Purchases</h1>
         </div>
         <table class="table table-striped">
             <thead>
@@ -71,19 +71,21 @@
                 <th>Product name</th>
                 <th>Product price</th>
                 <th>Cost</th>
+                <th>Invoiced?</th>
                 <th>{% bootstrap_icon 'info-sign' %}</th>
                 <th>{% bootstrap_icon 'pencil' %}</th>
                 <th>{% bootstrap_icon 'trash' %}</th>
             </tr>
             </thead>
             <tbody>
-            {% for p in unbilled_purchases %}
+            {% for p in purchases_page_obj.object_list %}
                 <tr>
                     <td><a href="{% url 'user_purchase_detail' p.pk %}">{{ p.created_date }}</a></td>
                     <td>{{ p.quantity }}</td>
                     <td>{{ p.product_name }}</td>
                     <td>{{ p.product_price|currency }}</td>
                     <td>{{ p.cost|currency }}</td>
+                    <td>{% bool_to_icon p.invoice %}</td>
                     <td><a href="{% url 'user_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
                     <td><a href="{% url 'user_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
                     <td><a href="{% url 'user_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
@@ -91,5 +93,41 @@
             {% endfor %}
             </tbody>
         </table>
+        <p>{{ purchases_page_obj.paginator.count }} result(s)</p>
+        {% bootstrap_pagination purchases_page_obj extra=request.GET.urlencode parameter_name="purchases_page" %}
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Payments</h1>
+        </div>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Time</th>
+                <th>Amount</th>
+                <th>Payment method</th>
+                <th>Comment</th>
+
+                <th>{% bootstrap_icon 'info-sign' %}</th>
+                <th>{% bootstrap_icon 'pencil' %}</th>
+                <th>{% bootstrap_icon 'trash' %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for p in payments_page_obj.object_list %}
+                <tr>
+                    <td><a href="{% url 'user_payment_detail' p.pk %}">{{ p.created_date }}</a></td>
+                    <td>{{ p.amount|currency }}</td>
+                    <td>{{ p.get_payment_method_display }}</td>
+                    <td>{% bool_to_icon p.comment %}</td>
+
+                    <td><a href="{% url 'user_payment_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+                    <td><a href="{% url 'user_payment_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                    <td><a href="{% url 'user_payment_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p>{{ payments_page_obj.paginator.count }} result(s)</p>
+        {% bootstrap_pagination payments_page_obj extra=request.GET.urlencode parameter_name="payments_page" %}
     </div>
 {% endblock %}

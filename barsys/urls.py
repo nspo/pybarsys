@@ -59,5 +59,8 @@ urlpatterns = [
         name='user_statsdisplay_delete'),
 
     # Statistics
-    url(r'^userarea/statistics/purchase/$', views.PurchaseStatisticsView.as_view(), name='user_purchase_statistics'),
+    url(r'^userarea/statistics/purchase/by_category/$', views.PurchaseStatisticsByCategoryView.as_view(),
+        name='user_purchase_statistics_by_category'),
+    url(r'^userarea/statistics/purchase/by_product/', views.PurchaseStatisticsByProductView.as_view(),
+        name='user_purchase_statistics_by_product'),
 ]
