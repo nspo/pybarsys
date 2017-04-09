@@ -1,0 +1,28 @@
+{% extends 'barsys/userarea/base.html' %}
+
+{% load bootstrap3 %}
+{% block content %}
+
+    <div class="container">
+        {% if cannot_be_deleted %}
+            <div class="jumbotron">
+                <h1>Deletion not possible</h1>
+                <p>{{ object }} cannot be deleted.</p>
+                <p>{{ cannot_be_deleted }}</p>
+                <p>
+                    <button onclick="window.history.back();" class="btn btn-primary btn-lg" type="button">Go back
+                    </button>
+                </p>
+            </div>
+        {% else %}
+            <div class="jumbotron">
+                <h1>Confirm deletion</h1>
+                <form action="" method="post" class="form">{% csrf_token %}
+                    <p>Are you sure you want to delete "{{ object }}"?</p>
+                    <button type="submit" class="btn btn-danger btn-lg">{% bootstrap_icon 'trash' %} Confirm</button>
+                    <button onclick="window.history.back();" class="btn btn-primary btn-lg" type="button">Cancel</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

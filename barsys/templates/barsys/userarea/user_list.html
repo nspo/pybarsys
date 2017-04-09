@@ -8,38 +8,50 @@
 
     <div class="container">
         <div>
-            <h1>User list</h1>
-
+            <div>
+                <h1 class="pull-left" style="margin-top: 0;">Users</h1>
+                <a href="{% url 'user_user_new' %}">
+                    <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new user</button>
+                </a>
+            </div>
             <table class="table table-striped">
                 <thead>
-                    <tr>
-                        <th>Display name</th>
-                        <th>Email</th>
-                        <th>Active?</th>
-                        <th>Buyer?</th>
-                        <th>Admin?</th>
-                        <th>Favorite?</th>
-                        <th>Number of purchases</th>
-                    </tr>
+                <tr>
+                    <th>Display name</th>
+                    <th>Email</th>
+                    <th>Active?</th>
+                    <th>Buyer?</th>
+                    <th>Admin?</th>
+                    <th>Favorite?</th>
+                    <th>Number of purchases</th>
+                    <th>{% bootstrap_icon 'info-sign' %}</th>
+                    <th>{% bootstrap_icon 'pencil' %}</th>
+                    <th>{% bootstrap_icon 'trash' %}</th>
+                </tr>
                 </thead>
                 <tbody>
                 {% for user in object_list %}
                     <tr>
-                        <td>{{ user.display_name }}</td>
+                        <td><a href="{% url 'user_user_detail' user.pk %}">{{ user.display_name }}</a></td>
                         <td>{{ user.email }}</td>
                         <td>{% bool_to_icon user.is_active %}</td>
                         <td>{% bool_to_icon user.is_buyer %}</td>
                         <td>{% bool_to_icon user.is_admin %}</td>
                         <td>{% bool_to_icon user.is_favorite %}</td>
                         <td>{{ user.num_purchases }}</td>
+                        <td><a href="{% url 'user_user_detail' user.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+                        <td><a href="{% url 'user_user_update' user.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                        <td><a href="{% url 'user_user_delete' user.pk %}">{% bootstrap_icon 'trash' %}</a></td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
+            <p>{{ paginator.count }} results</p>
             {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
         </div>
 
-        <div>
+        <div class="col-md-6 col-md-offset-3">
+            <h2>Filter</h2>
             <form method="get" class="form">
                 {{ filter.form|crispy }}
                 {% buttons %}

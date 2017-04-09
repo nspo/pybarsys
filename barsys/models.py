@@ -48,9 +48,11 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser):
-    email = models.EmailField(max_length=255, unique=True, blank=False)
+    email = models.EmailField(max_length=255, unique=True, blank=False, help_text="Email is used as username when "
+                                                                                  "logging into the user-only area")
 
-    display_name = models.CharField(max_length=40, unique=True, blank=False)
+    display_name = models.CharField(max_length=40, unique=True, blank=False, help_text="What is shown on the "
+                                                                                       "main purchase page")
 
     is_active = models.BooleanField(default=True, help_text="User account is activated")
     is_admin = models.BooleanField(default=False, help_text="User may login as admin")
@@ -108,6 +110,13 @@ class User(AbstractBaseUser):
 
     class Meta:
         ordering = ["display_name"]
+
+    def get_absolute_url(self):
+        return reverse('user_user_detail', kwargs={'pk': self.pk})
+
+    # TODO: check whether there are invoices for this user
+    def cannot_be_deleted(self):
+        return "Deletion of users is currently forbidden. Later, it will be if the user has purchases."
 
 
 class Category(models.Model):
@@ -229,6 +238,13 @@ class Purchase(models.Model):
 
     def get_absolute_url(self):
         return reverse('user_purchase_detail', kwargs={'pk': self.pk})
+
+    def cannot_be_deleted(self):
+        """ Returns False or an explanation why this cannot be deleted """
+        if self.invoice:
+            return "This purchase already has an invoice"
+        else:
+            return False
 
 
 class PurchaseSummary(Purchase):

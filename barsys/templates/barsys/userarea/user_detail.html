@@ -1,0 +1,30 @@
+{% extends 'barsys/userarea/base.html' %}
+
+{% load bootstrap3 %}
+{% load table_helpers %}
+{% block content %}
+
+    <div class="container">
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">User details</h1>
+            <a href="{% url 'user_user_update' object.pk %}"><button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button></a>
+        </div>
+        <table class="table table-striped">
+            <tbody>
+            <tr><th>Display name</th><td>{{ object.display_name }}</td></tr>
+            <tr><th>Email</th><td>{{ object.email }}</td></tr>
+
+            <tr><th>Active?</th><td>{% bool_to_icon object.is_active %}</td></tr>
+            <tr><th>Buyer?</th><td>{% bool_to_icon object.is_buyer %}</td></tr>
+            <tr><th>Favorite?</th><td>{% bool_to_icon object.is_favorite %}</td></tr>
+            <tr><th>Admin?</th><td>{% bool_to_icon object.is_admin %}</td></tr>
+
+            <tr><th>Purchases paid by</th><td>{{ object.purchases_paid_by }}</td></tr>
+
+            <tr><th>Created</th><td>{{ object.created_date }}</td></tr>
+            <tr><th>Last modified</th><td>{{ object.modified_date }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
