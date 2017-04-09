@@ -22,3 +22,19 @@ class PurchaseFilter(django_filters.FilterSet):
     class Meta:
         model = Purchase
         fields = []
+
+
+class CategoryFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = Category
+        fields = []
+
+
+class ProductFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = Product
+        fields = ["name", "category"]

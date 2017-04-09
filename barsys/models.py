@@ -136,6 +136,15 @@ class Category(models.Model):
     class Meta:
         verbose_name_plural = "Categories"
 
+    def get_absolute_url(self):
+        return reverse('user_category_detail', kwargs={'pk': self.pk})
+
+    def cannot_be_deleted(self):
+        product_count = Product.objects.filter(category=self).count()
+        if product_count > 0:
+            return "There is at least one product in this category"
+        else:
+            return False
 
 class Product(models.Model):
     """ name of Product is not unique, because there can be other products with the same name but different amount"""
@@ -151,7 +160,10 @@ class Product(models.Model):
 
     class Meta:
         unique_together = ["name", "amount"]
-        ordering = ["category__name", "name", "amount"]
+        ordering = ["category__name", "name",]
+
+    def cannot_be_deleted(self):
+        return False
 
 
 class Invoice(models.Model):

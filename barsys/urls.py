@@ -13,7 +13,7 @@ urlpatterns = [
     url(r'^userarea/$', views.user_home, name='user_home'),
 
     # Purchase
-    url(r'^userarea/purchase/$',     views.PurchaseListView.as_view(), name="user_purchase_list"),
+    url(r'^userarea/purchase/$', views.PurchaseListView.as_view(), name="user_purchase_list"),
     url(r'^userarea/purchase/new/$', views.PurchaseCreateView.as_view(), name='user_purchase_new'),
     url(r'^userarea/purchase/(?P<pk>[0-9]+)/detail/$', views.PurchaseDetailView.as_view(), name='user_purchase_detail'),
     url(r'^userarea/purchase/(?P<pk>[0-9]+)/update/$', views.PurchaseUpdateView.as_view(), name='user_purchase_update'),
@@ -25,4 +25,18 @@ urlpatterns = [
     url(r'^userarea/user/(?P<pk>[0-9]+)/detail/$', views.UserDetailView.as_view(), name='user_user_detail'),
     url(r'^userarea/user/(?P<pk>[0-9]+)/update/$', views.UserUpdateView.as_view(), name='user_user_update'),
     url(r'^userarea/user/(?P<pk>[0-9]+)/delete/$', views.UserDeleteView.as_view(), name='user_user_delete'),
+
+    # Category
+    url(r'^userarea/category/$', views.CategoryListView.as_view(), name='user_category_list'),
+    url(r'^userarea/category/new/$', views.CategoryCreateView.as_view(), name='user_category_new'),
+    url(r'^userarea/category/(?P<pk>[0-9]+)/detail/$', views.CategoryDetailView.as_view(), name='user_category_detail'),
+    url(r'^userarea/category/(?P<pk>[0-9]+)/update/$', views.CategoryUpdateView.as_view(), name='user_category_update'),
+    url(r'^userarea/category/(?P<pk>[0-9]+)/delete/$', views.CategoryDeleteView.as_view(), name='user_category_delete'),
+
+    # Product
+    url(r'^userarea/product/$', views.ProductListView.as_view(), name='user_product_list'),
+    url(r'^userarea/product/new/$', views.ProductCreateView.as_view(), name='user_product_new'),
+    url(r'^userarea/product/(?P<pk>[0-9]+)/detail/$', views.ProductDetailView.as_view(), name='user_product_detail'),
+    url(r'^userarea/product/(?P<pk>[0-9]+)/update/$', views.ProductUpdateView.as_view(), name='user_product_update'),
+    url(r'^userarea/product/(?P<pk>[0-9]+)/delete/$', views.ProductDeleteView.as_view(), name='user_product_delete'),
 ]

@@ -6,7 +6,7 @@ from .view_helpers import get_renderable_stats_elements
 from constance import config
 from itertools import groupby
 from collections import OrderedDict
-from .forms import PurchaseForm, UserUpdateForm, UserCreateForm
+from .forms import *
 
 from django.views.generic import ListView, edit, View
 from django.views.generic.detail import DetailView
@@ -35,7 +35,7 @@ class UserListView(FilterView):
     filterset_class = filters.UserFilter
     template_name = 'barsys/userarea/user_list.html'
 
-    paginate_by = 5
+    paginate_by = 10
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
@@ -101,7 +101,7 @@ class UserDeleteView(CheckedDeleteView):
 class PurchaseListView(FilterView):
     filterset_class = filters.PurchaseFilter
     template_name = "barsys/userarea/purchase_list.html"
-    paginate_by = 20
+    paginate_by = 10
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
@@ -132,6 +132,95 @@ class PurchaseUpdateView(edit.UpdateView):
 class PurchaseDeleteView(CheckedDeleteView):
     model = Purchase
     success_url = reverse_lazy('user_purchase_list')
+
+# Category
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class CategoryListView(FilterView):
+    filterset_class = filters.CategoryFilter
+    template_name = 'barsys/userarea/category_list.html'
+
+    paginate_by = 10
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class CategoryDetailView(DetailView):
+    model = Category
+    template_name = "barsys/userarea/category_detail.html"
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class CategoryCreateView(edit.CreateView):
+    model = Category
+    form_class = CategoryForm
+    template_name = "barsys/userarea/category_new.html"
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class CategoryUpdateView(edit.UpdateView):
+    model = Category
+    form_class = CategoryForm
+    template_name = "barsys/userarea/category_update.html"
+
+
+class CategoryDeleteView(CheckedDeleteView):
+    model = Category
+    success_url = reverse_lazy('user_category_list')
+# Category END
+# Product
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class ProductListView(FilterView):
+    filterset_class = filters.ProductFilter
+    template_name = 'barsys/userarea/product_list.html'
+
+    paginate_by = 10
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class ProductDetailView(DetailView):
+    model = Product
+    template_name = "barsys/userarea/product_detail.html"
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class ProductCreateView(edit.CreateView):
+    model = Product
+    form_class = ProductForm
+    template_name = "barsys/userarea/product_new.html"
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class ProductUpdateView(edit.UpdateView):
+    model = Product
+    form_class = ProductForm
+    template_name = "barsys/userarea/product_update.html"
+
+
+class ProductDeleteView(CheckedDeleteView):
+    model = Product
+    success_url = reverse_lazy('user_product_list')
+# Product END
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # user area end

@@ -1,0 +1,35 @@
+{% extends 'barsys/userarea/base.html' %}
+
+{% load bootstrap3 %}
+{% block content %}
+
+    <div class="container">
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Product details</h1>
+            <a href="{% url 'user_product_update' object.pk %}">
+                <button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button>
+            </a>
+        </div>
+        <table class="table table-striped">
+            <tbody>
+            <tr>
+                <th>Name</th>
+                <td>{{ object.name }}</td>
+            </tr>
+            <tr>
+                <th>Category</th>
+                <td>{{ object.category }}</td>
+            </tr>
+            <tr>
+                <th>Amount</th>
+                <td>{{ object.amount }}</td>
+            </tr>
+            <tr>
+                <th>Price</th>
+                <td>{{ object.price }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

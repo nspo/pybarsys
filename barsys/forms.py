@@ -140,3 +140,15 @@ class SingleUserSinglePurchaseForm(forms.Form):
     quantity = forms.IntegerField()
     product_id = forms.IntegerField()
     user_id = forms.IntegerField()
+
+
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        exclude = ('', )
+
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        exclude = ('', )
