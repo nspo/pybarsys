@@ -127,6 +127,9 @@ class User(AbstractBaseUser):
     def cannot_be_deleted(self):
         return "Deletion of users is currently forbidden. Later, it will be if the user has purchases."
 
+    def get_purchases(self):
+        return Purchase.objects.filter(user=self)
+
 
 class Category(models.Model):
     name = models.CharField(max_length=30, unique=True, blank=False)

@@ -8,17 +8,37 @@
 
         <div>
             <h1 class="pull-left" style="margin-top: 0;">User details</h1>
-            <a href="{% url 'user_user_update' object.pk %}"><button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button></a>
+            <a href="{% url 'user_user_update' object.pk %}">
+                <button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button>
+            </a>
         </div>
         <table class="table table-striped">
             <tbody>
-            <tr><th>Display name</th><td>{{ object.display_name }}</td></tr>
-            <tr><th>Email</th><td>{{ object.email }}</td></tr>
+            <tr>
+                <th>Display name</th>
+                <td>{{ object.display_name }}</td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td>{{ object.email }}</td>
+            </tr>
 
-            <tr><th>Active?</th><td>{% bool_to_icon object.is_active %}</td></tr>
-            <tr><th>Buyer?</th><td>{% bool_to_icon object.is_buyer %}</td></tr>
-            <tr><th>Favorite?</th><td>{% bool_to_icon object.is_favorite %}</td></tr>
-            <tr><th>Admin?</th><td>{% bool_to_icon object.is_admin %}</td></tr>
+            <tr>
+                <th>Active?</th>
+                <td>{% bool_to_icon object.is_active %}</td>
+            </tr>
+            <tr>
+                <th>Buyer?</th>
+                <td>{% bool_to_icon object.is_buyer %}</td>
+            </tr>
+            <tr>
+                <th>Favorite?</th>
+                <td>{% bool_to_icon object.is_favorite %}</td>
+            </tr>
+            <tr>
+                <th>Admin?</th>
+                <td>{% bool_to_icon object.is_admin %}</td>
+            </tr>
 
             <tr>
                 <th>Purchases paid by other</th>
@@ -29,8 +49,46 @@
                 {% endif %}</td>
             </tr>
 
-            <tr><th>Created</th><td>{{ object.created_date }}</td></tr>
-            <tr><th>Last modified</th><td>{{ object.modified_date }}</td></tr>
+            <tr>
+                <th>Created</th>
+                <td>{{ object.created_date }}</td>
+            </tr>
+            <tr>
+                <th>Last modified</th>
+                <td>{{ object.modified_date }}</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Unbilled purchases</h1>
+        </div>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Time</th>
+                <th>Quantity</th>
+                <th>Product name</th>
+                <th>Product price</th>
+                <th>Cost</th>
+                <th>{% bootstrap_icon 'info-sign' %}</th>
+                <th>{% bootstrap_icon 'pencil' %}</th>
+                <th>{% bootstrap_icon 'trash' %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for p in unbilled_purchases %}
+                <tr>
+                    <td><a href="{% url 'user_purchase_detail' p.pk %}">{{ p.created_date }}</a></td>
+                    <td>{{ p.quantity }}</td>
+                    <td>{{ p.product_name }}</td>
+                    <td>{{ p.product_price|currency }}</td>
+                    <td>{{ p.cost|currency }}</td>
+                    <td><a href="{% url 'user_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+                    <td><a href="{% url 'user_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                    <td><a href="{% url 'user_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+                </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>

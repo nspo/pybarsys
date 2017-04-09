@@ -44,6 +44,11 @@ class UserDetailView(DetailView):
     model = User
     template_name = "barsys/userarea/user_detail.html"
 
+    def get_context_data(self, **kwargs):
+        context = super(UserDetailView, self).get_context_data(**kwargs)
+        context["unbilled_purchases"] = self.object.get_purchases().filter(invoice=None)
+        return context
+
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class UserCreateView(edit.CreateView):
@@ -259,9 +264,11 @@ class PaymentExportView(FilterView):
     filterset_class = filters.PaymentFilter
 
     def render_to_response(self, context, **response_kwargs):
-        # Create the HttpResponse object with the appropriate CSV header.
+        # Could use timezone.now(), but that makes the string much longer
+        filename = "{}-payments-export.csv".format(datetime.datetime.now().replace(microsecond=0).isoformat())
+
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="payments-export.csv"'
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
 
         writer = csv.writer(response)
         writer.writerow(['created', 'email', 'display_name', 'amount', 'payment_method', 'comment'])

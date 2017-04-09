@@ -12,11 +12,11 @@
             <div>
                 <h1 class="pull-left" style="margin-top: 0;">Payments</h1>
                 <div class="btn-group pull-right" role="group">
-                    <a href="{% url 'user_payment_export' %}?{{ request.GET.urlencode }}" class="btn btn-success">
-                        {% bootstrap_icon 'download' %} Export
-                    </a>
                     <a href="{% url 'user_payment_new' %}" class="btn btn-primary">
                         {% bootstrap_icon 'plus' %} Add new payment
+                    </a>
+                    <a href="{% url 'user_payment_export' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+                        {% bootstrap_icon 'download' %} Export
                     </a>
                 </div>
             </div>

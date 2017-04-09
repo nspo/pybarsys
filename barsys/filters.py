@@ -36,7 +36,7 @@ class PaymentFilter(django_filters.FilterSet):
     comment = django_filters.CharFilter(lookup_expr='icontains')
     amount__gte = django_filters.NumberFilter(name='amount', lookup_expr='gte')
     amount__lte = django_filters.NumberFilter(name='amount', lookup_expr='lte')
-    
+
     created_date = django_filters.DateTimeFromToRangeFilter(help_text="Format YYYY-MM-DD HH:MM. Time is 00:00 by default.")
 
     class Meta:
