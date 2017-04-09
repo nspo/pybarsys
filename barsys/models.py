@@ -146,6 +146,7 @@ class Category(models.Model):
         else:
             return False
 
+
 class Product(models.Model):
     """ name of Product is not unique, because there can be other products with the same name but different amount"""
     name = models.CharField(max_length=40, blank=False, help_text="Multiple products can have the same name "
@@ -160,7 +161,7 @@ class Product(models.Model):
 
     class Meta:
         unique_together = ["name", "amount"]
-        ordering = ["category__name", "name",]
+        ordering = ["category__name", "name", ]
 
     def cannot_be_deleted(self):
         return False
@@ -253,11 +254,13 @@ class Purchase(models.Model):
 
     def cannot_be_deleted(self):
         """ Returns False or an explanation why this cannot be deleted """
-        if self.invoice:
+        if self.has_invoice():
             return "This purchase already has an invoice"
         else:
             return False
 
+    def has_invoice(self):
+        return self.invoice is not None
 
 class PurchaseSummary(Purchase):
     class Meta:
@@ -280,7 +283,9 @@ class StatsDisplay(models.Model):
                                        help_text="If none, any product is used")
 
     time_period = models.DurationField(default=datetime.timedelta(weeks=1), help_text="Duration over which "
-                                                                                      "statistics are to be evaluated in the format 'WEEKS HOURS:MINUTES:SECONDS'")
+                                                                                      "statistics are to be evaluated "
+                                                                                      "in the format "
+                                                                                      "'DAYS HOURS:MINUTES:SECONDS'")
 
     SORT_BY_NUM_PURCHASES = "NP"
     SORT_BY_TOTAL_COST_SHOW_RANK = "TC"
@@ -297,6 +302,9 @@ class StatsDisplay(models.Model):
         help_text="Whether this should always be shown first. " \
                   "If not, it can be selected by cycling through the other ones, " \
                   "as long as any one is shown by default.")
+
+    class Meta:
+        ordering = ["-show_by_default", "title"]
 
     def save(self, *args, **kwargs):
         """Make sure that only one StatsDisplay is shown by default"""
@@ -319,3 +327,9 @@ class StatsDisplay(models.Model):
             return "1. {} Peter".format(self.row_string)
         else:
             return "not supported"
+
+    def get_absolute_url(self):
+        return reverse('user_statsdisplay_detail', kwargs={'pk': self.pk})
+
+    def cannot_be_deleted(self):
+        return False

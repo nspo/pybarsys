@@ -60,7 +60,9 @@ class UserUpdateView(edit.UpdateView):
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class CheckedDeleteView(View):
+    """ Base view class for calling a check on object.cannot_be_deleted() before .delete()ing it """
     success_url = None
+    cancel_url = None
     template_name = "barsys/userarea/confirm_delete.html"
     model = None
     object = None
@@ -87,7 +89,8 @@ class CheckedDeleteView(View):
     def get(self, request, pk):
         self.object = get_object_or_404(self.model, pk=pk)
         context = {"object": self.object,
-                   "cannot_be_deleted": self.object.cannot_be_deleted()}
+                   "cannot_be_deleted": self.object.cannot_be_deleted(),
+                   "cancel_url": self.cancel_url}
         return render(request, self.template_name, context)
 
 
@@ -133,6 +136,7 @@ class PurchaseDeleteView(CheckedDeleteView):
     model = Purchase
     success_url = reverse_lazy('user_purchase_list')
 
+
 # Category
 
 
@@ -167,10 +171,10 @@ class CategoryUpdateView(edit.UpdateView):
 class CategoryDeleteView(CheckedDeleteView):
     model = Category
     success_url = reverse_lazy('user_category_list')
+
+
 # Category END
-# Product
-
-
+# Product BEGIN
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class ProductListView(FilterView):
     filterset_class = filters.ProductFilter
@@ -202,9 +206,83 @@ class ProductUpdateView(edit.UpdateView):
 class ProductDeleteView(CheckedDeleteView):
     model = Product
     success_url = reverse_lazy('user_product_list')
+
+
 # Product END
+# StatsDisplay BEGIN
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class StatsDisplayListView(FilterView):
+    filterset_class = filters.StatsDisplayFilter
+    template_name = 'barsys/userarea/statsdisplay_list.html'
+
+    paginate_by = 10
 
 
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class StatsDisplayDetailView(DetailView):
+    model = StatsDisplay
+    template_name = "barsys/userarea/statsdisplay_detail.html"
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class StatsDisplayCreateView(edit.CreateView):
+    model = StatsDisplay
+    form_class = StatsDisplayForm
+    template_name = "barsys/userarea/statsdisplay_new.html"
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class StatsDisplayUpdateView(edit.UpdateView):
+    model = StatsDisplay
+    form_class = StatsDisplayForm
+    template_name = "barsys/userarea/statsdisplay_update.html"
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class StatsDisplayDeleteView(CheckedDeleteView):
+    model = StatsDisplay
+    success_url = reverse_lazy('user_statsdisplay_list')
+
+
+# StatsDisplay END
+# Statistics BEGIN
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PurchaseStatisticsView(FilterView):
+    filterset_class = filters.PurchaseFilter
+    template_name = "barsys/userarea/purchase_statistics.html"
+    paginate_by = 10
+
+    def get_context_data(self, **kwargs):
+        context = super(PurchaseStatisticsView, self).get_context_data(**kwargs)
+
+        metrics = {
+            "num_purchases": models.Count("id"),
+            "average_cost": models.Avg(F("quantity") * F("product_price"),
+                                        output_field=DecimalField(decimal_places=2)),
+            "average_quantity": models.Avg(F("quantity"),
+                                        output_field=DecimalField(decimal_places=2)),
+            "total_quantity": models.Sum(F("quantity")),
+            "total_sales": models.Sum(F("quantity") * F("product_price"),
+                                      output_field=DecimalField(decimal_places=2)),
+        }
+
+        context["summary"] = list(
+            context["filter"].qs
+                .values("product_category")
+                .annotate(**metrics)
+                .order_by("-total_sales")
+        )
+
+        context["summary_total"] = dict(
+            context["filter"].qs.aggregate(**metrics)
+        )
+
+        return context
+
+
+# Statistics END
 
 
 

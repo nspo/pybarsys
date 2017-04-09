@@ -12,7 +12,7 @@
         <table class="table table-striped">
             <tbody>
             <tr><th>Time</th><td>{{ object.created_date }}</td></tr>
-            <tr><th>User</th><td><a href="">{{ object.user.display_name }}</a></td></tr>
+            <tr><th>User</th><td><a href="{% url 'user_user_detail' object.user.pk %}">{{ object.user.display_name }}</a></td></tr>
             <tr><th>Quantity</th><td>{{ object.quantity }}</td></tr>
             <tr><th>Product name</th><td>{{ object.product_name }}</td></tr>
             <tr><th>Product amount</th><td>{{ object.product_amount }}</td></tr>

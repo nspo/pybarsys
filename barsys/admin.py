@@ -72,7 +72,7 @@ class PurchaseSummaryAdmin(admin.ModelAdmin):
             return response
 
         metrics = {
-            "total": models.Count("id"),
+            "total": models.Sum(F("quantity")),
             "total_sales": models.Sum(F("quantity") * F("product_price"),
                                       output_field=DecimalField(decimal_places=2))
         }

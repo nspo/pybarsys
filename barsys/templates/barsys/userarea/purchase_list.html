@@ -30,7 +30,7 @@
                 {% for p in object_list %}
                     <tr>
                         <td><a href="{% url 'user_purchase_detail' p.pk %}">{{ p.created_date }}</a></td>
-                        <td>{{ p.user.display_name }}</td>
+                        <td><a href="{% url 'user_user_detail' p.user.pk %}">{{ p.user.display_name }}</a></td>
                         <td>{{ p.quantity }}</td>
                         <td>{{ p.product_name }}</td>
                         <td>{{ p.product_price }}</td>

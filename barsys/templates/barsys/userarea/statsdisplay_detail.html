@@ -1,0 +1,26 @@
+{% extends 'barsys/userarea/base.html' %}
+
+{% load bootstrap3 %}
+{% load barsys_helpers %}
+{% block content %}
+
+    <div class="container">
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Stats Display details</h1>
+            <a href="{% url 'user_statsdisplay_update' object.pk %}"><button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button></a>
+        </div>
+        <table class="table table-striped">
+            <tbody>
+            <tr><th>Title</th><td>{{ object.title }}</td></tr>
+            <tr><th>Filter category</th><td>{{ object.filter_category|default_if_none:"any" }}</td><td></td></tr>
+            <tr><th>Filter product</th><td>{{ object.filter_product|default_if_none:"any" }}</td></tr>
+            <tr><th>Time period</th><td>{{ object.time_period }}</td></tr>
+            <tr><th>Sort by and show</th><td>{{ object.get_sort_by_and_show_display }}</td></tr>
+            <tr><th>Row string</th><td>{{ object.row_string }}</td></tr>
+            <tr><th>Example row</th><td>{{ object.example_row }}</td></tr>
+            <tr><th>Show by default</th><td>{% bool_to_icon object.show_by_default %}</td></tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

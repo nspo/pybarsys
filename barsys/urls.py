@@ -39,4 +39,17 @@ urlpatterns = [
     url(r'^userarea/product/(?P<pk>[0-9]+)/detail/$', views.ProductDetailView.as_view(), name='user_product_detail'),
     url(r'^userarea/product/(?P<pk>[0-9]+)/update/$', views.ProductUpdateView.as_view(), name='user_product_update'),
     url(r'^userarea/product/(?P<pk>[0-9]+)/delete/$', views.ProductDeleteView.as_view(), name='user_product_delete'),
+
+    # StatsDisplay
+    url(r'^userarea/statsdisplay/$', views.StatsDisplayListView.as_view(), name='user_statsdisplay_list'),
+    url(r'^userarea/statsdisplay/new/$', views.StatsDisplayCreateView.as_view(), name='user_statsdisplay_new'),
+    url(r'^userarea/statsdisplay/(?P<pk>[0-9]+)/detail/$', views.StatsDisplayDetailView.as_view(),
+        name='user_statsdisplay_detail'),
+    url(r'^userarea/statsdisplay/(?P<pk>[0-9]+)/update/$', views.StatsDisplayUpdateView.as_view(),
+        name='user_statsdisplay_update'),
+    url(r'^userarea/statsdisplay/(?P<pk>[0-9]+)/delete/$', views.StatsDisplayDeleteView.as_view(),
+        name='user_statsdisplay_delete'),
+
+    # Statistics
+    url(r'^userarea/statistics/purchase/$', views.PurchaseStatisticsView.as_view(), name='user_purchase_statistics'),
 ]

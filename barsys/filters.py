@@ -17,7 +17,11 @@ class UserFilter(django_filters.FilterSet):
 class PurchaseFilter(django_filters.FilterSet):
     product_name = django_filters.CharFilter(lookup_expr='icontains')
     product_category = django_filters.CharFilter(lookup_expr='icontains')
+    invoice = django_filters.BooleanFilter(method='filter_has_invoice')
     created_date = django_filters.DateTimeFromToRangeFilter(help_text="Format YYYY-MM-DD HH:MM. Time is 00:00 by default.")
+
+    def filter_has_invoice(self, queryset, name, value):
+        return queryset.filter(invoice__isnull=not value)
 
     class Meta:
         model = Purchase
@@ -38,3 +42,11 @@ class ProductFilter(django_filters.FilterSet):
     class Meta:
         model = Product
         fields = ["name", "category"]
+
+
+class StatsDisplayFilter(django_filters.FilterSet):
+    title = django_filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = StatsDisplay
+        fields = ["sort_by_and_show"]

@@ -152,3 +152,9 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         exclude = ('', )
+
+
+class StatsDisplayForm(forms.ModelForm):
+    class Meta:
+        model = StatsDisplay
+        exclude = ('', )

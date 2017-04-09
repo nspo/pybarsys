@@ -10,8 +10,15 @@
                 <p>{{ object }} cannot be deleted.</p>
                 <p>{{ cannot_be_deleted }}</p>
                 <p>
-                    <button onclick="window.history.back();" class="btn btn-primary btn-lg" type="button">Go back
-                    </button>
+                    {% if cancel_url %}
+                        <a href="{{ cancel_url }}">
+                            <button class="btn btn-primary btn-lg" type="button">Go back
+                            </button>
+                        </a>
+                    {% else %}
+                        <button onclick="window.history.back();" class="btn btn-primary btn-lg" type="button">Go back
+                        </button>
+                    {% endif %}
                 </p>
             </div>
         {% else %}
@@ -20,7 +27,15 @@
                 <form action="" method="post" class="form">{% csrf_token %}
                     <p>Are you sure you want to delete "{{ object }}"?</p>
                     <button type="submit" class="btn btn-danger btn-lg">{% bootstrap_icon 'trash' %} Confirm</button>
-                    <button onclick="window.history.back();" class="btn btn-primary btn-lg" type="button">Cancel</button>
+                    {% if cancel_url %}
+                        <a href="{{ cancel_url }}">
+                            <button class="btn btn-primary btn-lg" type="button">Go back
+                            </button>
+                        </a>
+                    {% else %}
+                        <button onclick="window.history.back();" class="btn btn-primary btn-lg" type="button">Go back
+                        </button>
+                    {% endif %}
                 </form>
             </div>
         {% endif %}
