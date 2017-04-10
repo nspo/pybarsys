@@ -50,6 +50,7 @@ urlpatterns = [
 
     # Invoice
     url(r'^userarea/invoice/list/$', views.InvoiceListView.as_view(), name='user_invoice_list'),
+    url(r'^userarea/invoice/new/$', views.InvoiceCreateView.as_view(), name='user_invoice_new'),
     url(r'^userarea/invoice/(?P<pk>[0-9]+)/detail/$', views.InvoiceDetailView.as_view(), name='user_invoice_detail'),
     url(r'^userarea/invoice/(?P<pk>[0-9]+)/delete/$', views.InvoiceDeleteView.as_view(), name='user_invoice_delete'),
 

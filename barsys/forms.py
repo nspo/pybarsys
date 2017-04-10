@@ -4,6 +4,9 @@ from .models import *
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.contrib.auth import forms as auth_forms, models as auth_models
 
+from crispy_forms.helper import FormHelper
+from crispy_forms import layout
+
 
 class LoginForm(auth_forms.AuthenticationForm):
     username = forms.CharField(label="Email", max_length=30,
@@ -14,16 +17,27 @@ class LoginForm(auth_forms.AuthenticationForm):
 
 
 class PurchaseForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super(PurchaseForm, self).__init__(*args, **kwargs)
-
-        # change widget attributes
-        self.fields['invoice'].widget.attrs["disabled"] = True
-
     class Meta:
         model = Purchase
-        fields = ('user', 'product_name', 'product_category', 'product_price', 'product_amount', 'quantity', 'invoice')
+        fields = ('user', 'product_name', 'product_category', 'product_price', 'product_amount', 'quantity',)
 
+
+class InvoicesCreateForm(forms.Form):
+    users = forms.ModelMultipleChoiceField(queryset=User.objects.active().buyers().pay_themselves(),
+        help_text="Select users to generate invoices for. Only users who pay themselves can be selected."
+    )
+    create_empty_invoices = forms.BooleanField(required=False, help_text="Whether invoices should be created even "
+                                                                         "if user has not purchased anything. "
+                                                                         "Ignored if user does not pay for themselves.")
+
+    def __init__(self, *args, **kwargs):
+        super(InvoicesCreateForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.layout = layout.Layout(layout.Field('users', size="35"), 'create_empty_invoices')
+
+        self.helper.add_input(layout.Submit('create', 'Create'))
+        self.helper.add_input(layout.Reset('reset', 'Unselect all'))
 
 class UserCreateForm(auth_forms.UserCreationForm):
     class Meta:
@@ -31,18 +45,6 @@ class UserCreateForm(auth_forms.UserCreationForm):
         fields = (
             'email', 'display_name', 'password1', 'password2', "purchases_paid_by_other", 'is_active', 'is_buyer',
             'is_favorite', 'is_admin')
-
-# Old version of UserUpdateForm. Password changing was not working.
-# class UserUpdateForm(auth_forms.UserChangeForm):
-#     def __init__(self, *args, **kwargs):
-#         super(UserUpdateForm, self).__init__(*args, **kwargs)
-#         self.fields.pop('password')
-#
-#     class Meta:
-#         model = User
-#         fields = (
-#             'email', 'display_name', 'purchases_paid_by', 'is_active', 'is_buyer',
-#             'is_favorite', 'is_admin')
 
 
 class UserChangeWithPasswordForm(forms.ModelForm):

@@ -3,6 +3,7 @@ from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
 )
 from collections import defaultdict
+from itertools import groupby
 from django.db.models import F
 import datetime
 from django.urls import reverse
@@ -28,6 +29,9 @@ class UserQuerySet(models.QuerySet):
 
     def favorites(self):
         return self.filter(is_favorite=True)
+
+    def pay_themselves(self):
+        return self.filter(purchases_paid_by_other=None)
 
 
 class UserManager(BaseUserManager):
@@ -91,6 +95,16 @@ class User(AbstractBaseUser):
     def clean(self):
         if self.purchases_paid_by_other == self:
             raise ValidationError({'purchases_paid_by_other': "This field cannot be set to the same user"})
+        if self.purchases_paid_by_other is not None:
+            if self.purchases_paid_by_other.purchases_paid_by_other is not None:
+                raise ValidationError({'purchases_paid_by_other': "Purchases cannot be paid by someone who does not "
+                                                                  "pay for their own purchases."})
+            pays_for = self.pays_for_others()
+            if pays_for.count() > 0:
+                other_names = [u.display_name for u in pays_for]
+                raise ValidationError({'purchases_paid_by_other': "This user pays for the following users, so "
+                                                                  "their purchases cannot be paid by someone else: {}"
+                                      .format(', '.join(other_names))})
 
     def get_full_name(self):
         # The user is identified by their email address
@@ -133,9 +147,11 @@ class User(AbstractBaseUser):
     def get_absolute_url(self):
         return reverse('user_user_detail', kwargs={'pk': self.pk})
 
-    # TODO: check whether there are invoices for this user
     def cannot_be_deleted(self):
-        return "Deletion of users is currently forbidden. Later, it will be if the user has purchases."
+        if self.purchases().count() == 0:
+            return False
+        else:
+            return "This user cannot be deleted because they have purchases."
 
     def purchases(self):
         return Purchase.objects.filter(user=self)
@@ -147,7 +163,11 @@ class User(AbstractBaseUser):
         return Payment.objects.filter(user=self)
 
     def pays_for_others(self):
+        """ FIXME: name """
         return User.objects.filter(purchases_paid_by_other=self)
+
+    def pays_themselves(self):
+        return self.purchases_paid_by_other is None
 
 
 class Category(models.Model):
@@ -204,11 +224,11 @@ class Product(models.Model):
         return reverse('user_product_detail', kwargs={'pk': self.pk})
 
 
-from itertools import groupby
-
-
 class InvoiceManager(models.Manager):
     def create_for_user(self, user):
+        if not user.pays_themselves():
+            raise IntegrityError("Cannot create an invoice for someone who does not pay for themselves")
+
         invoice = Invoice()
         invoice.recipient = user
 
@@ -218,24 +238,24 @@ class InvoiceManager(models.Manager):
         own_purchases = user.purchases().unbilled()
         subtotal = 0
         for p in own_purchases:
-            subtotal += p.quantity * p.product_price
-            invoice.amount += p.quantity * p.product_price
+            subtotal += p.cost()
+            invoice.amount += p.cost()
             p.invoice = invoice
             p.save()
-        print("Subtotal for own purchases: {}".format(subtotal))
+        # print("Subtotal for own purchases: {}".format(subtotal))
 
         other_purchases = Purchase.objects.unbilled().to_pay_by(user).order_by('user')
         for user, purchases in groupby(other_purchases, key=lambda p: p.user):
             subtotal = 0
             for purchase in purchases:
-                subtotal += purchase.quantity * purchase.product_price
-                invoice.amount += purchase.quantity * purchase.product_price
+                subtotal += purchase.cost()
+                invoice.amount += purchase.cost()
                 purchase.invoice = invoice
                 purchase.save()
-            print("Subtotal for purchases of {}: {}".format(user, subtotal))
+                # print("Subtotal for purchases of {}: {}".format(user, subtotal))
 
         invoice.save()
-        print(invoice)
+        # print(invoice)
 
         return invoice
 
@@ -272,17 +292,18 @@ class Invoice(models.Model):
         """ Create a list of tuples in the format (User, PurchaseQuerySet) of purchases
             that the recipient paid for other users
         """
-        other_purchases = self.purchases()\
-            .paid_as_other(self.recipient)\
+        other_purchases = self.purchases() \
+            .paid_as_other(self.recipient) \
             .order_by('user')
 
         other_purchases_grouped = []
         for u, ps in groupby(other_purchases, key=lambda p: p.user):
-            print("By {}, pk={}".format(u, u.pk))
-            print(other_purchases.filter(user=u))
             other_purchases_grouped.append((u, other_purchases.filter(user=u).order_by('-created_date')))
 
         return other_purchases_grouped
+
+    def get_absolute_url(self):
+        return reverse('user_invoice_detail', kwargs={'pk': self.pk})
 
 
 class PurchaseQuerySet(models.QuerySet):

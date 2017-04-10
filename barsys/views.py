@@ -157,11 +157,6 @@ class PurchaseCreateView(edit.CreateView):
     form_class = PurchaseForm
     template_name = "barsys/userarea/purchase_new.html"
 
-    def get_form(self, form_class=None):
-        form = super(PurchaseCreateView, self).get_form(form_class)
-        form.fields.pop('invoice')
-        return form
-
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PurchaseUpdateView(edit.UpdateView):
@@ -347,6 +342,7 @@ class PaymentUpdateView(edit.UpdateView):
     template_name = "barsys/userarea/payment_update.html"
 
 
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PaymentDeleteView(CheckedDeleteView):
     model = Payment
     success_url = reverse_lazy('user_payment_list')
@@ -375,9 +371,37 @@ class InvoiceDetailView(DetailView):
         return context
 
 
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class InvoiceCreateView(edit.FormView):
+    template_name = "barsys/userarea/invoice_new.html"
+    form_class = InvoicesCreateForm
+    success_url = reverse_lazy("user_invoice_list")
+
+    def form_valid(self, form):
+        users = form.cleaned_data["users"]
+        skipped_users = []
+        invoices = []
+        for user in users:
+            purchases_to_pay = user.purchases().to_pay_by(user)
+            if form.cleaned_data["create_empty_invoices"] or purchases_to_pay.count() > 0:
+                # print("{} has {} purchases to pay for: ".format(user, purchases_to_pay.count()))
+                invoice = Invoice.objects.create_for_user(user)
+                invoices.append(invoice)
+            else:
+                # print("{} has no purchases to pay for".format(user))
+                skipped_users.append(user)
+
+        messages.info(self.request, "Created {} invoice(s). {} user(s) were skipped.".format(len(invoices),
+                                                                                         len(skipped_users)))
+        return super(InvoiceCreateView, self).form_valid(form)
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceDeleteView(CheckedDeleteView):
     model = Invoice
     success_url = reverse_lazy('user_invoice_list')
+
+
 # Invoice END
 # Statistics BEGIN
 
