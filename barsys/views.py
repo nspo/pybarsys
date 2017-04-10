@@ -382,7 +382,7 @@ class InvoiceCreateView(edit.FormView):
         skipped_users = []
         invoices = []
         for user in users:
-            purchases_to_pay = user.purchases().to_pay_by(user)
+            purchases_to_pay = Purchase.objects.to_pay_by(user)
             if form.cleaned_data["create_empty_invoices"] or purchases_to_pay.count() > 0:
                 # print("{} has {} purchases to pay for: ".format(user, purchases_to_pay.count()))
                 invoice = Invoice.objects.create_for_user(user)
@@ -391,8 +391,20 @@ class InvoiceCreateView(edit.FormView):
                 # print("{} has no purchases to pay for".format(user))
                 skipped_users.append(user)
 
-        messages.info(self.request, "Created {} invoice(s). {} user(s) were skipped.".format(len(invoices),
-                                                                                         len(skipped_users)))
+        if len(invoices) > 0:
+            created_str = "Created {} invoice(s) for the following user(s): {}. ".format(len(invoices), ", ".join(
+                [i.recipient.__str__() for i in invoices]))
+        else:
+            created_str = "No invoices were created. "
+
+        if len(skipped_users) > 0:
+            #skipped_str = "Skipped {} user(s): {}".format(len(skipped_users), ' ,'.join([u.__str__() for u in skipped_users]))
+            skipped_str = "Skipped {} user(s).".format(len(skipped_users))
+        else:
+            skipped_str = "No users were skipped."
+
+        messages.info(self.request, created_str+skipped_str)
+
         return super(InvoiceCreateView, self).form_valid(form)
 
 

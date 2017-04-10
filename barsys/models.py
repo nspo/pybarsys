@@ -244,7 +244,7 @@ class InvoiceManager(models.Manager):
             p.save()
         # print("Subtotal for own purchases: {}".format(subtotal))
 
-        other_purchases = Purchase.objects.unbilled().to_pay_by(user).order_by('user')
+        other_purchases = Purchase.objects.to_pay_by(user).order_by('user')
         for user, purchases in groupby(other_purchases, key=lambda p: p.user):
             subtotal = 0
             for purchase in purchases:
