@@ -21,6 +21,7 @@ from django.urls import reverse_lazy
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
 import csv
 from django.core import exceptions, paginator
+from django.contrib import messages
 
 from . import filters
 
@@ -39,6 +40,7 @@ class UserDetailView(DetailView):
     template_name = "barsys/userarea/user_detail.html"
     purchases_paginate_by = 5
     payments_paginate_by = 5
+    invoices_paginate_by = 5
 
     def get_context_data(self, **kwargs):
         context = super(UserDetailView, self).get_context_data(**kwargs)
@@ -65,6 +67,17 @@ class UserDetailView(DetailView):
             payments_page_obj = payments_paginator.page(1)
 
         context["payments_page_obj"] = payments_page_obj
+
+        invoices = self.object.invoices()
+
+        invoices_page = self.request.GET.get("invoices_page")
+        invoices_paginator = paginator.Paginator(invoices, self.invoices_paginate_by)
+        try:
+            invoices_page_obj = invoices_paginator.page(invoices_page)
+        except (paginator.PageNotAnInteger, paginator.EmptyPage):
+            invoices_page_obj = invoices_paginator.page(1)
+
+        context["invoices_page_obj"] = invoices_page_obj
 
         return context
 
@@ -155,6 +168,20 @@ class PurchaseUpdateView(edit.UpdateView):
     model = Purchase
     form_class = PurchaseForm
     template_name = "barsys/userarea/purchase_update.html"
+
+    def get(self, request, *args, **kwargs):
+        if self.get_object().has_invoice():
+            return self.handle_with_invoice(request)
+        return super(PurchaseUpdateView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.get_object().has_invoice():
+            return self.handle_with_invoice(request)
+        return super(PurchaseUpdateView, self).post(request, *args, **kwargs)
+
+    def handle_with_invoice(self, request):
+        messages.error(request, "Cannot update this purchase because it has an invoice")
+        return redirect('user_purchase_list')
 
 
 class PurchaseDeleteView(CheckedDeleteView):
@@ -326,6 +353,32 @@ class PaymentDeleteView(CheckedDeleteView):
 
 
 # PAYMENT END
+# Invoice BEGIN
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class InvoiceListView(FilterView):
+    filterset_class = filters.InvoiceFilter
+    template_name = "barsys/userarea/invoice_list.html"
+    paginate_by = 10
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class InvoiceDetailView(DetailView):
+    model = Invoice
+    template_name = "barsys/userarea/invoice_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(InvoiceDetailView, self).get_context_data(**kwargs)
+
+        context["own_purchases"] = self.object.own_purchases()
+        context["other_purchases_grouped"] = self.object.other_purchases_grouped()
+
+        return context
+
+
+class InvoiceDeleteView(CheckedDeleteView):
+    model = Invoice
+    success_url = reverse_lazy('user_invoice_list')
+# Invoice END
 # Statistics BEGIN
 
 
@@ -414,7 +467,7 @@ class PurchaseStatisticsByProductView(FilterView):
 # user area end
 
 def main_user_purchase(request, user_id):
-    user = get_object_or_404(User.objects.filter_buyers(), pk=user_id)
+    user = get_object_or_404(User.objects.active().buyers(), pk=user_id)
     categories = get_list_or_404(Category)
 
     if request.method == "POST":
@@ -444,7 +497,7 @@ def main_user_purchase(request, user_id):
 
 
 def main_user_list(request):
-    all_users_ungrouped = User.objects.filter_buyers().order_by("display_name")
+    all_users_ungrouped = User.objects.active().buyers().order_by("display_name")
 
     # Group by first letter of name
     all_users = OrderedDict()
@@ -490,7 +543,7 @@ def main_user_list(request):
                     break
         jump_to_data_lines.append(this_line)
 
-    favorite_users = User.objects.filter_favorites()
+    favorite_users = User.objects.active().favorites()
 
     last_purchases = Purchase.objects.order_by("-created_date")[:config.NUM_MAIN_LAST_PURCHASES]
 
@@ -506,7 +559,7 @@ def main_user_list(request):
 
 
 def main_user_history(request, user_id):
-    user = get_object_or_404(User.objects.filter_buyers(), pk=user_id)
+    user = get_object_or_404(User.objects.active().buyers(), pk=user_id)
 
     # Sum not yet billed product purchases grouped by product_category
     categories = Purchase.objects.stats_purchases_by_category_and_product(user__pk=user_id, invoice=None)

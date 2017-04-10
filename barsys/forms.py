@@ -132,7 +132,7 @@ class SingleUserSinglePurchaseForm(forms.Form):
     def clean_user_id(self):
         user_id = self.cleaned_data["user_id"]
         try:
-            user = User.objects.get(pk=user_id, is_active=True, is_buyer=True)
+            user = User.objects.active().buyers().get(pk=user_id)
             return user_id
         except User.DoesNotExist:
             raise ValidationError("Invalid user ID")

@@ -33,11 +33,23 @@
             <td>{{ p.product_name }}</td>
             <td>{{ p.product_price|currency }}</td>
             <td>{{ p.cost|currency }}</td>
-            <td>{% bool_to_icon p.invoice %}</td>
-            <td><a href="{% url 'user_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+            <td>
+                {% if p.has_invoice %}
+                    <a href="{% url 'user_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a>
+                {% else %}
+                    {% bool_to_icon p.invoice %}
+                {% endif %}
             </td>
-            <td><a href="{% url 'user_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
-            <td><a href="{% url 'user_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+            <td><a href="{% url 'user_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+            <td>
+                {% if not p.has_invoice %}
+                    <a href="{% url 'user_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                {% endif %}
+            <td>
+                {% if not p.has_invoice %}
+                    <a href="{% url 'user_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a>
+                {% endif %}
+            </td>
         </tr>
     {% endfor %}
 {% endblock %}

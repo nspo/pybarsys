@@ -21,7 +21,14 @@
             <tr><th>Product category</th><td>{{ object.product_category }}</td></tr>
             <tr><th>Product price</th><td>{{ object.product_price|currency }}</td></tr>
             <tr><th>Cost</th><td>{{ object.cost|currency }}</td></tr>
-            <tr><th>Invoice</th><td>{{ object.invoice }}</td></tr>
+            <tr><th>Invoice</th>
+                <td>{% if object.has_invoice %}
+                    <a href="{% url 'user_invoice_detail' object.invoice.pk %}">{{ object.invoice }}</a>
+                    {% else %}
+                    No
+                    {% endif %}
+                </td>
+            </tr>
             <tr><th>Last modified</th><td>{{ object.modified_date }}</td></tr>
             </tbody>
         </table>

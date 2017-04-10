@@ -85,7 +85,13 @@
                     <td>{{ p.product_name }}</td>
                     <td>{{ p.product_price|currency }}</td>
                     <td>{{ p.cost|currency }}</td>
-                    <td>{% bool_to_icon p.invoice %}</td>
+                    <td>
+                        {% if p.has_invoice %}
+                            <a href="{% url 'user_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a>
+                        {% else %}
+                            {% bool_to_icon p.invoice %}
+                        {% endif %}
+                    </td>
                     <td><a href="{% url 'user_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
                     <td><a href="{% url 'user_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
                     <td><a href="{% url 'user_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
@@ -129,5 +135,34 @@
         </table>
         <p>{{ payments_page_obj.paginator.count }} result(s)</p>
         {% bootstrap_pagination payments_page_obj extra=request.GET.urlencode parameter_name="payments_page" %}
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Invoices</h1>
+        </div>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Time</th>
+                <th>Recipient</th>
+                <th>Amount</th>
+                <th>{% bootstrap_icon 'info-sign' %}</th>
+                <th>{% bootstrap_icon 'trash' %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for invoice in invoices_page_obj.object_list %}
+                <tr>
+                    <td><a href="{% url 'user_invoice_detail' invoice.pk %}">{{ invoice.created_date|sdatetime }}</a>
+                    </td>
+                    <td>{{ invoice.recipient }}</td>
+                    <td>{{ invoice.amount|currency }}</td>
+                    <td><a href="{% url 'user_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+                    <td><a href="{% url 'user_invoice_delete' invoice.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p>{{ invoices_page_obj.paginator.count }} result(s)</p>
+        {% bootstrap_pagination invoices_page_obj extra=request.GET.urlencode parameter_name="invoices_page" %}
     </div>
 {% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'barsys/userarea/list_base.html' %}
+
+{% load bootstrap3 %}
+{% load barsys_helpers %}
+
+{% block above_table %}
+    <h1 class="pull-left" style="margin-top: 0;">Invoices</h1>
+    <a href="{% url 'user_user_new' %}">
+        <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new user TODO</button>
+    </a>
+{% endblock %}
+{% block tablehead %}
+    <tr>
+        <th>Time</th>
+        <th>Recipient</th>
+        <th>Amount</th>
+        <th>{% bootstrap_icon 'info-sign' %}</th>
+        <th>{% bootstrap_icon 'trash' %}</th>
+    </tr>
+{% endblock %}
+{% block tablebody %}
+    {% for invoice in object_list %}
+        <tr>
+            <td><a href="{% url 'user_invoice_detail' invoice.pk %}">{{ invoice.created_date|sdatetime }}</a></td>
+            <td><a href="{% url 'user_user_detail' invoice.recipient.pk %}">{{ invoice.recipient }}</a></td>
+            <td>{{ invoice.amount }}</td>
+            <td><a href="{% url 'user_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+            <td><a href="{% url 'user_invoice_delete' invoice.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+        </tr>
+    {% endfor %}
+{% endblock %}
+{% block below_table %}
+    <p>{{ paginator.count }} results</p>
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+{% endblock %}
+
+{% block additional_content %}
+    {% include "barsys/userarea/list_filter.html" %}
+{% endblock %}

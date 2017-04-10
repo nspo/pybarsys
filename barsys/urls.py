@@ -48,6 +48,11 @@ urlpatterns = [
     url(r'^userarea/payment/(?P<pk>[0-9]+)/update/$', views.PaymentUpdateView.as_view(), name='user_payment_update'),
     url(r'^userarea/payment/(?P<pk>[0-9]+)/delete/$', views.PaymentDeleteView.as_view(), name='user_payment_delete'),
 
+    # Invoice
+    url(r'^userarea/invoice/list/$', views.InvoiceListView.as_view(), name='user_invoice_list'),
+    url(r'^userarea/invoice/(?P<pk>[0-9]+)/detail/$', views.InvoiceDetailView.as_view(), name='user_invoice_detail'),
+    url(r'^userarea/invoice/(?P<pk>[0-9]+)/delete/$', views.InvoiceDeleteView.as_view(), name='user_invoice_delete'),
+
     # StatsDisplay
     url(r'^userarea/statsdisplay/list/$', views.StatsDisplayListView.as_view(), name='user_statsdisplay_list'),
     url(r'^userarea/statsdisplay/new/$', views.StatsDisplayCreateView.as_view(), name='user_statsdisplay_new'),

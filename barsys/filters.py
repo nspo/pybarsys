@@ -44,6 +44,15 @@ class PaymentFilter(django_filters.FilterSet):
         fields = ["user"]
 
 
+class InvoiceFilter(django_filters.FilterSet):
+    created_date = django_filters.DateTimeFromToRangeFilter(help_text="Format YYYY-MM-DD HH:MM. Time is 00:00 by default.")
+    amount__gte = django_filters.NumberFilter(name='amount', lookup_expr='gte')
+    amount__lte = django_filters.NumberFilter(name='amount', lookup_expr='lte')
+    class Meta:
+        model = Invoice
+        fields = ["recipient"]
+
+
 class CategoryFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
 

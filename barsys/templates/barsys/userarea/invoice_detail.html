@@ -1,0 +1,54 @@
+{% extends 'barsys/userarea/base.html' %}
+
+{% load bootstrap3 %}
+{% load barsys_helpers %}
+{% load humanize %}
+{% block content %}
+
+    <div class="container">
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Invoice details</h1>
+            <a href="{% url 'user_invoice_delete' invoice.pk %}">
+                <button class="btn btn-danger pull-right">{% bootstrap_icon 'remove-sign' %} Delete</button>
+            </a>
+        </div>
+        <div class="table-responsive" style="overflow-x: inherit;">
+            <table class="table table-striped">
+                <tbody>
+                <tr>
+                    <th>Time</th>
+                    <td>{{ invoice.created_date }}</td>
+                </tr>
+                <tr>
+                    <th>Recipient</th>
+                    <td><a href="{% url 'user_user_detail' invoice.recipient.pk %}">{{ invoice.recipient }}</a></td>
+                </tr>
+                <tr>
+                    <th>Amount</th>
+                    <td>{{ invoice.amount|currency }}</td>
+                </tr>
+                <tr>
+                    <th colspan="2"><h4>Own purchases</h4></th>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding-left: 25px; padding-right: 0;">
+                        {% include 'barsys/userarea/purchases_subtable.html' with purchases=own_purchases %}
+                    </td>
+                </tr>
+                {% for p_user, purchases in other_purchases_grouped %}
+                    <tr>
+                        <th colspan="2"><h4>Purchases by <a
+                                href="{% url 'user_user_detail' p_user.pk %}">{{ p_user.display_name }}</a></h4></th>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding-left: 25px; padding-right: 0;">
+                            {% include 'barsys/userarea/purchases_subtable.html' with purchases=purchases %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

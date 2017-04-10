@@ -12,13 +12,28 @@ from django.db.models import DecimalField
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from decimal import Decimal
 from barsys.templatetags.barsys_helpers import currency
 from django.utils.timezone import localtime
 from django.utils import formats
 
 
+class UserQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(is_active=True)
+
+    def buyers(self):
+        return self.filter(is_buyer=True)
+
+    def favorites(self):
+        return self.filter(is_favorite=True)
+
+
 class UserManager(BaseUserManager):
+    def get_queryset(self):
+        return UserQuerySet(self.model, using=self._db)
+
     def create_user(self, email, display_name, password=None):
         if not email:
             raise ValueError('Users must have an email address')
@@ -41,14 +56,6 @@ class UserManager(BaseUserManager):
         user.is_admin = True
         user.save(using=self._db)
         return user
-
-    # Active buyers
-    def filter_buyers(self):
-        return self.filter(is_active=True, is_buyer=True)
-
-    # Active favorite buyers
-    def filter_favorites(self):
-        return self.filter_buyers().filter(is_favorite=True)
 
 
 from django.db.models import Q
@@ -76,7 +83,7 @@ class User(AbstractBaseUser):
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
 
-    objects = UserManager()
+    objects = UserManager.from_queryset(UserQuerySet)()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -133,8 +140,8 @@ class User(AbstractBaseUser):
     def purchases(self):
         return Purchase.objects.filter(user=self)
 
-    def unbilled_purchases(self):
-        return self.purchases().filter(invoice=None)
+    def invoices(self):
+        return Invoice.objects.filter(recipient=self)
 
     def payments(self):
         return Payment.objects.filter(user=self)
@@ -193,6 +200,9 @@ class Product(models.Model):
     def cannot_be_deleted(self):
         return False
 
+    def get_absolute_url(self):
+        return reverse('user_product_detail', kwargs={'pk': self.pk})
+
 
 from itertools import groupby
 
@@ -200,12 +210,12 @@ from itertools import groupby
 class InvoiceManager(models.Manager):
     def create_for_user(self, user):
         invoice = Invoice()
-        invoice.payer = user
+        invoice.recipient = user
 
         invoice.amount = 0
         invoice.save()  # Save so that an ID is created
 
-        own_purchases = user.unbilled_purchases()
+        own_purchases = user.purchases().unbilled()
         subtotal = 0
         for p in own_purchases:
             subtotal += p.quantity * p.product_price
@@ -214,7 +224,7 @@ class InvoiceManager(models.Manager):
             p.save()
         print("Subtotal for own purchases: {}".format(subtotal))
 
-        other_purchases = Purchase.objects.unbilled().paid_by(user).order_by('user')
+        other_purchases = Purchase.objects.unbilled().to_pay_by(user).order_by('user')
         for user, purchases in groupby(other_purchases, key=lambda p: p.user):
             subtotal = 0
             for purchase in purchases:
@@ -227,9 +237,11 @@ class InvoiceManager(models.Manager):
         invoice.save()
         print(invoice)
 
+        return invoice
+
 
 class Invoice(models.Model):
-    payer = models.ForeignKey(User, on_delete=models.PROTECT)
+    recipient = models.ForeignKey(User, on_delete=models.PROTECT)
     amount = models.DecimalField(max_digits=7, decimal_places=2, blank=False, null=False,
                                  validators=[MinValueValidator(Decimal('0.01'))])
 
@@ -242,46 +254,65 @@ class Invoice(models.Model):
     class Meta:
         ordering = ["-created_date"]
 
-    def purchases(self, *args, **kwargs):
-        return Purchase.objects.filter(invoice=self, *args, **kwargs)
+    def purchases(self):
+        return Purchase.objects.filter(invoice=self)
 
     def __str__(self):
-        return "Invoice to {} over {} on {}".format(self.payer, currency(self.amount),
+        return "Invoice to {} over {} on {}".format(self.recipient, currency(self.amount),
                                                     formats.date_format(localtime(self.created_date),
                                                                         "SHORT_DATETIME_FORMAT"))
+
+    def cannot_be_deleted(self):
+        return False
+
+    def own_purchases(self):
+        return self.purchases().paid_as_self(self.recipient)
+
+    def other_purchases_grouped(self):
+        """ Create a list of tuples in the format (User, PurchaseQuerySet) of purchases
+            that the recipient paid for other users
+        """
+        other_purchases = self.purchases()\
+            .paid_as_other(self.recipient)\
+            .order_by('user')
+
+        other_purchases_grouped = []
+        for u, ps in groupby(other_purchases, key=lambda p: p.user):
+            print("By {}, pk={}".format(u, u.pk))
+            print(other_purchases.filter(user=u))
+            other_purchases_grouped.append((u, other_purchases.filter(user=u).order_by('-created_date')))
+
+        return other_purchases_grouped
 
 
 class PurchaseQuerySet(models.QuerySet):
     def unbilled(self):
         return self.filter(invoice=None)
 
-    def paid_by(self, user):
-        return self.filter(
-            Q(user__purchases_paid_by_other=user) | Q(user=user, user__purchases_paid_by_other__isnull=True))
+    def to_pay_by(self, user):
+        """ Unbilled purchases that a user must pay for (either b/c they bought something themselves
+            or have to pay for others)
+        """
+        return self.unbilled().filter(Q(user__purchases_paid_by_other=user) |
+                                      Q(user=user, user__purchases_paid_by_other__isnull=True))
 
-    def paid_as_other_by(self, user):
-        return self.filter(user__purchases_paid_by_other=user)
+    def paid_as_other(self, payer):
+        """ Invoiced purchases that were paid by a user for others """
+        return self.filter(Q(invoice__recipient=payer) & ~Q(user=payer))
 
-    def paid_as_self_by(self, user):
-        return self.filter(user=user, user__purchases_paid_by_other__isnull=True)
+    def paid_as_self(self, payer):
+        """ Invoiced purchases that were paid by a user for themselves """
+        return self.filter(Q(invoice__recipient=payer) & Q(user=payer))
+
+    def sum_costs(self):
+        return self.aggregate(total_cost=models.Sum(F("quantity") * F("product_price"),
+                                                    output_field=DecimalField(decimal_places=2))).get("total_cost")
+
+    def sum_quantity(self):
+        return self.aggregate(total_quantity=models.Sum(F("quantity"))).get("total_quantity")
 
 
 class PurchaseManager(models.Manager):
-    def get_queryset(self):
-        return PurchaseQuerySet(self.model, using=self._db)
-
-    def unbilled(self):
-        return self.get_queryset().unbilled()
-
-    def paid_by(self, user):
-        return self.get_queryset().paid_by(user)
-
-    def paid_as_other_by(self, user):
-        return self.get_queryset().paid_as_other_by(user)
-
-    def paid_as_self_by(self, user):
-        return self.get_queryset().paid_as_self_by(user)
-
     def stats_purchases_by_category_and_product(self, *args, **kwargs):
         """ Calculate sum of purchases of each product and group by category and product
             All necessary filters (e.g. user=this_user) need to be passed as arguments
@@ -340,13 +371,13 @@ class Purchase(models.Model):
     product_amount = models.CharField(max_length=10, blank=False)
     quantity = models.PositiveIntegerField(default=1, null=False, blank=False)
 
-    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, blank=True, null=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.SET_NULL, blank=True, null=True)
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
 
-    objects = PurchaseManager()
+    objects = PurchaseManager.from_queryset(PurchaseQuerySet)()
 
     class Meta:
         ordering = ["-created_date"]
@@ -369,6 +400,29 @@ class Purchase(models.Model):
 
     def has_invoice(self):
         return self.invoice is not None
+
+    def clean(self, *args, **kw):
+        if self.pk is not None:
+            orig = Purchase.objects.get(pk=self.pk)
+            if orig.has_invoice():
+                field_names = [field.name for field in Purchase._meta.fields]
+                for field_name in field_names:
+                    if getattr(orig, field_name) != getattr(self, field_name):
+                        # some attribute has changed, although there was already an invoice
+                        raise ValidationError("Invoiced purchases may not be changed")
+        super(Purchase, self).clean(*args, **kw)
+
+    def save(self, *args, **kw):
+        """ Check whether obj has invoice but was changed """
+        if self.pk is not None:
+            orig = Purchase.objects.get(pk=self.pk)
+            if orig.has_invoice():
+                field_names = [field.name for field in Purchase._meta.fields]
+                for field_name in field_names:
+                    if getattr(orig, field_name) != getattr(self, field_name):
+                        # some attribute has changed, although there was already an invoice
+                        raise IntegrityError("Invoiced purchases may not be changed")
+        super(Purchase, self).save(*args, **kw)
 
 
 class Payment(models.Model):
