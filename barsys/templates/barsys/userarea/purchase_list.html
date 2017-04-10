@@ -1,65 +1,51 @@
-{% extends 'barsys/userarea/base.html' %}
+{% extends 'barsys/userarea/list_base.html' %}
 
 {% load bootstrap3 %}
 {% load crispy_forms_tags %}
 {% load barsys_helpers %}
-{% block content %}
 
-    <div class="container">
-        <div>
-            <div>
-                <h1 class="pull-left" style="margin-top: 0;">Purchases</h1>
-                <a href="{% url 'user_purchase_new' %}">
-                    <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new purchase</button>
-                </a>
-            </div>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>User</th>
-                    <th>Quantity</th>
-                    <th>Product name</th>
-                    <th>Product price</th>
-                    <th>Cost</th>
-                    <th>Invoiced?</th>
-                    <th>{% bootstrap_icon 'info-sign' %}</th>
-                    <th>{% bootstrap_icon 'pencil' %}</th>
-                    <th>{% bootstrap_icon 'trash' %}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for p in object_list %}
-                    <tr>
-                        <td><a href="{% url 'user_purchase_detail' p.pk %}">{{ p.created_date }}</a></td>
-                        <td><a href="{% url 'user_user_detail' p.user.pk %}">{{ p.user.display_name }}</a></td>
-                        <td>{{ p.quantity }}</td>
-                        <td>{{ p.product_name }}</td>
-                        <td>{{ p.product_price|currency }}</td>
-                        <td>{{ p.cost|currency }}</td>
-                        <td>{% bool_to_icon p.invoice %}</td>
-                        <td><a href="{% url 'user_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
-                        <td><a href="{% url 'user_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
-                        <td><a href="{% url 'user_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-            <p>{{ paginator.count }} results</p>
-            {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
-        </div>
+{% block above_table %}
+    <h1 class="pull-left" style="margin-top: 0;">Purchases</h1>
+    <a href="{% url 'user_purchase_new' %}">
+        <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new purchase</button>
+    </a>
+{% endblock %}
+{% block tablehead %}
+    <tr>
+        <th>Time</th>
+        <th>User</th>
+        <th>Quantity</th>
+        <th>Product name</th>
+        <th>Product price</th>
+        <th>Cost</th>
+        <th>Invoiced?</th>
+        <th>{% bootstrap_icon 'info-sign' %}</th>
+        <th>{% bootstrap_icon 'pencil' %}</th>
+        <th>{% bootstrap_icon 'trash' %}</th>
+    </tr>
+{% endblock %}
+{% block tablebody %}
+    {% for p in object_list %}
+        <tr>
+            <td><a href="{% url 'user_purchase_detail' p.pk %}">{{ p.created_date|sdatetime }}</a></td>
+            <td><a href="{% url 'user_user_detail' p.user.pk %}">{{ p.user.display_name }}</a></td>
+            <td>{{ p.quantity }}</td>
+            <td>{{ p.product_name }}</td>
+            <td>{{ p.product_price|currency }}</td>
+            <td>{{ p.cost|currency }}</td>
+            <td>{% bool_to_icon p.invoice %}</td>
+            <td><a href="{% url 'user_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+            </td>
+            <td><a href="{% url 'user_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+            <td><a href="{% url 'user_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+        </tr>
+    {% endfor %}
+{% endblock %}
+{% block below_table %}
+    <p>{{ paginator.count }} results</p>
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+{% endblock %}
 
-        <div class="col-md-6 col-md-offset-3">
-            <h2>Filter</h2>
-            <form method="get" class="form">
-                {{ filter.form|crispy }}
-                {% buttons %}
-                    <button type="submit" class="btn btn-primary">Search</button>
-                {% endbuttons %}
-            </form>
-        </div>
-    </div>
-
-
-
+{% block additional_content %}
+    {% include "barsys/userarea/list_filter.html" %}
 {% endblock %}

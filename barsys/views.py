@@ -25,12 +25,6 @@ from django.core import exceptions, paginator
 from . import filters
 
 
-# user area test
-@staff_member_required(login_url='user_login')
-def user_home(request):
-    return render(request, "barsys/userarea/home.html")
-
-
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class UserListView(FilterView):
     filterset_class = filters.UserFilter
@@ -49,7 +43,7 @@ class UserDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super(UserDetailView, self).get_context_data(**kwargs)
 
-        purchases = self.object.get_purchases().filter()
+        purchases = self.object.purchases()
 
         purchases_page = self.request.GET.get("purchases_page")
         purchases_paginator = paginator.Paginator(purchases, self.purchases_paginate_by)
@@ -61,7 +55,7 @@ class UserDetailView(DetailView):
 
         context["purchases_page_obj"] = purchases_page_obj
 
-        payments = self.object.get_payments().filter()
+        payments = self.object.payments()
 
         payments_page = self.request.GET.get("payments_page")
         payments_paginator = paginator.Paginator(payments, self.payments_paginate_by)
@@ -515,7 +509,7 @@ def main_user_history(request, user_id):
     user = get_object_or_404(User.objects.filter_buyers(), pk=user_id)
 
     # Sum not yet billed product purchases grouped by product_category
-    categories = Purchase.objects.purchases_by_category_and_product(user__pk=user_id, invoice=None)
+    categories = Purchase.objects.stats_purchases_by_category_and_product(user__pk=user_id, invoice=None)
 
     last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[
                      :config.NUM_USER_PURCHASE_HISTORY]

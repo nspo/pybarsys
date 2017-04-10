@@ -1,58 +1,49 @@
-{% extends 'barsys/userarea/base.html' %}
+{% extends 'barsys/userarea/list_base.html' %}
 
 {% load bootstrap3 %}
 {% load crispy_forms_tags %}
 {% load barsys_helpers %}
 {% load humanize %}
 
-{% block content %}
+{% block above_table %}
+    <h1 class="pull-left" style="margin-top: 0;">Products</h1>
+    <a href="{% url 'user_product_new' %}">
+        <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new product</button>
+    </a>
+{% endblock %}
+{% block tablehead %}
+    <tr>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Amount</th>
+        <th>Price</th>
+        <th>{% bootstrap_icon 'info-sign' %}</th>
+        <th>{% bootstrap_icon 'pencil' %}</th>
+        <th>{% bootstrap_icon 'trash' %}</th>
+    </tr>
+{% endblock %}
+{% block tablebody %}
+    {% for product in object_list %}
+        <tr>
+            <td><a href="{% url 'user_product_detail' product.pk %}">{{ product.name }}</a></td>
+            <td>{{ product.category }}</td>
+            <td>{{ product.amount }}</td>
+            <td>{{ product.price|currency }}</td>
+            <td>
+                <a href="{% url 'user_product_detail' product.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+            </td>
+            <td><a href="{% url 'user_product_update' product.pk %}">{% bootstrap_icon 'pencil' %}</a>
+            </td>
+            <td><a href="{% url 'user_product_delete' product.pk %}">{% bootstrap_icon 'trash' %}</a>
+            </td>
+        </tr>
+    {% endfor %}
+{% endblock %}
+{% block below_table %}
+    <p>{{ paginator.count }} results</p>
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+{% endblock %}
 
-    <div class="container">
-        <div>
-            <div>
-                <h1 class="pull-left" style="margin-top: 0;">Products</h1>
-                <a href="{% url 'user_product_new' %}">
-                    <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new product</button>
-                </a>
-            </div>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Amount</th>
-                    <th>Price</th>
-                    <th>{% bootstrap_icon 'info-sign' %}</th>
-                    <th>{% bootstrap_icon 'pencil' %}</th>
-                    <th>{% bootstrap_icon 'trash' %}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for product in object_list %}
-                    <tr>
-                        <td><a href="{% url 'user_product_detail' product.pk %}">{{ product.name }}</a></td>
-                        <td>{{ product.category }}</td>
-                        <td>{{ product.amount }}</td>
-                        <td>{{ product.price|currency }}</td>
-                        <td><a href="{% url 'user_product_detail' product.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
-                        <td><a href="{% url 'user_product_update' product.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
-                        <td><a href="{% url 'user_product_delete' product.pk %}">{% bootstrap_icon 'trash' %}</a></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-            <p>{{ paginator.count }} results</p>
-            {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
-        </div>
-
-        <div class="col-md-6 col-md-offset-3">
-            <h2>Filter</h2>
-            <form method="get" class="form">
-                {{ filter.form|crispy }}
-                {% buttons %}
-                    <button type="submit" class="btn btn-primary">Search</button>
-                {% endbuttons %}
-            </form>
-        </div>
-    </div>
+{% block additional_content %}
+    {% include "barsys/userarea/list_filter.html" %}
 {% endblock %}

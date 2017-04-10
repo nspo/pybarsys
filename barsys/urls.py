@@ -10,7 +10,7 @@ urlpatterns = [
     url(r'^user/(?P<user_id>[0-9]+)/history/$', views.main_user_history, name='main_user_history'),
 
     # user area (user_*)
-    url(r'^userarea/$', views.user_home, name='user_home'),
+    url(r'^userarea/$', views.PurchaseListView.as_view(), name='user_home'),
 
     # Purchase
     url(r'^userarea/purchase/list/$', views.PurchaseListView.as_view(), name="user_purchase_list"),

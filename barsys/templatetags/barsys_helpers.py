@@ -1,6 +1,6 @@
 from bootstrap3.templatetags.bootstrap3 import bootstrap_icon
-from django.utils.translation import to_locale, get_language
-from constance import config
+from django.utils import formats
+from django.utils.timezone import localtime
 from django.conf import settings
 
 from django import template
@@ -33,3 +33,8 @@ def currency(value):
 @register.filter
 def keyvalue(dict, key):
     return dict.get(key, '')
+
+
+@register.filter
+def sdatetime(value):
+    return formats.date_format(value, "SHORT_DATETIME_FORMAT")

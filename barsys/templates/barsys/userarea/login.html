@@ -1,23 +1,19 @@
 {% extends 'barsys/userarea/base.html' %}
+{% load bootstrap3 %}
 {% load crispy_forms_tags %}
 {% block content %}
-    {% if form.errors %}
-
-        <p>Your email and password didn't match. Please try again.</p>
-    {% endif %}
-
-    {% if next %}
-        {% if user.is_authenticated %}
-
-            <p>Your account doesn't have access to this page. To proceed,
-                please login with an account that has access.</p>
-        {% else %}
-
-            <p>Please login to see this page.</p>
-        {% endif %}
-    {% endif %}
-
     <div class="container">
+
+        {% if form.errors %}
+            {% bootstrap_alert "Your email and password didn't match. Please try again." 'danger' %}
+        {% endif %}
+        {% if next %}
+            {% if user.is_authenticated %}
+                {% bootstrap_alert "Your account doesn't have access to this page. To proceed, please login with an account that has access." 'danger' %}
+            {% else %}
+                {% bootstrap_alert "Please login to access this area." 'info' %}
+            {% endif %}
+        {% endif %}
         <div class="row">
             <div class="col-md-4 col-md-offset-4">
                 <div class="login-panel panel panel-default">
@@ -27,16 +23,13 @@
                     <div class="panel-body">
                         <form method="post" action="">
                             {% csrf_token %}
-
                             <p class="bs-component">
                             <table>
                                 {{ form|crispy }}
                             </table>
                             </p>
                             <p class="bs-component">
-                            <center>
-                                <input class="btn btn-success btn-sm" type="submit" value="login"/>
-                            </center>
+                                <input class="btn btn-success btn-lg" type="submit" value="Submit"/>
                             </p>
                             <input type="hidden" name="next" value="{{ next }}"/>
                         </form>
