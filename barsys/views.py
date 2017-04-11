@@ -23,6 +23,11 @@ import csv
 from django.core import exceptions, paginator
 from django.contrib import messages
 
+from . import view_helpers
+
+
+from pybarsys import settings
+
 from . import filters
 
 
@@ -379,6 +384,7 @@ class InvoiceCreateView(edit.FormView):
 
     def form_valid(self, form):
         users = form.cleaned_data["users"]
+        send_mails = form.cleaned_data["send_mails"]
         skipped_users = []
         invoices = []
         for user in users:
@@ -398,12 +404,18 @@ class InvoiceCreateView(edit.FormView):
             created_str = "No invoices were created. "
 
         if len(skipped_users) > 0:
-            #skipped_str = "Skipped {} user(s): {}".format(len(skipped_users), ' ,'.join([u.__str__() for u in skipped_users]))
+            # skipped_str = "Skipped {} user(s): {}".format(len(skipped_users), ' ,'.join([u.__str__() for u in skipped_users]))
             skipped_str = "Skipped {} user(s).".format(len(skipped_users))
         else:
             skipped_str = "No users were skipped."
 
-        messages.info(self.request, created_str+skipped_str)
+        messages.info(self.request, created_str + skipped_str)
+
+        # Send mails if wanted
+        if send_mails and len(invoices) > 0:
+            view_helpers.send_invoice_mails(self.request, invoices)
+        else:
+            messages.info(self.request, "No mails were sent.")
 
         return super(InvoiceCreateView, self).form_valid(form)
 

@@ -151,15 +151,24 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
-
+from decimal import Decimal
 # Constance settings
 CONSTANCE_CONFIG = {
     'NUM_USER_PURCHASE_HISTORY': (15, "Number of purchases to show on user history page"),
     'NUM_MAIN_LAST_PURCHASES': (5, "Number of purchases to show on main page"),
+
+    'MAIL_INVOICE_SUBJECT': ('Invoice from Barsys bar', 'Subject of an invoice mail'),
+    'MAIL_NAME_OF_BAR': ('Barsys bar', 'Name of the bar'),
+    'MAIL_BANK_DETAILS': ('Bank account No. 55542\n'
+                          'Routing No. 2718\n'
+                          'Royal Bank of Moldova', 'Bank account details'),
+    'MAIL_BALANCE_SEND_MONEY': (Decimal('0'), 'Below this account balance the user should send money.'),
+
 }
 
 CONSTANCE_CONFIG_FIELDSETS = {
     'Main page': ('NUM_USER_PURCHASE_HISTORY', 'NUM_MAIN_LAST_PURCHASES', ),
+    'Mail': ('MAIL_INVOICE_SUBJECT', 'MAIL_NAME_OF_BAR', 'MAIL_BANK_DETAILS', 'MAIL_BALANCE_SEND_MONEY'),
 }
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
@@ -168,5 +177,6 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 EMAIL_HOST = 'localhost'
 #EMAIL_HOST_USER = 'no-reply@example.com'
 #EMAIL_HOST_PASSWORD = 'hunter2'
+EMAIL_FROM_ADDRESS = 'no-reply@example.com'
 EMAIL_PORT = 1025 # 587
 EMAIL_USE_TLS = False # True

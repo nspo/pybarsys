@@ -26,14 +26,21 @@ class InvoicesCreateForm(forms.Form):
     users = forms.ModelMultipleChoiceField(queryset=User.objects.active().buyers().pay_themselves(),
                                            help_text="Select users to generate invoices for. Only users who pay themselves can be selected."
                                            )
+
     create_empty_invoices = forms.BooleanField(required=False, help_text="Whether invoices should be created even "
                                                                          "if user has not purchased anything. ")
+
+    send_mails = forms.BooleanField(required=False, initial=True,
+                                    help_text="Whether to send invoices to the users' mail addresses. "
+                                              "Users who do not pay for themselves will get a notification of their "
+                                              " purchases instead of a real invoice. "
+                                              "If false, invoices will only be created internally.")
 
     def __init__(self, *args, **kwargs):
         super(InvoicesCreateForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
-        self.helper.layout = layout.Layout(layout.Field('users', size="35"), 'create_empty_invoices')
+        self.helper.layout = layout.Layout(layout.Field('users', size="35"), 'create_empty_invoices', 'send_mails')
 
         self.helper.add_input(layout.Submit('create', 'Create'))
         self.helper.add_input(layout.Reset('reset', 'Unselect all'))

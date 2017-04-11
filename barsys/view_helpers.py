@@ -1,5 +1,12 @@
 from .models import StatsDisplay, Purchase
 from django.utils import timezone
+from django.contrib import messages
+
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from decimal import Decimal
+from constance import config
+from pybarsys import settings as pybarsys_settings
 
 
 def get_renderable_stats_elements():
@@ -45,3 +52,32 @@ def get_renderable_stats_elements():
         stats_elements.append(stats_element)
 
     return stats_elements
+
+
+def send_invoice_mails(request, invoices):
+    """ Send invoice mails to invoice recipients with a list of all purchases of that invoice """
+    num_invoice_mail_success = 0
+    invoice_mail_failure = []  # [(username, error), ...]
+    for invoice in invoices:
+        context = {}
+        context["invoice"] = invoice
+        context["bar_name"] = config.MAIL_NAME_OF_BAR
+        context["bank_details"] = config.MAIL_BANK_DETAILS
+        context["below_balance_send"] = config.MAIL_BALANCE_SEND_MONEY
+        context["own_purchases"] = invoice.own_purchases()
+        context["other_purchases_grouped"] = invoice.other_purchases_grouped()
+        context["recent_payments"] = invoice.recipient.payments().order_by('-created_date')[:5]
+        content_plain = render_to_string("email/normal_invoice.plaintext.html", context)
+        try:
+            send_mail(config.MAIL_INVOICE_SUBJECT,
+                      content_plain,
+                      pybarsys_settings.EMAIL_FROM_ADDRESS,
+                      [invoice.recipient.email], fail_silently=False)
+            num_invoice_mail_success += 1
+        except Exception as e:
+            invoice_mail_failure.append((invoice.recipient, e))
+
+    messages.info(request, "{} mails were successfully sent. ".format(num_invoice_mail_success))
+    if len(invoice_mail_failure) > 0:
+        messages.error(request, "Sending mail(s) to the following user(s) failed: {}". \
+                       format(", ".join(["{} ({})".format(u, err) for u, err in invoice_mail_failure])))
