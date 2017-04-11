@@ -163,3 +163,10 @@ CONSTANCE_CONFIG_FIELDSETS = {
 }
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
+
+# Email settings
+EMAIL_HOST = 'localhost'
+#EMAIL_HOST_USER = 'no-reply@example.com'
+#EMAIL_HOST_PASSWORD = 'hunter2'
+EMAIL_PORT = 1025 # 587
+EMAIL_USE_TLS = False # True
