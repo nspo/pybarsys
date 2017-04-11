@@ -7,7 +7,7 @@
 
         <div>
             <h1 class="pull-left" style="margin-top: 0;">Category details</h1>
-            <a href="{% url 'user_category_update' object.pk %}">
+            <a href="{% url 'admin_category_update' object.pk %}">
                 <button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button>
             </a>
         </div>
@@ -26,7 +26,7 @@
                 <td>
                     <ul class="list-group">{% for product in object.get_products %}
                         <li class="list-group-item"><a
-                                href="{% url 'user_product_detail' product.pk %}">{{ product.name }}</a></li>
+                                href="{% url 'admin_product_detail' product.pk %}">{{ product.name }}</a></li>
                     {% endfor %}</ul>
                 </td>
             </tr>

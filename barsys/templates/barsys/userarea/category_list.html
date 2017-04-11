@@ -6,7 +6,7 @@
 
 {% block above_table %}
     <h1 class="pull-left" style="margin-top: 0;">Categories</h1>
-    <a href="{% url 'user_category_new' %}">
+    <a href="{% url 'admin_category_new' %}">
         <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new category</button>
     </a>
 {% endblock %}
@@ -22,14 +22,14 @@
 {% block tablebody %}
     {% for category in object_list %}
         <tr>
-            <td><a href="{% url 'user_category_detail' category.pk %}">{{ category.name }}</a></td>
+            <td><a href="{% url 'admin_category_detail' category.pk %}">{{ category.name }}</a></td>
             <td>{{ category.get_number_products }}</td>
             <td>
-                <a href="{% url 'user_category_detail' category.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+                <a href="{% url 'admin_category_detail' category.pk %}">{% bootstrap_icon 'info-sign' %}</a>
             </td>
-            <td><a href="{% url 'user_category_update' category.pk %}">{% bootstrap_icon 'pencil' %}</a>
+            <td><a href="{% url 'admin_category_update' category.pk %}">{% bootstrap_icon 'pencil' %}</a>
             </td>
-            <td><a href="{% url 'user_category_delete' category.pk %}">{% bootstrap_icon 'trash' %}</a>
+            <td><a href="{% url 'admin_category_delete' category.pk %}">{% bootstrap_icon 'trash' %}</a>
             </td>
         </tr>
     {% endfor %}

@@ -5,7 +5,7 @@
 
 {% block above_table %}
     <h1 class="pull-left" style="margin-top: 0;">Users</h1>
-    <a href="{% url 'user_user_new' %}">
+    <a href="{% url 'admin_user_new' %}">
         <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new user</button>
     </a>
 {% endblock %}
@@ -27,7 +27,7 @@
 {% block tablebody %}
     {% for user in object_list %}
         <tr>
-            <td><a href="{% url 'user_user_detail' user.pk %}">{{ user.display_name }}</a></td>
+            <td><a href="{% url 'admin_user_detail' user.pk %}">{{ user.display_name }}</a></td>
             <td>{{ user.email }}</td>
             <td>{% bool_to_icon user.is_active %}</td>
             <td>{% bool_to_icon user.is_buyer %}</td>
@@ -35,9 +35,9 @@
             <td>{% bool_to_icon user.is_favorite %}</td>
             <td>{{ user.num_purchases }}</td>
             <td>{% bool_to_icon user.purchases_paid_by_other %}</td>
-            <td><a href="{% url 'user_user_detail' user.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
-            <td><a href="{% url 'user_user_update' user.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
-            <td><a href="{% url 'user_user_delete' user.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+            <td><a href="{% url 'admin_user_detail' user.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+            <td><a href="{% url 'admin_user_update' user.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+            <td><a href="{% url 'admin_user_delete' user.pk %}">{% bootstrap_icon 'trash' %}</a></td>
         </tr>
     {% endfor %}
 {% endblock %}

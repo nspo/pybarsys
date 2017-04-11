@@ -8,7 +8,7 @@
 
         <div>
             <h1 class="pull-left" style="margin-top: 0;">Payment details</h1>
-            <a href="{% url 'user_payment_update' object.pk %}">
+            <a href="{% url 'admin_payment_update' object.pk %}">
                 <button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button>
             </a>
         </div>
@@ -24,7 +24,7 @@
             </tr>
             <tr>
                 <th>User</th>
-                <td><a href="{% url 'user_user_detail' object.user.pk %}">{{ object.user }}</a></td>
+                <td><a href="{% url 'admin_user_detail' object.user.pk %}">{{ object.user }}</a></td>
             </tr>
             <tr>
                 <th>Amount</th>

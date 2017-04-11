@@ -6,7 +6,7 @@
 
 {% block above_table %}
     <h1 class="pull-left" style="margin-top: 0;">Stats Displays</h1>
-    <a href="{% url 'user_statsdisplay_new' %}">
+    <a href="{% url 'admin_statsdisplay_new' %}">
         <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add stats display
         </button>
     </a>
@@ -27,18 +27,18 @@
 {% block tablebody %}
     {% for s in object_list %}
         <tr>
-            <td><a href="{% url 'user_statsdisplay_detail' s.pk %}">{{ s.title }}</a></td>
+            <td><a href="{% url 'admin_statsdisplay_detail' s.pk %}">{{ s.title }}</a></td>
             <td>{{ s.filter_category|default_if_none:"any" }}</td>
             <td>{{ s.filter_product|default_if_none:"any" }}</td>
             <td>{{ s.time_period }}</td>
             <td>{{ s.get_sort_by_and_show_display }}</td>
             <td>{% bool_to_icon s.show_by_default %}</td>
 
-            <td><a href="{% url 'user_statsdisplay_detail' s.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+            <td><a href="{% url 'admin_statsdisplay_detail' s.pk %}">{% bootstrap_icon 'info-sign' %}</a>
             </td>
-            <td><a href="{% url 'user_statsdisplay_update' s.pk %}">{% bootstrap_icon 'pencil' %}</a>
+            <td><a href="{% url 'admin_statsdisplay_update' s.pk %}">{% bootstrap_icon 'pencil' %}</a>
             </td>
-            <td><a href="{% url 'user_statsdisplay_delete' s.pk %}">{% bootstrap_icon 'trash' %}</a>
+            <td><a href="{% url 'admin_statsdisplay_delete' s.pk %}">{% bootstrap_icon 'trash' %}</a>
             </td>
         </tr>
     {% endfor %}

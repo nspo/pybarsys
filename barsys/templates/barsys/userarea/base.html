@@ -26,22 +26,22 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
                 <li>
-                    <a href="{% url 'user_purchase_list' %}">Purchases</a>
+                    <a href="{% url 'admin_purchase_list' %}">Purchases</a>
                 </li>
                 <li>
-                    <a href="{% url 'user_user_list' %}">Users</a>
+                    <a href="{% url 'admin_user_list' %}">Users</a>
                 </li>
                 <li>
-                    <a href="{% url 'user_product_list' %}">Products</a>
+                    <a href="{% url 'admin_product_list' %}">Products</a>
                 </li>
                 <li>
-                    <a href="{% url 'user_category_list' %}">Categories</a>
+                    <a href="{% url 'admin_category_list' %}">Categories</a>
                 </li>
                 <li>
-                    <a href="{% url 'user_payment_list' %}">Payments</a>
+                    <a href="{% url 'admin_payment_list' %}">Payments</a>
                 </li>
                 <li>
-                    <a href="{% url 'user_invoice_list' %}">Invoices</a>
+                    <a href="{% url 'admin_invoice_list' %}">Invoices</a>
                 </li>
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Statistics
@@ -49,13 +49,13 @@
                     </a>
                     <ul class="dropdown-menu" role="menu">
                         <li>
-                            <a href="{% url 'user_statsdisplay_list' %}">Stats Displays</a>
+                            <a href="{% url 'admin_statsdisplay_list' %}">Stats Displays</a>
                         </li>
                         <li>
-                            <a href="{% url 'user_purchase_statistics_by_category' %}">Purchases by category</a>
+                            <a href="{% url 'admin_purchase_statistics_by_category' %}">Purchases by category</a>
                         </li>
                         <li>
-                            <a href="{% url 'user_purchase_statistics_by_product' %}">Purchases by product</a>
+                            <a href="{% url 'admin_purchase_statistics_by_product' %}">Purchases by product</a>
                         </li>
                     </ul>
                 </li>

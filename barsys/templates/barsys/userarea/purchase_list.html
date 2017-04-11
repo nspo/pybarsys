@@ -6,7 +6,7 @@
 
 {% block above_table %}
     <h1 class="pull-left" style="margin-top: 0;">Purchases</h1>
-    <a href="{% url 'user_purchase_new' %}">
+    <a href="{% url 'admin_purchase_new' %}">
         <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new purchase</button>
     </a>
 {% endblock %}
@@ -27,27 +27,27 @@
 {% block tablebody %}
     {% for p in object_list %}
         <tr>
-            <td><a href="{% url 'user_purchase_detail' p.pk %}">{{ p.created_date|sdatetime }}</a></td>
-            <td><a href="{% url 'user_user_detail' p.user.pk %}">{{ p.user.display_name }}</a></td>
+            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{{ p.created_date|sdatetime }}</a></td>
+            <td><a href="{% url 'admin_user_detail' p.user.pk %}">{{ p.user.display_name }}</a></td>
             <td>{{ p.quantity }}</td>
             <td>{{ p.product_name }}</td>
             <td>{{ p.product_price|currency }}</td>
             <td>{{ p.cost|currency }}</td>
             <td>
                 {% if p.has_invoice %}
-                    <a href="{% url 'user_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a>
+                    <a href="{% url 'admin_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a>
                 {% else %}
                     {% bool_to_icon p.invoice %}
                 {% endif %}
             </td>
-            <td><a href="{% url 'user_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
             <td>
                 {% if not p.has_invoice %}
-                    <a href="{% url 'user_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                    <a href="{% url 'admin_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
                 {% endif %}
             <td>
                 {% if not p.has_invoice %}
-                    <a href="{% url 'user_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a>
+                    <a href="{% url 'admin_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a>
                 {% endif %}
             </td>
         </tr>

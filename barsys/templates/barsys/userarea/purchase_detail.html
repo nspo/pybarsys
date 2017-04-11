@@ -10,7 +10,7 @@
         <div>
             <h1 class="pull-left" style="margin-top: 0;">Purchase details</h1>
             {% if not purchase.has_invoice %}
-                <a href="{% url 'user_purchase_update' purchase.pk %}">
+                <a href="{% url 'admin_purchase_update' purchase.pk %}">
                     <button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button>
                 </a>
             {% endif %}
@@ -23,7 +23,7 @@
             </tr>
             <tr>
                 <th>User</th>
-                <td><a href="{% url 'user_user_detail' object.user.pk %}">{{ object.user.display_name }}</a></td>
+                <td><a href="{% url 'admin_user_detail' object.user.pk %}">{{ object.user.display_name }}</a></td>
             </tr>
             <tr>
                 <th>Quantity</th>
@@ -52,7 +52,7 @@
             <tr>
                 <th>Invoice</th>
                 <td>{% if object.has_invoice %}
-                    <a href="{% url 'user_invoice_detail' object.invoice.pk %}">{{ object.invoice }}</a>
+                    <a href="{% url 'admin_invoice_detail' object.invoice.pk %}">{{ object.invoice }}</a>
                 {% else %}
                     No
                 {% endif %}

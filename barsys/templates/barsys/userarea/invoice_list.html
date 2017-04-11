@@ -5,7 +5,7 @@
 
 {% block above_table %}
     <h1 class="pull-left" style="margin-top: 0;">Invoices</h1>
-    <a href="{% url 'user_invoice_new' %}">
+    <a href="{% url 'admin_invoice_new' %}">
         <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Create new invoices</button>
     </a>
 {% endblock %}
@@ -21,11 +21,11 @@
 {% block tablebody %}
     {% for invoice in object_list %}
         <tr>
-            <td><a href="{% url 'user_invoice_detail' invoice.pk %}">{{ invoice.created_date|sdatetime }}</a></td>
+            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|sdatetime }}</a></td>
             <td>{{ invoice.recipient }}</td>
             <td>{{ invoice.amount|currency }}</td>
-            <td><a href="{% url 'user_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
-            <td><a href="{% url 'user_invoice_delete' invoice.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+            <td><a href="{% url 'admin_invoice_delete' invoice.pk %}">{% bootstrap_icon 'trash' %}</a></td>
         </tr>
     {% endfor %}
 {% endblock %}

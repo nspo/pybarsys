@@ -134,7 +134,7 @@ class CheckedDeleteView(View):
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class UserDeleteView(CheckedDeleteView):
-    success_url = reverse_lazy('user_user_list')
+    success_url = reverse_lazy('admin_user_list')
     model = User
 
 
@@ -176,12 +176,12 @@ class PurchaseUpdateView(edit.UpdateView):
 
     def handle_with_invoice(self, request):
         messages.error(request, "Cannot update this purchase because it has an invoice")
-        return redirect('user_purchase_list')
+        return redirect('admin_purchase_list')
 
 
 class PurchaseDeleteView(CheckedDeleteView):
     model = Purchase
-    success_url = reverse_lazy('user_purchase_list')
+    success_url = reverse_lazy('admin_purchase_list')
 
 
 # Category
@@ -217,7 +217,7 @@ class CategoryUpdateView(edit.UpdateView):
 
 class CategoryDeleteView(CheckedDeleteView):
     model = Category
-    success_url = reverse_lazy('user_category_list')
+    success_url = reverse_lazy('admin_category_list')
 
 
 # Category END
@@ -252,7 +252,7 @@ class ProductUpdateView(edit.UpdateView):
 
 class ProductDeleteView(CheckedDeleteView):
     model = Product
-    success_url = reverse_lazy('user_product_list')
+    success_url = reverse_lazy('admin_product_list')
 
 
 # Product END
@@ -288,7 +288,7 @@ class StatsDisplayUpdateView(edit.UpdateView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class StatsDisplayDeleteView(CheckedDeleteView):
     model = StatsDisplay
-    success_url = reverse_lazy('user_statsdisplay_list')
+    success_url = reverse_lazy('admin_statsdisplay_list')
 
 
 # StatsDisplay END
@@ -345,7 +345,7 @@ class PaymentUpdateView(edit.UpdateView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PaymentDeleteView(CheckedDeleteView):
     model = Payment
-    success_url = reverse_lazy('user_payment_list')
+    success_url = reverse_lazy('admin_payment_list')
 
 
 # PAYMENT END
@@ -375,7 +375,7 @@ class InvoiceDetailView(DetailView):
 class InvoiceCreateView(edit.FormView):
     template_name = "barsys/userarea/invoice_new.html"
     form_class = InvoicesCreateForm
-    success_url = reverse_lazy("user_invoice_list")
+    success_url = reverse_lazy("admin_invoice_list")
 
     def form_valid(self, form):
         users = form.cleaned_data["users"]
@@ -411,7 +411,7 @@ class InvoiceCreateView(edit.FormView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceDeleteView(CheckedDeleteView):
     model = Invoice
-    success_url = reverse_lazy('user_invoice_list')
+    success_url = reverse_lazy('admin_invoice_list')
 
 
 # Invoice END

@@ -153,7 +153,7 @@ class User(AbstractBaseUser):
         ordering = ["display_name"]
 
     def get_absolute_url(self):
-        return reverse('user_user_detail', kwargs={'pk': self.pk})
+        return reverse('admin_user_detail', kwargs={'pk': self.pk})
 
     def cannot_be_deleted(self):
         if self.purchases().count() == 0:
@@ -199,7 +199,7 @@ class Category(models.Model):
         verbose_name_plural = "Categories"
 
     def get_absolute_url(self):
-        return reverse('user_category_detail', kwargs={'pk': self.pk})
+        return reverse('admin_category_detail', kwargs={'pk': self.pk})
 
     def cannot_be_deleted(self):
         product_count = Product.objects.filter(category=self).count()
@@ -232,7 +232,7 @@ class Product(models.Model):
         return False
 
     def get_absolute_url(self):
-        return reverse('user_product_detail', kwargs={'pk': self.pk})
+        return reverse('admin_product_detail', kwargs={'pk': self.pk})
 
 
 class InvoiceQuerySet(models.QuerySet):
@@ -317,7 +317,7 @@ class Invoice(models.Model):
         return other_purchases_grouped
 
     def get_absolute_url(self):
-        return reverse('user_invoice_detail', kwargs={'pk': self.pk})
+        return reverse('admin_invoice_detail', kwargs={'pk': self.pk})
 
 
 class PurchaseQuerySet(models.QuerySet):
@@ -433,7 +433,7 @@ class Purchase(models.Model):
         return self.quantity * self.product_price
 
     def get_absolute_url(self):
-        return reverse('user_purchase_detail', kwargs={'pk': self.pk})
+        return reverse('admin_purchase_detail', kwargs={'pk': self.pk})
 
     def cannot_be_deleted(self):
         """ Returns False or an explanation why this cannot be deleted """
@@ -501,7 +501,7 @@ class Payment(models.Model):
     objects = PaymentQuerySet.as_manager()
 
     def get_absolute_url(self):
-        return reverse('user_payment_detail', kwargs={'pk': self.pk})
+        return reverse('admin_payment_detail', kwargs={'pk': self.pk})
 
     class Meta:
         ordering = ["-created_date"]
@@ -580,7 +580,7 @@ class StatsDisplay(models.Model):
             return "not supported"
 
     def get_absolute_url(self):
-        return reverse('user_statsdisplay_detail', kwargs={'pk': self.pk})
+        return reverse('admin_statsdisplay_detail', kwargs={'pk': self.pk})
 
     def cannot_be_deleted(self):
         return False

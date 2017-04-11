@@ -7,10 +7,10 @@
 {% block above_table %}
     <h1 class="pull-left" style="margin-top: 0;">Payments</h1>
     <div class="btn-group pull-right" role="group">
-        <a href="{% url 'user_payment_new' %}" class="btn btn-primary">
+        <a href="{% url 'admin_payment_new' %}" class="btn btn-primary">
             {% bootstrap_icon 'plus' %} Add new payment
         </a>
-        <a href="{% url 'user_payment_export' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+        <a href="{% url 'admin_payment_export' %}?{{ request.GET.urlencode }}" class="btn btn-success">
             {% bootstrap_icon 'download' %} Export
         </a>
     </div>
@@ -31,17 +31,17 @@
     {% for object in object_list %}
         <tr>
             <td>
-                <a href="{% url 'user_payment_detail' object.pk %}">{{ object.created_date|sdatetime }}</a>
+                <a href="{% url 'admin_payment_detail' object.pk %}">{{ object.created_date|sdatetime }}</a>
             </td>
-            <td><a href="{% url 'user_user_detail' object.user.pk %}">{{ object.user }}</a></td>
+            <td><a href="{% url 'admin_user_detail' object.user.pk %}">{{ object.user }}</a></td>
             <td>{{ object.amount|currency }}</td>
             <td>{{ object.get_payment_method_display }}</td>
             <td>{% bool_to_icon object.comment %}</td>
-            <td><a href="{% url 'user_payment_detail' object.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+            <td><a href="{% url 'admin_payment_detail' object.pk %}">{% bootstrap_icon 'info-sign' %}</a>
             </td>
-            <td><a href="{% url 'user_payment_update' object.pk %}">{% bootstrap_icon 'pencil' %}</a>
+            <td><a href="{% url 'admin_payment_update' object.pk %}">{% bootstrap_icon 'pencil' %}</a>
             </td>
-            <td><a href="{% url 'user_payment_delete' object.pk %}">{% bootstrap_icon 'trash' %}</a>
+            <td><a href="{% url 'admin_payment_delete' object.pk %}">{% bootstrap_icon 'trash' %}</a>
             </td>
         </tr>
     {% endfor %}
