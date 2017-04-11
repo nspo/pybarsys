@@ -24,7 +24,7 @@ SECRET_KEY = '&_cx6qdzz^1w%per*z6emn$*&937j-^0@q93g+t9fk7hy%8p(%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.0.133", "localhost"]
+ALLOWED_HOSTS = ["127.0.0.1", "192.168.0.133", "localhost",]
 
 # Constance settings
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
@@ -38,17 +38,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize', # summary pages
+    'django.contrib.humanize',
     'bootstrap3',
     'barsys.apps.BarsysConfig',
     'constance',
     'constance.backends.database',
     'django_filters',
     'crispy_forms',
-
+    'debug_toolbar',
 ]
 
+STATIC_URL = '/static/'
+
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,7 +59,29 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda e: False,
+}
+
+DEBUG_TOOLBAR_PANELS = [
+    'debug_toolbar.panels.versions.VersionsPanel',
+    'debug_toolbar.panels.timer.TimerPanel',
+    'debug_toolbar.panels.settings.SettingsPanel',
+    'debug_toolbar.panels.headers.HeadersPanel',
+    'debug_toolbar.panels.request.RequestPanel',
+    'debug_toolbar.panels.sql.SQLPanel',
+    'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+    'debug_toolbar.panels.templates.TemplatesPanel',
+    'debug_toolbar.panels.cache.CachePanel',
+    'debug_toolbar.panels.signals.SignalsPanel',
+    'debug_toolbar.panels.logging.LoggingPanel',
+    'debug_toolbar.panels.redirects.RedirectsPanel',
+    'debug_toolbar.panels.profiling.ProfilingPanel',
+]
+
 
 ROOT_URLCONF = 'pybarsys.urls'
 LOGIN_REDIRECT_URL = 'user_home'
@@ -126,8 +151,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
-
-STATIC_URL = '/static/'
 
 # Constance settings
 CONSTANCE_CONFIG = {

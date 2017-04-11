@@ -17,6 +17,8 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from barsys.forms import LoginForm
+from django.conf import settings
+from debug_toolbar import apps
 
 urlpatterns = [
     url(r'^django-admin/', admin.site.urls),
@@ -28,3 +30,9 @@ urlpatterns = [
         name="user_login"),
     url(r'^logout/$', auth_views.logout, {'next_page': 'user_login'}, name="user_logout"),
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        url(r'^debug/', include(debug_toolbar.urls)),
+    ] + urlpatterns

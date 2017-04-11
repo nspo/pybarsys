@@ -39,6 +39,22 @@
                 <th>Admin?</th>
                 <td>{% bool_to_icon object.is_admin %}</td>
             </tr>
+            <tr>
+                <th>Account balance</th>
+                <td>{{ object.account_balance|currency }}</td>
+            </tr>
+            <tr>
+                <th>Sum of payments</th>
+                <td>{{ object.payments.sum_amount|currency }}</td>
+            </tr>
+            <tr>
+                <th>Sum of invoices</th>
+                <td>{{ object.invoices.sum_amount|currency }}</td>
+            </tr>
+            <tr>
+                <th>Sum of own purchases</th>
+                <td>{{ object.purchases.sum_cost|currency }}</td>
+            </tr>
 
             <tr>
                 <th>Purchases paid by other</th>
@@ -53,7 +69,7 @@
                 <th>Pays purchases for others</th>
                 <td>{% if object.pays_for_others %}
                     {% for u in object.pays_for_others %}
-                        {% if not forloop.first %} + {% endif %}<a href="{% url 'user_user_detail' u.pk %}">{{u}}</a>
+                        {% if not forloop.first %} + {% endif %}<a href="{% url 'user_user_detail' u.pk %}">{{ u }}</a>
                     {% endfor %}
                 {% else %}
                     No

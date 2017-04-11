@@ -169,6 +169,9 @@ class User(AbstractBaseUser):
     def pays_themselves(self):
         return self.purchases_paid_by_other is None
 
+    def account_balance(self):
+        return self.payments().sum_amount() - self.invoices().sum_amount()
+
 
 class Category(models.Model):
     name = models.CharField(max_length=30, unique=True, blank=False)
@@ -224,6 +227,14 @@ class Product(models.Model):
         return reverse('user_product_detail', kwargs={'pk': self.pk})
 
 
+class InvoiceQuerySet(models.QuerySet):
+    def sum_amount(self):
+        total_amount = self.aggregate(total_amount=models.Sum(F("amount"))).get("total_amount")
+        if total_amount is not None:
+            return total_amount
+        else:
+            return Decimal('0')
+
 class InvoiceManager(models.Manager):
     def create_for_user(self, user):
         if not user.pays_themselves():
@@ -236,26 +247,20 @@ class InvoiceManager(models.Manager):
         invoice.save()  # Save so that an ID is created
 
         own_purchases = user.purchases().unbilled()
-        subtotal = 0
-        for p in own_purchases:
-            subtotal += p.cost()
-            invoice.amount += p.cost()
-            p.invoice = invoice
-            p.save()
+
+        subtotal = own_purchases.sum_cost()
+        invoice.amount += subtotal
+        # Call update only after summing up the costs, b/c otherwise they are not unbilled anymore
+        own_purchases.update(invoice=invoice)
         # print("Subtotal for own purchases: {}".format(subtotal))
 
         other_purchases = Purchase.objects.to_pay_by(user).order_by('user')
-        for user, purchases in groupby(other_purchases, key=lambda p: p.user):
-            subtotal = 0
-            for purchase in purchases:
-                subtotal += purchase.cost()
-                invoice.amount += purchase.cost()
-                purchase.invoice = invoice
-                purchase.save()
-                # print("Subtotal for purchases of {}: {}".format(user, subtotal))
+
+        subtotal = other_purchases.sum_cost()
+        invoice.amount += subtotal
+        other_purchases.update(invoice=invoice)
 
         invoice.save()
-        # print(invoice)
 
         return invoice
 
@@ -269,7 +274,7 @@ class Invoice(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
 
-    objects = InvoiceManager()
+    objects = InvoiceManager.from_queryset(InvoiceQuerySet)()
 
     class Meta:
         ordering = ["-created_date"]
@@ -325,9 +330,14 @@ class PurchaseQuerySet(models.QuerySet):
         """ Invoiced purchases that were paid by a user for themselves """
         return self.filter(Q(invoice__recipient=payer) & Q(user=payer))
 
-    def sum_costs(self):
-        return self.aggregate(total_cost=models.Sum(F("quantity") * F("product_price"),
-                                                    output_field=DecimalField(decimal_places=2))).get("total_cost")
+    def sum_cost(self):
+        total_cost = self.aggregate(total_cost=models.Sum(F("quantity") * F("product_price"),
+                                                          output_field=DecimalField(decimal_places=2))).get(
+            "total_cost")
+        if total_cost is not None:
+            return total_cost
+        else:
+            return Decimal('0')
 
     def sum_quantity(self):
         return self.aggregate(total_quantity=models.Sum(F("quantity"))).get("total_quantity")
@@ -446,6 +456,16 @@ class Purchase(models.Model):
         super(Purchase, self).save(*args, **kw)
 
 
+class PaymentQuerySet(models.QuerySet):
+    def sum_amount(self):
+        """ Total amount of all payments """
+        total_amount = self.aggregate(total_amount=models.Sum(F("amount"))).get("total_amount")
+        if total_amount is not None:
+            return total_amount
+        else:
+            return Decimal('0')
+
+
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, help_text="User that made this payment")
     amount = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
@@ -463,6 +483,8 @@ class Payment(models.Model):
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
+
+    objects = PaymentQuerySet.as_manager()
 
     def get_absolute_url(self):
         return reverse('user_payment_detail', kwargs={'pk': self.pk})

@@ -393,7 +393,7 @@ class InvoiceCreateView(edit.FormView):
 
         if len(invoices) > 0:
             created_str = "Created {} invoice(s) for the following user(s): {}. ".format(len(invoices), ", ".join(
-                [i.recipient.__str__() for i in invoices]))
+                ["{} ({})".format(i.recipient.display_name, currency(i.amount)) for i in invoices]))
         else:
             created_str = "No invoices were created. "
 
