@@ -1,0 +1,59 @@
+{% extends "email/html_email_base.html" %}
+{% load barsys_helpers %}
+
+{% block main_content %}
+    <h1>{{ subject }}</h1>
+    <p>Hello, {{ invoice.recipient.display_name }}!</p>
+
+    <p>This is an invoice from <i>{{ bar_name }}</i>. <br/>
+        Your current account balance is: <b>{{ invoice.recipient.account_balance|currency }}</b></p>
+
+    <p>If your account balance is below {{ below_balance_send|currency }}, please send money to the following bank
+        account:</p>
+    <div style="white-space: pre-wrap;">{{ bank_details }}</div>
+    <p/>
+
+    <p>The total amount of this invoice is <b>{{ invoice.amount|currency }}</b> and consists of the following purchases:
+    </p>
+    <hr/>
+    <h2>Own purchases:</h2>
+    {% include "email/subtable_purchases.html" with purchases=own_purchases %}
+    <hr/>
+    {% for p_user, u_purchases in other_purchases_grouped %}
+        <h2>Purchases of {{ p_user }}:</h2>
+        {% include "email/subtable_purchases.html" with purchases=u_purchases %}
+        <hr/>
+    {% endfor %}
+
+    <h2>Your last payments:</h2>
+    <table>
+        <thead class="left">
+        <th>Time</th>
+        <th>Amount</th>
+        <th>Payment method</th>
+        <th>Comment</th>
+        </thead>
+        <tbody>
+        {% for p in recent_payments %}
+            <tr>
+                <td>{{ p.created_date|sdatetime }}</td>
+                <td>{{ p.amount|currency }}</td>
+                <td>{{ p.get_payment_method_display }}</td>
+                <td>{{ p.comment }}</td>
+            </tr>
+        {% endfor %}
+        {% if not recent_payments %}
+            <tr><td colspan="4">None</td></tr>
+        {% endif %}
+        </tbody>
+    </table>
+
+    <p/>
+    <p>Have a nice day!</p>
+{% endblock %}
+
+{% block footer %}
+    You have purchased products for yourself with a total cost of {{ invoice.recipient.purchases.sum_cost|currency }} so
+    far.<br/>
+    This invoice was automatically generated on {{ invoice.created_date|sdate }} by <a href="https://github.com/nspo/pybarsys">pybarsys</a>.
+{% endblock %}

@@ -1,0 +1,30 @@
+{% load barsys_helpers %}
+<table>
+<thead class="left">
+<tr>
+    <th>Time</th>
+    <th>Quantity</th>
+    <th>Product (amount)</th>
+    <th>Price per product</th>
+    <th>Cost</th>
+</tr>
+</thead>
+<tbody>
+{% for p in purchases %}
+    <tr>
+        <td>{{ p.created_date|sdatetime }}</td>
+        <td>{{ p.quantity }}</td>
+        <td>{{ p.product_name }} ({{ p.product_amount }})</td>
+        <td>{{ p.product_price|currency }}</td>
+        <td>{{ p.cost|currency }}</td>
+    </tr>
+{% endfor %}
+    <tr class="total-row">
+        <td>Total</td>
+        <td>{{ purchases.sum_quantity }}</td>
+        <td></td>
+        <td></td>
+        <td>{{ purchases.sum_cost|currency }}</td>
+    </tr>
+</tbody>
+</table>

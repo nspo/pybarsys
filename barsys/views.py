@@ -375,6 +375,28 @@ class InvoiceDetailView(DetailView):
 
         return context
 
+# for debugging mail
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class InvoiceDetail2View(DetailView):
+    model = Invoice
+    template_name = "email/normal_invoice.html.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(InvoiceDetail2View, self).get_context_data(**kwargs)
+
+        invoice = self.object
+
+        context["invoice"] = invoice
+        context["subject"] = config.MAIL_INVOICE_SUBJECT
+        context["bar_name"] = config.MAIL_NAME_OF_BAR
+        context["bank_details"] = config.MAIL_BANK_DETAILS
+        context["below_balance_send"] = config.MAIL_BALANCE_SEND_MONEY
+        context["own_purchases"] = invoice.own_purchases()
+        context["other_purchases_grouped"] = invoice.other_purchases_grouped()
+        context["recent_payments"] = invoice.recipient.payments().order_by('-created_date')[:5]
+
+        return context
+#before can be deleted
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceCreateView(edit.FormView):

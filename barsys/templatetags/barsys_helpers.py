@@ -38,3 +38,7 @@ def keyvalue(dict, key):
 @register.filter
 def sdatetime(value):
     return formats.date_format(value, "SHORT_DATETIME_FORMAT")
+
+@register.filter
+def sdate(value):
+    return formats.date_format(value, "SHORT_DATE_FORMAT")
