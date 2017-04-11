@@ -24,11 +24,10 @@ class PurchaseForm(forms.ModelForm):
 
 class InvoicesCreateForm(forms.Form):
     users = forms.ModelMultipleChoiceField(queryset=User.objects.active().buyers().pay_themselves(),
-        help_text="Select users to generate invoices for. Only users who pay themselves can be selected."
-    )
+                                           help_text="Select users to generate invoices for. Only users who pay themselves can be selected."
+                                           )
     create_empty_invoices = forms.BooleanField(required=False, help_text="Whether invoices should be created even "
-                                                                         "if user has not purchased anything. "
-                                                                         "Ignored if user does not pay for themselves.")
+                                                                         "if user has not purchased anything. ")
 
     def __init__(self, *args, **kwargs):
         super(InvoicesCreateForm, self).__init__(*args, **kwargs)
@@ -38,6 +37,7 @@ class InvoicesCreateForm(forms.Form):
 
         self.helper.add_input(layout.Submit('create', 'Create'))
         self.helper.add_input(layout.Reset('reset', 'Unselect all'))
+
 
 class UserCreateForm(auth_forms.UserCreationForm):
     class Meta:
@@ -52,6 +52,11 @@ class UserChangeWithPasswordForm(forms.ModelForm):
     Mainly copied from auth.UserCreationForm, b/c UserChangeForm does not allow to change passwords
     This is still based on auth.models.User, but the model will be overwritten in another class
     """
+    purchases_paid_by_other = forms.ModelChoiceField(queryset=User.objects.active().pay_themselves(),
+                                                     help_text=User._meta.get_field(
+                                                         'purchases_paid_by_other').help_text,
+                                                     required=False)
+
     error_messages = {
         'password_mismatch': _("The two password fields didn't match."),
     }
@@ -147,22 +152,22 @@ class SingleUserSinglePurchaseForm(forms.Form):
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        exclude = ('', )
+        exclude = ('',)
 
 
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        exclude = ('', )
+        exclude = ('',)
 
 
 class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
-        exclude = ('', )
+        exclude = ('',)
 
 
 class StatsDisplayForm(forms.ModelForm):
     class Meta:
         model = StatsDisplay
-        exclude = ('', )
+        exclude = ('',)

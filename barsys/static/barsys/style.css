@@ -2,6 +2,10 @@
 
 }*/
 
+tr.table-total-row {
+    font-weight:bold; border-top:2px solid #DDDDDD;
+}
+
 table.table-sidebar {
     text-align: left; table-layout: fixed; margin-bottom: 0;
 }

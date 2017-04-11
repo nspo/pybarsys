@@ -72,15 +72,16 @@ class User(AbstractBaseUser):
     display_name = models.CharField(max_length=40, unique=True, blank=False, help_text="What is shown on the "
                                                                                        "main purchase page")
 
-    is_active = models.BooleanField(default=True, help_text="User account is activated")
+    is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False, help_text="User may login as admin")
     is_buyer = models.BooleanField(default=True, help_text="User may buy products")
     is_favorite = models.BooleanField(default=False, help_text="User is shown under favorites")
 
     purchases_paid_by_other = models.ForeignKey("self", on_delete=models.PROTECT, default=None, null=True, blank=True,
-                                                help_text="Someone else is responsible to pay for all purchases made "
-                                                          "by this user. Invoices are sent to the responsible person "
-                                                          "and a copy is sent to the user itself as a notification.",
+                                                help_text="Another active user (who pays for their own purchases) is "
+                                                          "responsible to pay for all purchases made by this user. "
+                                                          "Invoices are sent to the responsible user, and a copy goes "
+                                                          "to the dependent as notification.",
                                                 limit_choices_to=(Q(purchases_paid_by_other=None)))
 
     # Dates
@@ -99,12 +100,19 @@ class User(AbstractBaseUser):
             if self.purchases_paid_by_other.purchases_paid_by_other is not None:
                 raise ValidationError({'purchases_paid_by_other': "Purchases cannot be paid by someone who does not "
                                                                   "pay for their own purchases."})
-            pays_for = self.pays_for_others()
-            if pays_for.count() > 0:
-                other_names = [u.display_name for u in pays_for]
+            dependents = self.dependents()
+            if dependents.count() > 0:
+                other_names = [u.display_name for u in dependents]
                 raise ValidationError({'purchases_paid_by_other': "This user pays for the following users, so "
                                                                   "their purchases cannot be paid by someone else: {}"
                                       .format(', '.join(other_names))})
+        if self.pk is not None:
+            # Check whether this user should pay for other active users' purchases but is not active
+            dependents = self.dependents().active()
+            if not self.is_active and dependents.count() > 0:
+                raise ValidationError({'is_active': "This user has to pay for purchases of the following active users"
+                                                    ", so they cannot be deactivated: {}".
+                                      format(", ".join([d.display_name for d in dependents]))})
 
     def get_full_name(self):
         # The user is identified by their email address
@@ -162,7 +170,7 @@ class User(AbstractBaseUser):
     def payments(self):
         return Payment.objects.filter(user=self)
 
-    def pays_for_others(self):
+    def dependents(self):
         """ FIXME: name """
         return User.objects.filter(purchases_paid_by_other=self)
 
@@ -234,6 +242,7 @@ class InvoiceQuerySet(models.QuerySet):
             return total_amount
         else:
             return Decimal('0')
+
 
 class InvoiceManager(models.Manager):
     def create_for_user(self, user):
@@ -340,7 +349,11 @@ class PurchaseQuerySet(models.QuerySet):
             return Decimal('0')
 
     def sum_quantity(self):
-        return self.aggregate(total_quantity=models.Sum(F("quantity"))).get("total_quantity")
+        total_quantity = self.aggregate(total_quantity=models.Sum(F("quantity"))).get("total_quantity")
+        if total_quantity is not None:
+            return total_quantity
+        else:
+            return 0
 
 
 class PurchaseManager(models.Manager):
@@ -467,9 +480,10 @@ class PaymentQuerySet(models.QuerySet):
 
 
 class Payment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.PROTECT, help_text="User that made this payment")
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
     amount = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
-                                 validators=[MinValueValidator(Decimal('0.01'))])
+                                 help_text="Positive amounts are deposits by the user. "
+                                           "Negative amounts are payouts to the user.")
     comment = models.CharField(max_length=100, blank=True)
 
     PAYMENT_METHOD_CASH = "CASH"

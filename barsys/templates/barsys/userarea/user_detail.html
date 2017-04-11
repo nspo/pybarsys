@@ -39,21 +39,22 @@
                 <th>Admin?</th>
                 <td>{% bool_to_icon object.is_admin %}</td>
             </tr>
+
             <tr>
-                <th>Account balance</th>
-                <td>{{ object.account_balance|currency }}</td>
+                <th colspan="2"><h4>Account balance</h4></th>
             </tr>
+
             <tr>
-                <th>Sum of payments</th>
+                <th style="padding-left: 25px;">Sum of payments</th>
                 <td>{{ object.payments.sum_amount|currency }}</td>
             </tr>
             <tr>
-                <th>Sum of invoices</th>
+                <th style="padding-left: 25px;">Sum of invoices</th>
                 <td>{{ object.invoices.sum_amount|currency }}</td>
             </tr>
-            <tr>
-                <th>Sum of own purchases</th>
-                <td>{{ object.purchases.sum_cost|currency }}</td>
+            <tr class="table-total-row">
+                <th style="padding-left: 25px;">Current account balance</th>
+                <td>{{ object.account_balance|currency }}</td>
             </tr>
 
             <tr>
@@ -67,13 +68,17 @@
 
             <tr>
                 <th>Pays purchases for others</th>
-                <td>{% if object.pays_for_others %}
-                    {% for u in object.pays_for_others %}
+                <td>{% if object.dependents %}
+                    {% for u in object.dependents %}
                         {% if not forloop.first %} + {% endif %}<a href="{% url 'user_user_detail' u.pk %}">{{ u }}</a>
                     {% endfor %}
                 {% else %}
                     No
                 {% endif %}</td>
+            </tr>
+            <tr>
+                <th>Sum of own purchases</th>
+                <td>{{ object.purchases.sum_cost|currency }}</td>
             </tr>
 
             <tr>

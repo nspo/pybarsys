@@ -17,12 +17,12 @@
             <td>{{ p.cost|currency }}</td>
         </tr>
     {% endfor %}
-    <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
+    <tr class="table-total-row">
         <td>Total</td>
         <td>{{ purchases.sum_quantity }}</td>
         <td></td>
         <td></td>
-        <td>{{ purchases.sum_costs|currency }}</td>
+        <td>{{ purchases.sum_cost|currency }}</td>
     </tr>
     </tbody>
 </table>
