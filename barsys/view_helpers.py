@@ -109,7 +109,8 @@ def send_reminder_mails(request, users):
         except Exception as e:
             reminder_mail_failure.append((user, e))
 
-    messages.info(request, "{} payment reminders were successfully sent. ".format(num_reminder_mail_success))
+    if num_reminder_mail_success > 0:
+        messages.info(request, "{} payment reminders were successfully sent. ".format(num_reminder_mail_success))
     if len(reminder_mail_failure) > 0:
         messages.error(request, "Sending payment reminder mail(s) to the following user(s) failed: {}". \
                        format(", ".join(["{} ({})".format(u, err) for u, err in reminder_mail_failure])))

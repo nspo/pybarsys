@@ -39,6 +39,28 @@ class UserListView(FilterView):
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class UserExportView(FilterView):
+    filterset_class = filters.UserFilter
+
+    def render_to_response(self, context, **response_kwargs):
+        # Could use timezone.now(), but that makes the string much longer
+        filename = "{}-users-export.csv".format(datetime.datetime.now().replace(microsecond=0).isoformat())
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+
+        writer = csv.writer(response)
+        writer.writerow(['display_name', 'email', 'pays_themselves', 'account_balance', 'unbilled_purchases'])
+
+        for obj in self.object_list:
+            writer.writerow(
+                [obj.display_name, obj.email, obj.pays_themselves(), obj.account_balance(),
+                 obj.purchases().unbilled().sum_cost()])
+
+        return response
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class UserDetailView(DetailView):
     model = User
     template_name = "barsys/userarea/user_detail.html"
@@ -377,7 +399,6 @@ class InvoiceDetailView(DetailView):
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceResendView(View):
-
     def get(self, request, pk):
         invoice = get_object_or_404(Invoice, pk=pk)
         view_helpers.send_invoice_mails(request, [invoice])

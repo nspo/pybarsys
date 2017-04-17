@@ -21,6 +21,7 @@ urlpatterns = [
 
     # User
     url(r'^admin/user/list/$', views.UserListView.as_view(), name='admin_user_list'),
+    url(r'^admin/user/export/$', views.UserExportView.as_view(), name='admin_user_export'),
     url(r'^admin/user/new/$', views.UserCreateView.as_view(), name='admin_user_new'),
     url(r'^admin/user/(?P<pk>[0-9]+)/detail/$', views.UserDetailView.as_view(), name='admin_user_detail'),
     url(r'^admin/user/(?P<pk>[0-9]+)/update/$', views.UserUpdateView.as_view(), name='admin_user_update'),

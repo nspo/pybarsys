@@ -5,9 +5,14 @@
 
 {% block above_table %}
     <h1 class="pull-left" style="margin-top: 0;">Users</h1>
-    <a href="{% url 'admin_user_new' %}">
-        <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new user</button>
-    </a>
+    <div class="btn-group pull-right" role="group">
+        <a href="{% url 'admin_user_new' %}" class="btn btn-primary">
+            {% bootstrap_icon 'plus' %} Add new user
+        </a>
+        <a href="{% url 'admin_user_export' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+            {% bootstrap_icon 'download' %} Export
+        </a>
+    </div>
 {% endblock %}
 {% block tablehead %}
     <tr>
