@@ -548,12 +548,6 @@ class ProductChangeActionListView(FilterView):
     filterset_class = filters.ProductChangeActionFilter
     template_name = "barsys/userarea/productchangeaction_list.html"
     paginate_by = 10
-#
-#
-# @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-# class ProductChangeActionDetailView(DetailView):
-#     model = ProductChangeAction
-#     template_name = "barsys/userarea/productchangeaction_detail.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
