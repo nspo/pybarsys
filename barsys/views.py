@@ -25,7 +25,6 @@ from django.contrib import messages
 
 from . import view_helpers
 
-
 from pybarsys import settings
 
 from . import filters
@@ -375,6 +374,7 @@ class InvoiceDetailView(DetailView):
 
         return context
 
+
 # for debugging mail
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceMailDebugView(DetailView):
@@ -394,6 +394,7 @@ class InvoiceMailDebugView(DetailView):
         context["last_payments"] = invoice.recipient.payments()[:5]
 
         return context
+
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PaymentReminderMailDebugView(DetailView):
@@ -423,17 +424,21 @@ class InvoiceCreateView(edit.FormView):
 
     def form_valid(self, form):
         users = form.cleaned_data["users"]
-        send_mails = form.cleaned_data["send_mails"]
+        send_invoices = form.cleaned_data["send_invoices"]
+        send_payment_reminders = form.cleaned_data["send_payment_reminders"]
         skipped_users = []
         invoices = []
+        users_to_remind = []
         for user in users:
             purchases_to_pay = Purchase.objects.to_pay_by(user)
-            if form.cleaned_data["create_empty_invoices"] or purchases_to_pay.count() > 0:
+            if purchases_to_pay.count() > 0:
                 # print("{} has {} purchases to pay for: ".format(user, purchases_to_pay.count()))
                 invoice = Invoice.objects.create_for_user(user)
                 invoices.append(invoice)
             else:
                 # print("{} has no purchases to pay for".format(user))
+                if send_payment_reminders and user.account_balance() < config.MAIL_BALANCE_SEND_MONEY:
+                    users_to_remind.append(user)
                 skipped_users.append(user)
 
         if len(invoices) > 0:
@@ -444,17 +449,21 @@ class InvoiceCreateView(edit.FormView):
 
         if len(skipped_users) > 0:
             # skipped_str = "Skipped {} user(s): {}".format(len(skipped_users), ' ,'.join([u.__str__() for u in skipped_users]))
-            skipped_str = "Skipped {} user(s).".format(len(skipped_users))
+            skipped_str = "Skipped {} user(s) because they did not need new invoices.".format(len(skipped_users))
         else:
-            skipped_str = "No users were skipped."
+            skipped_str = "No users were skipped because they did not need new invoices."
 
         messages.info(self.request, created_str + skipped_str)
 
-        # Send mails if wanted
-        if send_mails and len(invoices) > 0:
+        # Send invoice mails if wanted
+        if send_invoices and len(invoices) > 0:
             view_helpers.send_invoice_mails(self.request, invoices)
         else:
-            messages.info(self.request, "No mails were sent.")
+            messages.info(self.request, "No invoice mails were sent.")
+
+        # Send payment reminder mails
+        if len(users_to_remind) > 0:
+            view_helpers.send_reminder_mails(self.request, users_to_remind)
 
         return super(InvoiceCreateView, self).form_valid(form)
 

@@ -64,6 +64,7 @@ def send_invoice_mails(request, invoices):
         context["config"] = config
         context["own_purchases"] = invoice.own_purchases()
         context["other_purchases_grouped"] = invoice.other_purchases_grouped()
+        context["last_invoices"] = invoice.recipient.invoices()[:5]
         context["last_payments"] = invoice.recipient.payments()[:5]
         content_plain = render_to_string("email/normal_invoice.plaintext.html", context)
         content_html = render_to_string("email/normal_invoice.html.html", context)
@@ -78,7 +79,36 @@ def send_invoice_mails(request, invoices):
         except Exception as e:
             invoice_mail_failure.append((invoice.recipient, e))
 
-    messages.info(request, "{} mails were successfully sent. ".format(num_invoice_mail_success))
+    messages.info(request, "{} invoice mails were successfully sent. ".format(num_invoice_mail_success))
     if len(invoice_mail_failure) > 0:
         messages.error(request, "Sending mail(s) to the following user(s) failed: {}". \
                        format(", ".join(["{} ({})".format(u, err) for u, err in invoice_mail_failure])))
+
+
+def send_reminder_mails(request, users):
+    """ Send payment reminder mails to users """
+    num_reminder_mail_success = 0
+    reminder_mail_failure = []  # [(username, error), ...]
+    for user in users:
+        context = {}
+        context["user"] = user
+        context["config"] = config
+        context["last_invoices"] = user.invoices()[:5]
+        context["last_payments"] = user.payments()[:5]
+        content_plain = render_to_string("email/payment_reminder.plaintext.html", context)
+        content_html = render_to_string("email/payment_reminder.html.html", context)
+        try:
+            msg = EmailMultiAlternatives(config.MAIL_PAYMENT_REMINDER_SUBJECT, content_plain,
+                                         pybarsys_settings.EMAIL_FROM_ADDRESS, [user.email],
+                                         reply_to=[config.MAIL_CONTACT_EMAIL])
+            msg.attach_alternative(content_html, "text/html")
+            msg.send(fail_silently=False)
+
+            num_reminder_mail_success += 1
+        except Exception as e:
+            reminder_mail_failure.append((user, e))
+
+    messages.info(request, "{} payment reminders were successfully sent. ".format(num_reminder_mail_success))
+    if len(reminder_mail_failure) > 0:
+        messages.error(request, "Sending payment reminder mail(s) to the following user(s) failed: {}". \
+                       format(", ".join(["{} ({})".format(u, err) for u, err in reminder_mail_failure])))

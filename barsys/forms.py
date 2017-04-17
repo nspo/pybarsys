@@ -6,6 +6,7 @@ from django.contrib.auth import forms as auth_forms, models as auth_models
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout
+from constance import config
 
 
 class LoginForm(auth_forms.AuthenticationForm):
@@ -27,20 +28,23 @@ class InvoicesCreateForm(forms.Form):
                                            help_text="Select users to generate invoices for. Only users who pay themselves can be selected."
                                            )
 
-    create_empty_invoices = forms.BooleanField(required=False, help_text="Whether invoices should be created even "
-                                                                         "if user has not purchased anything. ")
+    send_invoices = forms.BooleanField(required=False, initial=True,
+                                       help_text="Whether to send invoice mails to the users' mail addresses. "
+                                                 "Users who do not pay for themselves will get a notification of their "
+                                                 "purchases instead of a real invoice. "
+                                                 "If false, invoices will only be created internally.")
 
-    send_mails = forms.BooleanField(required=False, initial=True,
-                                    help_text="Whether to send invoices to the users' mail addresses. "
-                                              "Users who do not pay for themselves will get a notification of their "
-                                              " purchases instead of a real invoice. "
-                                              "If false, invoices will only be created internally.")
+    send_payment_reminders = forms.BooleanField(required=False, initial=True,
+                                                help_text="Whether to send payment reminder mails to users with an "
+                                                          "account balance below {}".format(
+                                                           currency(config.MAIL_BALANCE_SEND_MONEY)))
 
     def __init__(self, *args, **kwargs):
         super(InvoicesCreateForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
-        self.helper.layout = layout.Layout(layout.Field('users', size="35"), 'create_empty_invoices', 'send_mails')
+        self.helper.layout = layout.Layout(layout.Field('users', size="30"), 'send_invoices',
+                                           'send_payment_reminders')
 
         self.helper.add_input(layout.Submit('create', 'Create'))
         self.helper.add_input(layout.Reset('reset', 'Unselect all'))
