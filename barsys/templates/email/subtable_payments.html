@@ -1,0 +1,24 @@
+{% load barsys_helpers %}
+<table>
+    <thead class="left">
+    <th>Time</th>
+    <th>Amount</th>
+    <th>Payment method</th>
+    <th>Comment</th>
+    </thead>
+    <tbody>
+    {% for p in payments %}
+        <tr>
+            <td>{{ p.created_date|sdatetime }}</td>
+            <td>{{ p.amount|currency }}</td>
+            <td>{{ p.get_payment_method_display }}</td>
+            <td>{{ p.comment }}</td>
+        </tr>
+    {% endfor %}
+    {% if not payments %}
+        <tr>
+            <td colspan="4">None</td>
+        </tr>
+    {% endif %}
+    </tbody>
+</table>

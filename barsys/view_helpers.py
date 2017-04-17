@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.contrib import messages
 
 from django.template.loader import render_to_string
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from decimal import Decimal
 from constance import config
 from pybarsys import settings as pybarsys_settings
@@ -61,22 +61,19 @@ def send_invoice_mails(request, invoices):
     for invoice in invoices:
         context = {}
         context["invoice"] = invoice
-        context["subject"] = config.MAIL_INVOICE_SUBJECT
-        context["bar_name"] = config.MAIL_NAME_OF_BAR
-        context["bank_details"] = config.MAIL_BANK_DETAILS
-        context["below_balance_send"] = config.MAIL_BALANCE_SEND_MONEY
+        context["config"] = config
         context["own_purchases"] = invoice.own_purchases()
         context["other_purchases_grouped"] = invoice.other_purchases_grouped()
-        context["recent_payments"] = invoice.recipient.payments().order_by('-created_date')[:5]
+        context["last_payments"] = invoice.recipient.payments()[:5]
         content_plain = render_to_string("email/normal_invoice.plaintext.html", context)
         content_html = render_to_string("email/normal_invoice.html.html", context)
         try:
-            send_mail(config.MAIL_INVOICE_SUBJECT,
-                      content_plain,
-                      pybarsys_settings.EMAIL_FROM_ADDRESS,
-                      [invoice.recipient.email],
-                      html_message=content_html,
-                      fail_silently=False)
+            msg = EmailMultiAlternatives(config.MAIL_INVOICE_SUBJECT, content_plain,
+                                         pybarsys_settings.EMAIL_FROM_ADDRESS, [invoice.recipient.email],
+                                         reply_to=[config.MAIL_CONTACT_EMAIL])
+            msg.attach_alternative(content_html, "text/html")
+            msg.send(fail_silently=False)
+
             num_invoice_mail_success += 1
         except Exception as e:
             invoice_mail_failure.append((invoice.recipient, e))

@@ -52,7 +52,12 @@ urlpatterns = [
     url(r'^admin/invoice/list/$', views.InvoiceListView.as_view(), name='admin_invoice_list'),
     url(r'^admin/invoice/new/$', views.InvoiceCreateView.as_view(), name='admin_invoice_new'),
     url(r'^admin/invoice/(?P<pk>[0-9]+)/detail/$', views.InvoiceDetailView.as_view(), name='admin_invoice_detail'),
-    url(r'^admin/invoice/(?P<pk>[0-9]+)/detail2/$', views.InvoiceDetail2View.as_view(), name='admin_invoice_detail2'),
+
+    # Mail debug
+    url(r'^admin/invoice/(?P<pk>[0-9]+)/mail/$', views.InvoiceMailDebugView.as_view(), name='admin_invoice_mail'),
+    url(r'^admin/user/(?P<pk>[0-9]+)/payment_reminder$', views.PaymentReminderMailDebugView.as_view(), name='admin_user_payment_reminder'),
+    # Mail debug END
+
     url(r'^admin/invoice/(?P<pk>[0-9]+)/delete/$', views.InvoiceDeleteView.as_view(), name='admin_invoice_delete'),
 
     # StatsDisplay

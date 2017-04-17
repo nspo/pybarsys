@@ -377,26 +377,43 @@ class InvoiceDetailView(DetailView):
 
 # for debugging mail
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class InvoiceDetail2View(DetailView):
+class InvoiceMailDebugView(DetailView):
     model = Invoice
     template_name = "email/normal_invoice.html.html"
 
     def get_context_data(self, **kwargs):
-        context = super(InvoiceDetail2View, self).get_context_data(**kwargs)
+        context = super(InvoiceMailDebugView, self).get_context_data(**kwargs)
 
         invoice = self.object
 
         context["invoice"] = invoice
-        context["subject"] = config.MAIL_INVOICE_SUBJECT
-        context["bar_name"] = config.MAIL_NAME_OF_BAR
-        context["bank_details"] = config.MAIL_BANK_DETAILS
-        context["below_balance_send"] = config.MAIL_BALANCE_SEND_MONEY
+        context["config"] = config
         context["own_purchases"] = invoice.own_purchases()
         context["other_purchases_grouped"] = invoice.other_purchases_grouped()
-        context["recent_payments"] = invoice.recipient.payments().order_by('-created_date')[:5]
+        context["last_invoices"] = invoice.recipient.invoices()[:5]
+        context["last_payments"] = invoice.recipient.payments()[:5]
 
         return context
-#before can be deleted
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PaymentReminderMailDebugView(DetailView):
+    model = User
+    template_name = "email/payment_reminder.html.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(PaymentReminderMailDebugView, self).get_context_data(**kwargs)
+
+        user = self.object
+
+        context["user"] = user
+        context["config"] = config
+        context["last_invoices"] = user.invoices()[:5]
+        context["last_payments"] = user.payments()[:5]
+
+        return context
+
+
+# end debugging mail
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceCreateView(edit.FormView):

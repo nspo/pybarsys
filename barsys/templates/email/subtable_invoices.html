@@ -1,0 +1,20 @@
+{% load barsys_helpers %}
+<table>
+    <thead class="left">
+    <th>Time</th>
+    <th>Amount</th>
+    </thead>
+    <tbody>
+    {% for i in invoices %}
+        <tr>
+            <td>{{ i.created_date|sdatetime }}</td>
+            <td>{{ i.amount|currency }}</td>
+        </tr>
+    {% endfor %}
+    {% if not invoices %}
+        <tr>
+            <td colspan="4">None</td>
+        </tr>
+    {% endif %}
+    </tbody>
+</table>

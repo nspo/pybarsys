@@ -24,7 +24,7 @@ SECRET_KEY = '&_cx6qdzz^1w%per*z6emn$*&937j-^0@q93g+t9fk7hy%8p(%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "192.168.0.133", "localhost",]
+ALLOWED_HOSTS = ["127.0.0.1", "192.168.0.133", "localhost", ]
 
 # Constance settings
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
@@ -82,7 +82,6 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.profiling.ProfilingPanel',
 ]
 
-
 ROOT_URLCONF = 'pybarsys.urls'
 LOGIN_REDIRECT_URL = 'user_home'
 
@@ -104,7 +103,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pybarsys.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
@@ -115,7 +113,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = 'barsys.User' # custom Barsys user model
+AUTH_USER_MODEL = 'barsys.User'  # custom Barsys user model
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
@@ -148,17 +146,19 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 from decimal import Decimal
+
 # Constance settings
 CONSTANCE_CONFIG = {
     'NUM_USER_PURCHASE_HISTORY': (15, "Number of purchases to show on user history page"),
     'NUM_MAIN_LAST_PURCHASES': (5, "Number of purchases to show on main page"),
 
     'MAIL_INVOICE_SUBJECT': ('Invoice from Barsys bar', 'Subject of an invoice mail'),
+    'MAIL_PAYMENT_REMINDER_SUBJECT': ('Payment reminder from Barsys bar', 'Subject of a payment reminder mail'),
     'MAIL_NAME_OF_BAR': ('Barsys bar', 'Name of the bar'),
+    'MAIL_CONTACT_EMAIL': ('bar@example.com', 'Bar contact email address'),
     'MAIL_BANK_DETAILS': ('Bank account No. 55542\n'
                           'Routing No. 2718\n'
                           'Royal Bank of Moldova', 'Bank account details'),
@@ -167,16 +167,17 @@ CONSTANCE_CONFIG = {
 }
 
 CONSTANCE_CONFIG_FIELDSETS = {
-    'Main page': ('NUM_USER_PURCHASE_HISTORY', 'NUM_MAIN_LAST_PURCHASES', ),
-    'Mail': ('MAIL_INVOICE_SUBJECT', 'MAIL_NAME_OF_BAR', 'MAIL_BANK_DETAILS', 'MAIL_BALANCE_SEND_MONEY'),
+    'Main page': ('NUM_USER_PURCHASE_HISTORY', 'NUM_MAIN_LAST_PURCHASES',),
+    'Mail': ('MAIL_INVOICE_SUBJECT', 'MAIL_NAME_OF_BAR', 'MAIL_CONTACT_EMAIL', 'MAIL_BANK_DETAILS',
+             'MAIL_BALANCE_SEND_MONEY', 'MAIL_PAYMENT_REMINDER_SUBJECT'),
 }
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # Email settings
 EMAIL_HOST = 'localhost'
-#EMAIL_HOST_USER = 'no-reply@example.com'
-#EMAIL_HOST_PASSWORD = 'hunter2'
+# EMAIL_HOST_USER = 'no-reply@example.com'
+# EMAIL_HOST_PASSWORD = 'hunter2'
 EMAIL_FROM_ADDRESS = 'no-reply@example.com'
-EMAIL_PORT = 1025 # 587
-EMAIL_USE_TLS = False # True
+EMAIL_PORT = 1025  # 587
+EMAIL_USE_TLS = False  # True

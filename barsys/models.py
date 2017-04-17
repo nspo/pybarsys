@@ -377,6 +377,7 @@ class PurchaseManager(models.Manager):
         return categories.items()
 
     def stats_purchases_by_user(self, *args, **kwargs):
+        """ TODO: LIMIT """
         """ Like stats_purchases_by_category_and_product, but groups by user """
 
         # Purchase quantity as list of dicts
@@ -391,6 +392,7 @@ class PurchaseManager(models.Manager):
         return users
 
     def stats_cost_by_user(self, *args, **kwargs):
+        """ Todo: LIMIT """
         """ Calculate total cost of purchases and group by user """
         cost_per_user = self.filter(*args, **kwargs).values("user"). \
             annotate(total_cost=models.Sum(F("quantity") * F("product_price"),
