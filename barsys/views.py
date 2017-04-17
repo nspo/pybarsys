@@ -719,7 +719,7 @@ def main_user_history(request, user_id):
     user = get_object_or_404(User.objects.active().buyers(), pk=user_id)
 
     # Sum not yet billed product purchases grouped by product_category
-    categories = Purchase.objects.stats_purchases_by_category_and_product(user__pk=user_id, invoice=None)
+    categories = Purchase.objects.filter(user__pk=user_id, invoice=None).stats_purchases_by_category_and_product()
 
     last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[
                      :config.NUM_USER_PURCHASE_HISTORY]

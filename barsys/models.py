@@ -365,16 +365,13 @@ class PurchaseQuerySet(models.QuerySet):
         else:
             return 0
 
-
-class PurchaseManager(models.Manager):
-    def stats_purchases_by_category_and_product(self, *args, **kwargs):
+    def stats_purchases_by_category_and_product(self):
         """ Calculate sum of purchases of each product and group by category and product
-            All necessary filters (e.g. user=this_user) need to be passed as arguments
+            Limit parameter would not make a lot of sense here
         """
 
         # Purchase quantity as list of dicts
-        purchases_per_product = self.filter(*args, **kwargs).values("product_category", "product_name",
-                                                                    "product_amount") \
+        purchases_per_product = self.values("product_category", "product_name", "product_amount") \
             .annotate(total_quantity=models.Sum("quantity")).order_by("-total_quantity").distinct()
 
         # Create dict (categories) of list (products)
@@ -384,15 +381,15 @@ class PurchaseManager(models.Manager):
 
         # Create list (categories) of tuples in the format
         # [(category, [{'product_name': 10, 'total_quantity': 5, ...}, {...}]), ...]
-        return categories.items()
+        return sorted(categories.items())  # Sort by category name
 
-    def stats_purchases_by_user(self, *args, **kwargs):
-        """ TODO: LIMIT """
+    def stats_purchases_by_user(self, limit=5):
         """ Like stats_purchases_by_category_and_product, but groups by user """
 
         # Purchase quantity as list of dicts
-        purchases_per_user = self.filter(*args, **kwargs).values("user") \
-            .annotate(total_quantity=models.Sum("quantity")).order_by("-total_quantity").distinct()
+        purchases_per_user = self.values("user") \
+                                 .annotate(total_quantity=models.Sum("quantity")).order_by(
+            "-total_quantity").distinct()[:limit]
 
         # Create list of tuples in the format (user, total_quantity)
         users = []
@@ -401,13 +398,12 @@ class PurchaseManager(models.Manager):
 
         return users
 
-    def stats_cost_by_user(self, *args, **kwargs):
-        """ Todo: LIMIT """
+    def stats_cost_by_user(self, limit=5):
         """ Calculate total cost of purchases and group by user """
-        cost_per_user = self.filter(*args, **kwargs).values("user"). \
-            annotate(total_cost=models.Sum(F("quantity") * F("product_price"),
-                                           output_field=DecimalField(decimal_places=2))). \
-            filter(total_cost__gt=0).order_by("-total_cost")
+        cost_per_user = self.values("user"). \
+                            annotate(total_cost=models.Sum(F("quantity") * F("product_price"),
+                                                           output_field=DecimalField(decimal_places=2))). \
+                            filter(total_cost__gt=0).order_by("-total_cost")[:limit]
 
         # Create list of tuples [(user, total_cost), ...]
         users = []
@@ -415,6 +411,10 @@ class PurchaseManager(models.Manager):
             users.append((User.objects.get(pk=u["user"]), u["total_cost"]))
 
         return users
+
+
+class PurchaseManager(models.Manager):
+    pass
 
 
 class Purchase(models.Model):
@@ -606,9 +606,9 @@ class ProductChangeAction(models.Model):
     products = models.ManyToManyField(Product, help_text="Only these products will be changed.")
 
     toggle_active = models.BooleanField(help_text="Toggle active state of products (whether they "
-                                        "are shown on main page)", default=False)
+                                                  "are shown on main page)", default=False)
     toggle_bold = models.BooleanField(help_text="Toggle bold state of products (whether they "
-                                      "are shown bold on main page)", default=False)
+                                                "are shown bold on main page)", default=False)
 
     price = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True,
                                 validators=[MinValueValidator(Decimal('0'))],

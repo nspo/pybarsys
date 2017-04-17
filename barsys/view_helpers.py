@@ -31,12 +31,12 @@ def get_renderable_stats_elements():
 
         stats_element["rows"] = []
         if stat.sort_by_and_show == StatsDisplay.SORT_BY_NUM_PURCHASES:
-            top_five = Purchase.objects.stats_purchases_by_user(**filters)[:5]
+            top_five = Purchase.objects.filter(**filters).stats_purchases_by_user(limit=5)
             for user, total_quantity in top_five:
                 stats_element["rows"].append({"left": "{}x".format(total_quantity),
                                               "right": "{} {}".format(stat.row_string, user.display_name)})
         else:
-            top_five = Purchase.objects.stats_cost_by_user(**filters)[:5]
+            top_five = Purchase.objects.filter(**filters).stats_cost_by_user(limit=5)
             for u_index, (user, total_cost) in enumerate(top_five):
                 stats_element["rows"].append({"left": "{}.".format(u_index + 1),
                                               "right": "{} {}".format(stat.row_string, user.display_name)})
