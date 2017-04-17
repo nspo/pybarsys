@@ -47,8 +47,8 @@
     <hr/>
     <div class="btn-group-horizontal">
         {% for user in favorites %}
-            <a href="{% url 'main_user_purchase' user.id %}" class="btn btn-lg btn-default btn-user"
-               style="width: 220px; margin-bottom: 10px;">{{ user.display_name }}</a>
+            <a href="{% url 'main_user_purchase' user.id %}"
+               class="btn btn-lg btn-default btn-user">{{ user.display_name }}</a>
         {% endfor %}
     </div>
     {% if not favorites %}
