@@ -5,6 +5,7 @@
     <th>Quantity</th>
     <th>Product name</th>
     <th>Amount</th>
+    <th>Comment</th>
     <th>Cost</th>
     </thead>
     <tbody>
@@ -14,12 +15,14 @@
             <td>{{ p.quantity }}</td>
             <td>{{ p.product_name }}</td>
             <td>{{ p.product_amount }}</td>
+            <td>{{ p.comment }}</td>
             <td>{{ p.cost|currency }}</td>
         </tr>
     {% endfor %}
     <tr class="table-total-row">
         <td>Total</td>
         <td>{{ purchases.sum_quantity }}</td>
+        <td></td>
         <td></td>
         <td></td>
         <td>{{ purchases.sum_cost|currency }}</td>

@@ -16,6 +16,10 @@
         {% csrf_token %}
         <input type="hidden" name="user_id" value="{{ user.pk }}">
         <div class="form-group">
+            <input type="text" style="text-align: center;" id="comment" name="comment"
+                       class="form-control" placeholder="Comment" maxlength="50">
+        </div>
+        <div class="form-group">
             <div class="input-group">
                     <span class="input-group-btn">
                         <button type="button" class="btn btn-default btn-number"

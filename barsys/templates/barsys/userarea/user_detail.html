@@ -101,6 +101,7 @@
                 <th>Time</th>
                 <th>Quantity</th>
                 <th>Product name</th>
+                <th>Comment</th>
                 <th>Product price</th>
                 <th>Cost</th>
                 <th>Invoiced?</th>
@@ -115,6 +116,7 @@
                     <td><a href="{% url 'admin_purchase_detail' p.pk %}">{{ p.created_date }}</a></td>
                     <td>{{ p.quantity }}</td>
                     <td>{{ p.product_name }}</td>
+                    <td>{{ p.comment }}</td>
                     <td>{{ p.product_price|currency }}</td>
                     <td>{{ p.cost|currency }}</td>
                     {% if p.has_invoice %}

@@ -20,7 +20,8 @@ class LoginForm(auth_forms.AuthenticationForm):
 class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
-        fields = ('user', 'product_name', 'product_category', 'product_price', 'product_amount', 'quantity',)
+        fields = ('user', 'product_name', 'product_category', 'product_price', 'product_amount', 'quantity',
+                  'comment', )
 
 
 class InvoicesCreateForm(forms.Form):
@@ -158,6 +159,7 @@ class SingleUserSinglePurchaseForm(forms.Form):
     quantity = forms.IntegerField()
     product_id = forms.IntegerField()
     user_id = forms.IntegerField()
+    comment = forms.CharField(max_length=50, required=False)
 
 
 class CategoryForm(forms.ModelForm):

@@ -5,7 +5,8 @@
     <th>Time</th>
     <th>Quantity</th>
     <th>Product (amount)</th>
-    <th>Price per product</th>
+    <th>Comment</th>
+    <th>Price per unit</th>
     <th>Cost</th>
 </tr>
 </thead>
@@ -15,6 +16,7 @@
         <td>{{ p.created_date|sdatetime }}</td>
         <td>{{ p.quantity }}</td>
         <td>{{ p.product_name }} ({{ p.product_amount }})</td>
+        <td>{{ p.comment }}</td>
         <td>{{ p.product_price|currency }}</td>
         <td>{{ p.cost|currency }}</td>
     </tr>

@@ -575,7 +575,7 @@ def main_user_purchase(request, user_id):
 
             purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
                                 product_category=product.category.name, product_price=product.price,
-                                quantity=form.cleaned_data["quantity"])
+                                quantity=form.cleaned_data["quantity"], comment=form.cleaned_data["comment"])
             purchase.save()
             return redirect(main_user_list)
         else:

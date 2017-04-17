@@ -417,6 +417,8 @@ class Purchase(models.Model):
     product_amount = models.CharField(max_length=10, blank=False)
     quantity = models.PositiveIntegerField(default=1, null=False, blank=False)
 
+    comment = models.CharField(max_length=50, blank=True, help_text="An optional comment for this purchase")
+
     invoice = models.ForeignKey(Invoice, on_delete=models.SET_NULL, blank=True, null=True)
 
     # Dates
