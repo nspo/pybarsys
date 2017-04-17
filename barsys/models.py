@@ -527,13 +527,6 @@ class Payment(models.Model):
         return False
 
 
-class PurchaseSummary(Purchase):
-    class Meta:
-        proxy = True
-        verbose_name = "Purchase Summary"
-        verbose_name_plural = "Purchases Summary"
-
-
 class StatsDisplay(models.Model):
     """ Admin-defined filters that can be shown as stats in frontend """
     title = models.CharField(max_length=30, blank=False)

@@ -1,0 +1,59 @@
+{% extends 'barsys/admin/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+{% load barsys_helpers %}
+{% load humanize %}
+{% block content %}
+
+    <div class="container">
+        <div>
+            <div>
+                <h1 class="pull-left" style="margin-top: 0;">Purchase statistics</h1>
+            </div>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>{{ grouped_by_title }}</th>
+                    <th>Number of purchases</th>
+                    <th>Average quantity</th>
+                    <th>Total quantity</th>
+                    <th>Average cost</th>
+                    <th>Total sales</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for line in summary %}
+                    <tr>
+                        <td>{{ line|keyvalue:grouped_by }}</td>
+                        <td>{{ line.num_purchases }}</td>
+                        <td>{{ line.average_quantity|intcomma }}</td>
+                        <td>{{ line.total_quantity }}</td>
+                        <td>{{ line.average_cost|currency }}</td>
+                        <td>{{ line.total_sales|currency }}</td>
+                    </tr>
+                {% endfor %}
+                <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
+                    <td> Total</td>
+                    <td> {{ summary_total.num_purchases|default_if_none:0 }} </td>
+                    <td> {{ summary_total.average_quantity|default_if_none:0|intcomma }} </td>
+                    <td> {{ summary_total.total_quantity|default_if_none:0 }} </td>
+                    <td> {{ summary_total.average_cost|default_if_none:0|currency }} </td>
+                    <td> {{ summary_total.total_sales|default_if_none:0|currency }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-6 col-md-offset-3">
+            <h2>Filter</h2>
+            <form method="get" class="form">
+                {{ filter.form|crispy }}
+                {% buttons %}
+                    <button type="submit" class="btn btn-primary">Search</button>
+                {% endbuttons %}
+            </form>
+        </div>
+    </div>
+
+{% endblock %}

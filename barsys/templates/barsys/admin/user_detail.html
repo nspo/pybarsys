@@ -1,0 +1,207 @@
+{% extends 'barsys/admin/base.html' %}
+
+{% load bootstrap3 %}
+{% load barsys_helpers %}
+{% block content %}
+
+    <div class="container">
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">User details</h1>
+            <a href="{% url 'admin_user_update' object.pk %}">
+                <button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button>
+            </a>
+        </div>
+        <table class="table table-striped">
+            <tbody>
+            <tr>
+                <th>Display name</th>
+                <td>{{ object.display_name }}</td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td>{{ object.email }}</td>
+            </tr>
+
+            <tr>
+                <th>Active?</th>
+                <td>{% bool_to_icon object.is_active %}</td>
+            </tr>
+            <tr>
+                <th>Buyer?</th>
+                <td>{% bool_to_icon object.is_buyer %}</td>
+            </tr>
+            <tr>
+                <th>Favorite?</th>
+                <td>{% bool_to_icon object.is_favorite %}</td>
+            </tr>
+            <tr>
+                <th>Admin?</th>
+                <td>{% bool_to_icon object.is_admin %}</td>
+            </tr>
+
+            <tr>
+                <th colspan="2"><h4>Account balance</h4></th>
+            </tr>
+
+            <tr>
+                <th style="padding-left: 25px;">Sum of payments</th>
+                <td>{{ object.payments.sum_amount|currency }}</td>
+            </tr>
+            <tr>
+                <th style="padding-left: 25px;">Sum of invoices</th>
+                <td>{{ object.invoices.sum_amount|currency }}</td>
+            </tr>
+            <tr class="table-total-row">
+                <th style="padding-left: 25px;">Current account balance</th>
+                <td>{{ object.account_balance|currency }}</td>
+            </tr>
+
+            <tr>
+                <th>Purchases paid by other</th>
+                <td>{% if object.purchases_paid_by_other != None %}
+                    <a href="{% url 'admin_user_detail' object.purchases_paid_by_other.pk %}">{{ object.purchases_paid_by_other }}</a>
+                {% else %}
+                    No
+                {% endif %}</td>
+            </tr>
+
+            <tr>
+                <th>Pays purchases for others</th>
+                <td>{% if object.dependents %}
+                    {% for u in object.dependents %}
+                        {% if not forloop.first %} + {% endif %}<a href="{% url 'admin_user_detail' u.pk %}">{{ u }}</a>
+                    {% endfor %}
+                {% else %}
+                    No
+                {% endif %}</td>
+            </tr>
+            <tr>
+                <th>Sum of own purchases</th>
+                <td>{{ object.purchases.sum_cost|currency }}</td>
+            </tr>
+
+            <tr>
+                <th>Created</th>
+                <td>{{ object.created_date }}</td>
+            </tr>
+            <tr>
+                <th>Last modified</th>
+                <td>{{ object.modified_date }}</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Purchases</h1>
+        </div>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Time</th>
+                <th>Quantity</th>
+                <th>Product name</th>
+                <th>Comment</th>
+                <th>Product price</th>
+                <th>Cost</th>
+                <th>Invoiced?</th>
+                <th>{% bootstrap_icon 'info-sign' %}</th>
+                <th>{% bootstrap_icon 'pencil' %}</th>
+                <th>{% bootstrap_icon 'trash' %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for p in purchases_page_obj.object_list %}
+                <tr>
+                    <td><a href="{% url 'admin_purchase_detail' p.pk %}">{{ p.created_date }}</a></td>
+                    <td>{{ p.quantity }}</td>
+                    <td>{{ p.product_name }}</td>
+                    <td>{{ p.comment }}</td>
+                    <td>{{ p.product_price|currency }}</td>
+                    <td>{{ p.cost|currency }}</td>
+                    {% if p.has_invoice %}
+                        <td><a href="{% url 'admin_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a></td>
+                    {% else %}
+                        <td>{% bool_to_icon p.invoice %}</td>
+                    {% endif %}
+                    <td>
+                        <a href="{% url 'admin_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+                    </td>
+                    {% if p.has_invoice %}
+                        <td></td>
+                        <td></td>
+                    {% else %}
+                        <td><a href="{% url 'admin_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                        <td><a href="{% url 'admin_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p>{{ purchases_page_obj.paginator.count }} result(s)</p>
+        {% bootstrap_pagination purchases_page_obj extra=request.GET.urlencode parameter_name="purchases_page" %}
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Payments</h1>
+        </div>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Time</th>
+                <th>Amount</th>
+                <th>Payment method</th>
+                <th>Comment</th>
+
+                <th>{% bootstrap_icon 'info-sign' %}</th>
+                <th>{% bootstrap_icon 'pencil' %}</th>
+                <th>{% bootstrap_icon 'trash' %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for p in payments_page_obj.object_list %}
+                <tr>
+                    <td><a href="{% url 'admin_payment_detail' p.pk %}">{{ p.created_date }}</a></td>
+                    <td>{{ p.amount|currency }}</td>
+                    <td>{{ p.get_payment_method_display }}</td>
+                    <td>{% bool_to_icon p.comment %}</td>
+
+                    <td><a href="{% url 'admin_payment_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+                    <td><a href="{% url 'admin_payment_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                    <td><a href="{% url 'admin_payment_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p>{{ payments_page_obj.paginator.count }} result(s)</p>
+        {% bootstrap_pagination payments_page_obj extra=request.GET.urlencode parameter_name="payments_page" %}
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Invoices</h1>
+        </div>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Time</th>
+                <th>Recipient</th>
+                <th>Amount</th>
+                <th>{% bootstrap_icon 'info-sign' %}</th>
+                <th>{% bootstrap_icon 'trash' %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for invoice in invoices_page_obj.object_list %}
+                <tr>
+                    <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|sdatetime }}</a>
+                    </td>
+                    <td>{{ invoice.recipient }}</td>
+                    <td>{{ invoice.amount|currency }}</td>
+                    <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+                    <td><a href="{% url 'admin_invoice_delete' invoice.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p>{{ invoices_page_obj.paginator.count }} result(s)</p>
+        {% bootstrap_pagination invoices_page_obj extra=request.GET.urlencode parameter_name="invoices_page" %}
+    </div>
+{% endblock %}

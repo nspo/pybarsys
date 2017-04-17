@@ -1,0 +1,13 @@
+{% extends 'barsys/admin/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+    <div class="container">
+
+        <h1>Create invoices</h1>
+        {% crispy form %}
+
+    </div>
+{% endblock %}

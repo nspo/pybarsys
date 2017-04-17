@@ -1,0 +1,63 @@
+{% extends 'barsys/admin/list_base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+{% load barsys_helpers %}
+
+{% block above_table %}
+    <h1 class="pull-left" style="margin-top: 0;">Purchases</h1>
+    <a href="{% url 'admin_purchase_new' %}">
+        <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new purchase</button>
+    </a>
+{% endblock %}
+{% block tablehead %}
+    <tr>
+        <th>Time</th>
+        <th>User</th>
+        <th>Quantity</th>
+        <th>Product name</th>
+        <th>Product price</th>
+        <th>Cost</th>
+        <th>Invoiced?</th>
+        <th>{% bootstrap_icon 'info-sign' %}</th>
+        <th>{% bootstrap_icon 'pencil' %}</th>
+        <th>{% bootstrap_icon 'trash' %}</th>
+    </tr>
+{% endblock %}
+{% block tablebody %}
+    {% for p in object_list %}
+        <tr>
+            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{{ p.created_date|sdatetime }}</a></td>
+            <td><a href="{% url 'admin_user_detail' p.user.pk %}">{{ p.user.display_name }}</a></td>
+            <td>{{ p.quantity }}</td>
+            <td>{{ p.product_name }}</td>
+            <td>{{ p.product_price|currency }}</td>
+            <td>{{ p.cost|currency }}</td>
+            <td>
+                {% if p.has_invoice %}
+                    <a href="{% url 'admin_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a>
+                {% else %}
+                    {% bool_to_icon p.invoice %}
+                {% endif %}
+            </td>
+            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+            <td>
+                {% if not p.has_invoice %}
+                    <a href="{% url 'admin_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                {% endif %}
+            <td>
+                {% if not p.has_invoice %}
+                    <a href="{% url 'admin_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+{% endblock %}
+{% block below_table %}
+    <p>{{ paginator.count }} results</p>
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+{% endblock %}
+
+{% block additional_content %}
+    {% include "barsys/admin/list_filter.html" %}
+{% endblock %}

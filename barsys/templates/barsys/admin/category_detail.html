@@ -1,0 +1,36 @@
+{% extends 'barsys/admin/base.html' %}
+
+{% load bootstrap3 %}
+{% block content %}
+
+    <div class="container">
+
+        <div>
+            <h1 class="pull-left" style="margin-top: 0;">Category details</h1>
+            <a href="{% url 'admin_category_update' object.pk %}">
+                <button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button>
+            </a>
+        </div>
+        <table class="table table-striped">
+            <tbody>
+            <tr>
+                <th>Name</th>
+                <td>{{ object.name }}</td>
+            </tr>
+            <tr>
+                <th>Number of product</th>
+                <td>{{ object.get_number_products }}</td>
+            </tr>
+            <tr>
+                <th>Products</th>
+                <td>
+                    <ul class="list-group">{% for product in object.get_products %}
+                        <li class="list-group-item"><a
+                                href="{% url 'admin_product_detail' product.pk %}">{{ product.name }}</a></li>
+                    {% endfor %}</ul>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

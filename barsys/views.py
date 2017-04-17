@@ -33,7 +33,7 @@ from . import filters
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class UserListView(FilterView):
     filterset_class = filters.UserFilter
-    template_name = 'barsys/userarea/user_list.html'
+    template_name = 'barsys/admin/user_list.html'
 
     paginate_by = 10
 
@@ -63,7 +63,7 @@ class UserExportView(FilterView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class UserDetailView(DetailView):
     model = User
-    template_name = "barsys/userarea/user_detail.html"
+    template_name = "barsys/admin/user_detail.html"
     purchases_paginate_by = 5
     payments_paginate_by = 5
     invoices_paginate_by = 5
@@ -112,14 +112,14 @@ class UserDetailView(DetailView):
 class UserCreateView(edit.CreateView):
     model = User
     form_class = UserCreateForm
-    template_name = "barsys/userarea/user_new.html"
+    template_name = "barsys/admin/user_new.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class UserUpdateView(edit.UpdateView):
     model = User
     form_class = UserUpdateForm
-    template_name = "barsys/userarea/user_update.html"
+    template_name = "barsys/admin/user_update.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
@@ -127,7 +127,7 @@ class CheckedDeleteView(View):
     """ Base view class for calling a check on object.cannot_be_deleted() before .delete()ing it """
     success_url = None
     cancel_url = None
-    template_name = "barsys/userarea/confirm_delete.html"
+    template_name = "barsys/admin/confirm_delete.html"
     model = None
     object = None
 
@@ -167,28 +167,28 @@ class UserDeleteView(CheckedDeleteView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PurchaseListView(FilterView):
     filterset_class = filters.PurchaseFilter
-    template_name = "barsys/userarea/purchase_list.html"
+    template_name = "barsys/admin/purchase_list.html"
     paginate_by = 10
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PurchaseDetailView(DetailView):
     model = Purchase
-    template_name = "barsys/userarea/purchase_detail.html"
+    template_name = "barsys/admin/purchase_detail.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PurchaseCreateView(edit.CreateView):
     model = Purchase
     form_class = PurchaseForm
-    template_name = "barsys/userarea/purchase_new.html"
+    template_name = "barsys/admin/purchase_new.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PurchaseUpdateView(edit.UpdateView):
     model = Purchase
     form_class = PurchaseForm
-    template_name = "barsys/userarea/purchase_update.html"
+    template_name = "barsys/admin/purchase_update.html"
 
     def get(self, request, *args, **kwargs):
         if self.get_object().has_invoice():
@@ -216,7 +216,7 @@ class PurchaseDeleteView(CheckedDeleteView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class CategoryListView(FilterView):
     filterset_class = filters.CategoryFilter
-    template_name = 'barsys/userarea/category_list.html'
+    template_name = 'barsys/admin/category_list.html'
 
     paginate_by = 10
 
@@ -224,21 +224,21 @@ class CategoryListView(FilterView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class CategoryDetailView(DetailView):
     model = Category
-    template_name = "barsys/userarea/category_detail.html"
+    template_name = "barsys/admin/category_detail.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class CategoryCreateView(edit.CreateView):
     model = Category
     form_class = CategoryForm
-    template_name = "barsys/userarea/category_new.html"
+    template_name = "barsys/admin/category_new.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class CategoryUpdateView(edit.UpdateView):
     model = Category
     form_class = CategoryForm
-    template_name = "barsys/userarea/category_update.html"
+    template_name = "barsys/admin/category_update.html"
 
 
 class CategoryDeleteView(CheckedDeleteView):
@@ -251,7 +251,7 @@ class CategoryDeleteView(CheckedDeleteView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class ProductListView(FilterView):
     filterset_class = filters.ProductFilter
-    template_name = 'barsys/userarea/product_list.html'
+    template_name = 'barsys/admin/product_list.html'
 
     paginate_by = 10
 
@@ -259,21 +259,21 @@ class ProductListView(FilterView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class ProductDetailView(DetailView):
     model = Product
-    template_name = "barsys/userarea/product_detail.html"
+    template_name = "barsys/admin/product_detail.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class ProductCreateView(edit.CreateView):
     model = Product
     form_class = ProductForm
-    template_name = "barsys/userarea/product_new.html"
+    template_name = "barsys/admin/product_new.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class ProductUpdateView(edit.UpdateView):
     model = Product
     form_class = ProductForm
-    template_name = "barsys/userarea/product_update.html"
+    template_name = "barsys/admin/product_update.html"
 
 
 class ProductDeleteView(CheckedDeleteView):
@@ -286,7 +286,7 @@ class ProductDeleteView(CheckedDeleteView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class StatsDisplayListView(FilterView):
     filterset_class = filters.StatsDisplayFilter
-    template_name = 'barsys/userarea/statsdisplay_list.html'
+    template_name = 'barsys/admin/statsdisplay_list.html'
 
     paginate_by = 10
 
@@ -294,21 +294,21 @@ class StatsDisplayListView(FilterView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class StatsDisplayDetailView(DetailView):
     model = StatsDisplay
-    template_name = "barsys/userarea/statsdisplay_detail.html"
+    template_name = "barsys/admin/statsdisplay_detail.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class StatsDisplayCreateView(edit.CreateView):
     model = StatsDisplay
     form_class = StatsDisplayForm
-    template_name = "barsys/userarea/statsdisplay_new.html"
+    template_name = "barsys/admin/statsdisplay_new.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class StatsDisplayUpdateView(edit.UpdateView):
     model = StatsDisplay
     form_class = StatsDisplayForm
-    template_name = "barsys/userarea/statsdisplay_update.html"
+    template_name = "barsys/admin/statsdisplay_update.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
@@ -322,7 +322,7 @@ class StatsDisplayDeleteView(CheckedDeleteView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PaymentListView(FilterView):
     filterset_class = filters.PaymentFilter
-    template_name = "barsys/userarea/payment_list.html"
+    template_name = "barsys/admin/payment_list.html"
     paginate_by = 10
 
 
@@ -351,21 +351,21 @@ class PaymentExportView(FilterView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PaymentDetailView(DetailView):
     model = Payment
-    template_name = "barsys/userarea/payment_detail.html"
+    template_name = "barsys/admin/payment_detail.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PaymentCreateView(edit.CreateView):
     model = Payment
     form_class = PaymentForm
-    template_name = "barsys/userarea/payment_new.html"
+    template_name = "barsys/admin/payment_new.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PaymentUpdateView(edit.UpdateView):
     model = Payment
     form_class = PaymentForm
-    template_name = "barsys/userarea/payment_update.html"
+    template_name = "barsys/admin/payment_update.html"
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
@@ -379,14 +379,14 @@ class PaymentDeleteView(CheckedDeleteView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceListView(FilterView):
     filterset_class = filters.InvoiceFilter
-    template_name = "barsys/userarea/invoice_list.html"
+    template_name = "barsys/admin/invoice_list.html"
     paginate_by = 10
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceDetailView(DetailView):
     model = Invoice
-    template_name = "barsys/userarea/invoice_detail.html"
+    template_name = "barsys/admin/invoice_detail.html"
 
     def get_context_data(self, **kwargs):
         context = super(InvoiceDetailView, self).get_context_data(**kwargs)
@@ -448,7 +448,7 @@ class PaymentReminderMailDebugView(DetailView):
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceCreateView(edit.FormView):
-    template_name = "barsys/userarea/invoice_new.html"
+    template_name = "barsys/admin/invoice_new.html"
     form_class = InvoicesCreateForm
     success_url = reverse_lazy("admin_invoice_list")
 
@@ -511,7 +511,7 @@ class InvoiceDeleteView(CheckedDeleteView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PurchaseStatisticsByCategoryView(FilterView):
     filterset_class = filters.PurchaseFilter
-    template_name = "barsys/userarea/purchase_statistics.html"
+    template_name = "barsys/admin/purchase_statistics.html"
     paginate_by = 10
 
     metrics = {
@@ -548,7 +548,7 @@ class PurchaseStatisticsByCategoryView(FilterView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PurchaseStatisticsByProductView(FilterView):
     filterset_class = filters.PurchaseFilter
-    template_name = "barsys/userarea/purchase_statistics.html"
+    template_name = "barsys/admin/purchase_statistics.html"
     paginate_by = 10
 
     def get_context_data(self, **kwargs):
@@ -576,7 +576,7 @@ class PurchaseStatisticsByProductView(FilterView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class ProductChangeActionListView(FilterView):
     filterset_class = filters.ProductChangeActionFilter
-    template_name = "barsys/userarea/productchangeaction_list.html"
+    template_name = "barsys/admin/productchangeaction_list.html"
     paginate_by = 10
 
 
@@ -584,7 +584,7 @@ class ProductChangeActionListView(FilterView):
 class ProductChangeActionCreateView(edit.CreateView):
     model = ProductChangeAction
     form_class = ProductChangeActionForm
-    template_name = "barsys/userarea/generic_form.html"
+    template_name = "barsys/admin/generic_form.html"
 
     def get_context_data(self, **kwargs):
         context = super(ProductChangeActionCreateView, self).get_context_data(**kwargs)
@@ -597,7 +597,7 @@ class ProductChangeActionCreateView(edit.CreateView):
 class ProductChangeActionUpdateView(edit.UpdateView):
     model = ProductChangeAction
     form_class = ProductChangeActionForm
-    template_name = "barsys/userarea/generic_form.html"
+    template_name = "barsys/admin/generic_form.html"
 
     def get_context_data(self, **kwargs):
         context = super(ProductChangeActionUpdateView, self).get_context_data(**kwargs)

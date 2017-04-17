@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.db import models
-from barsys.models import Category, Product, User, Purchase, Invoice, StatsDisplay, PurchaseSummary
+from barsys.models import Category, Product, User, Purchase, Invoice, StatsDisplay
 from django.db.models import F, DecimalField
 from django.db.models.functions import Trunc
 from django.db.models import DateTimeField
@@ -54,40 +54,6 @@ class PurchaseAdmin(NoEditForeignTablesInlineMixin, admin.ModelAdmin):
 
 
 admin.site.register(Purchase, PurchaseAdmin)
-
-
-@admin.register(PurchaseSummary)
-class PurchaseSummaryAdmin(admin.ModelAdmin):
-    change_list_template = 'admin/purchase_summary_change_list.html'
-    date_hierarchy = 'created_date'
-
-    def changelist_view(self, request, extra_context=None):
-        response = super().changelist_view(
-            request,
-            extra_context=extra_context,
-        )
-        try:
-            qs = response.context_data["cl"].queryset
-        except (AttributeError, KeyError):
-            return response
-
-        metrics = {
-            "total": models.Sum(F("quantity")),
-            "total_sales": models.Sum(F("quantity") * F("product_price"),
-                                      output_field=DecimalField(decimal_places=2))
-        }
-        response.context_data["summary"] = list(
-            qs
-                .values("product_category")
-                .annotate(**metrics)
-                .order_by("-total_sales")
-        )
-
-        response.context_data["summary_total"] = dict(
-            qs.aggregate(**metrics)
-        )
-
-        return response
 
 
 class UserAdmin(NoEditForeignTablesInlineMixin, admin.ModelAdmin):

@@ -26,7 +26,7 @@ urlpatterns = [
 
     # user area
     url(r'^login/$', auth_views.login,
-        {'template_name': 'barsys/userarea/login.html', 'authentication_form': LoginForm},
+        {'template_name': 'barsys/admin/login.html', 'authentication_form': LoginForm},
         name="user_login"),
     url(r'^logout/$', auth_views.logout, {'next_page': 'user_login'}, name="user_logout"),
 ]
