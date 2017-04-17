@@ -212,8 +212,13 @@ class Category(models.Model):
         ordering = ["name"]
 
 
+class ProductQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(is_active=True)
+
+
 class Product(models.Model):
-    """ name of Product is not unique, because there can be other products with the same name but different amount"""
+    """ name of product is not unique, because there can be other products with the same name but different amount"""
     name = models.CharField(max_length=40, blank=False, help_text="Multiple products can have the same name "
                                                                   "as long as the amount is different")
     price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
@@ -221,8 +226,13 @@ class Product(models.Model):
     amount = models.CharField(max_length=10, blank=False)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, null=False)
 
+    is_active = models.BooleanField(default=True, help_text="Whether this product is shown on the purchasing page")
+    is_bold = models.BooleanField(default=False, help_text="Whether this product is shown bold on the purchasing page")
+
+    objects = ProductQuerySet.as_manager()
+
     def __str__(self):
-        return "{} ({}, {})".format(self.name, self.amount, self.price)
+        return "{} ({}, {})".format(self.name, self.amount, currency(self.price))
 
     class Meta:
         unique_together = ["name", "amount"]
@@ -277,7 +287,7 @@ class InvoiceManager(models.Manager):
 class Invoice(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.PROTECT)
     amount = models.DecimalField(max_digits=7, decimal_places=2, blank=False, null=False,
-                                 validators=[MinValueValidator(Decimal('0.01'))])
+                                 validators=[MinValueValidator(Decimal('0.00'))])
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
@@ -588,3 +598,28 @@ class StatsDisplay(models.Model):
 
     def cannot_be_deleted(self):
         return False
+
+
+class ProductChangeAction(models.Model):
+    """ Specific changes to apply to products """
+    title = models.CharField(max_length=30, blank=False, unique=True)
+    products = models.ManyToManyField(Product, help_text="Only these products will be changed.")
+
+    toggle_active = models.BooleanField(help_text="Toggle active state of products (whether they "
+                                        "are shown on main page)", default=False)
+    toggle_bold = models.BooleanField(help_text="Toggle bold state of products (whether they "
+                                      "are shown bold on main page)", default=False)
+
+    price = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True,
+                                validators=[MinValueValidator(Decimal('0'))],
+                                help_text="If set, PCA will change the price of selected products to this")
+
+    def get_absolute_url(self):
+        return reverse("admin_productchangeaction_list")
+
+    def cannot_be_deleted(self):
+        return False
+
+    def __str__(self):
+        return "Product change action {} (affects {})".format(self.title,
+                                                              ", ".join([p.name for p in self.products.all()]))

@@ -75,4 +75,12 @@ urlpatterns = [
         name='admin_purchase_statistics_by_category'),
     url(r'^admin/statistics/purchase/by_product/', views.PurchaseStatisticsByProductView.as_view(),
         name='admin_purchase_statistics_by_product'),
+
+    # ProductChangeAction
+    url(r'^admin/productchangeaction/list/$', views.ProductChangeActionListView.as_view(), name='admin_productchangeaction_list'),
+    url(r'^admin/productchangeaction/new/$', views.ProductChangeActionCreateView.as_view(), name='admin_productchangeaction_new'),
+    # url(r'^admin/productchangeaction/(?P<pk>[0-9]+)/detail/$', views.PaymentDetailView.as_view(), name='admin_payment_detail'),
+    url(r'^admin/productchangeaction/(?P<pk>[0-9]+)/update/$', views.ProductChangeActionUpdateView.as_view(), name='admin_productchangeaction_update'),
+    url(r'^admin/productchangeaction/(?P<pk>[0-9]+)/execute/$', views.ProductChangeActionExecuteView.as_view(), name='admin_productchangeaction_execute'),
+    url(r'^admin/productchangeaction/(?P<pk>[0-9]+)/delete/$', views.ProductChangeActionDeleteView.as_view(), name='admin_productchangeaction_delete'),
 ]

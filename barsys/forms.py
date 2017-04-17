@@ -23,6 +23,21 @@ class PurchaseForm(forms.ModelForm):
         exclude = ('invoice', )
 
 
+class ProductChangeActionForm(forms.ModelForm):
+    class Meta:
+        model = ProductChangeAction
+        exclude = ('', )
+
+    def __init__(self, *args, **kwargs):
+        super(ProductChangeActionForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper(form=self)
+        self.helper["products"].wrap(layout.Field, size="10")
+
+        self.helper.add_input(layout.Submit('save', 'Save'))
+        self.helper.add_input(layout.Reset('reset', 'Reset'))
+
+
 class InvoicesCreateForm(forms.Form):
     users = forms.ModelMultipleChoiceField(queryset=User.objects.active().buyers().pay_themselves(),
                                            help_text="Select users to generate invoices for. Only users who pay themselves can be selected."
@@ -42,12 +57,11 @@ class InvoicesCreateForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(InvoicesCreateForm, self).__init__(*args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.layout = layout.Layout(layout.Field('users', size="30"), 'send_invoices',
-                                           'send_payment_reminders')
+        self.helper = FormHelper(form=self)
+        self.helper["users"].wrap(layout.Field, size="30")
 
         self.helper.add_input(layout.Submit('create', 'Create'))
-        self.helper.add_input(layout.Reset('reset', 'Unselect all'))
+        self.helper.add_input(layout.Reset('reset', 'Reset'))
 
 
 class UserCreateForm(auth_forms.UserCreationForm):

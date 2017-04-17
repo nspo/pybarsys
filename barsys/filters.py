@@ -32,6 +32,11 @@ class PurchaseFilter(django_filters.FilterSet):
         fields = []
 
 
+class ProductChangeActionFilter(django_filters.FilterSet):
+    class Meta:
+        model = ProductChangeAction
+        fields = []
+
 class PaymentFilter(django_filters.FilterSet):
     comment = django_filters.CharFilter(lookup_expr='icontains')
     amount__gte = django_filters.NumberFilter(name='amount', lookup_expr='gte')
@@ -66,7 +71,7 @@ class ProductFilter(django_filters.FilterSet):
 
     class Meta:
         model = Product
-        fields = ["name", "category"]
+        fields = ["name", "category", "is_active"]
 
 
 class StatsDisplayFilter(django_filters.FilterSet):

@@ -17,6 +17,7 @@
         <th>Category</th>
         <th>Amount</th>
         <th>Price</th>
+        <th>Active?</th>
         <th>{% bootstrap_icon 'info-sign' %}</th>
         <th>{% bootstrap_icon 'pencil' %}</th>
         <th>{% bootstrap_icon 'trash' %}</th>
@@ -25,10 +26,12 @@
 {% block tablebody %}
     {% for product in object_list %}
         <tr>
-            <td><a href="{% url 'admin_product_detail' product.pk %}">{{ product.name }}</a></td>
+            <td><a href="{% url 'admin_product_detail' product.pk %}">{% if product.is_bold %}
+                <strong>{% endif %}{{ product.name }}{% if product.is_bold %}</strong>{% endif %}</a></td>
             <td>{{ product.category }}</td>
             <td>{{ product.amount }}</td>
             <td>{{ product.price|currency }}</td>
+            <td>{% bool_to_icon product.is_active %}</td>
             <td>
                 <a href="{% url 'admin_product_detail' product.pk %}">{% bootstrap_icon 'info-sign' %}</a>
             </td>
