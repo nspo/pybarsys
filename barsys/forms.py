@@ -20,8 +20,7 @@ class LoginForm(auth_forms.AuthenticationForm):
 class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
-        fields = ('user', 'product_name', 'product_category', 'product_price', 'product_amount', 'quantity',
-                  'comment', )
+        exclude = ('invoice', )
 
 
 class InvoicesCreateForm(forms.Form):
