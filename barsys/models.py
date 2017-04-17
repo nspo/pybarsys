@@ -374,7 +374,7 @@ class PurchaseManager(models.Manager):
 
         # Create list (categories) of tuples in the format
         # [(category, [{'product_name': 10, 'total_quantity': 5, ...}, {...}]), ...]
-        return sorted(categories.items())
+        return categories.items()
 
     def stats_purchases_by_user(self, *args, **kwargs):
         """ Like stats_purchases_by_category_and_product, but groups by user """
@@ -392,15 +392,15 @@ class PurchaseManager(models.Manager):
 
     def stats_cost_by_user(self, *args, **kwargs):
         """ Calculate total cost of purchases and group by user """
-        cost_per_user = User.objects.filter(*args, **kwargs). \
-            annotate(total_cost=models.Sum(F("purchase__quantity") * F("purchase__product_price"),
+        cost_per_user = self.filter(*args, **kwargs).values("user"). \
+            annotate(total_cost=models.Sum(F("quantity") * F("product_price"),
                                            output_field=DecimalField(decimal_places=2))). \
             filter(total_cost__gt=0).order_by("-total_cost")
 
         # Create list of tuples [(user, total_cost), ...]
         users = []
         for u in cost_per_user:
-            users.append((u, u.total_cost))
+            users.append((User.objects.get(pk=u["user"]), u["total_cost"]))
 
         return users
 
