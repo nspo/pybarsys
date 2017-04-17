@@ -78,10 +78,10 @@ class User(AbstractBaseUser):
     is_favorite = models.BooleanField(default=False, help_text="User is shown under favorites")
 
     purchases_paid_by_other = models.ForeignKey("self", on_delete=models.PROTECT, default=None, null=True, blank=True,
-                                                help_text="Another active user (who pays for their own purchases) is "
-                                                          "responsible to pay for all purchases made by this user. "
-                                                          "Invoices are sent to the responsible user, and a copy goes "
-                                                          "to the dependent as notification.",
+                                                help_text="If set, another active user (who pays for their own "
+                                                          "purchases) is responsible to pay for all purchases made by "
+                                                          "this user. Invoices are sent to the responsible user, and a "
+                                                          "copy goes to the dependent as notification.",
                                                 limit_choices_to=(Q(purchases_paid_by_other=None)))
 
     # Dates

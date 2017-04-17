@@ -44,7 +44,7 @@ class UserExportView(FilterView):
 
     def render_to_response(self, context, **response_kwargs):
         # Could use timezone.now(), but that makes the string much longer
-        filename = "{}-users-export.csv".format(datetime.datetime.now().replace(microsecond=0).isoformat())
+        filename = "{}-pybarsys-users-export.csv".format(datetime.datetime.now().replace(microsecond=0).isoformat())
 
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
@@ -332,7 +332,7 @@ class PaymentExportView(FilterView):
 
     def render_to_response(self, context, **response_kwargs):
         # Could use timezone.now(), but that makes the string much longer
-        filename = "{}-payments-export.csv".format(datetime.datetime.now().replace(microsecond=0).isoformat())
+        filename = "{}-pybarsys-payments-export.csv".format(datetime.datetime.now().replace(microsecond=0).isoformat())
 
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
