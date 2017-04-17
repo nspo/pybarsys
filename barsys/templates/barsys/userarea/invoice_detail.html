@@ -9,9 +9,14 @@
 
         <div>
             <h1 class="pull-left" style="margin-top: 0;">Invoice details</h1>
-            <a href="{% url 'admin_invoice_delete' invoice.pk %}">
-                <button class="btn btn-danger pull-right">{% bootstrap_icon 'remove-sign' %} Delete</button>
-            </a>
+            <div class="btn-group pull-right" role="group">
+                <a href="{% url 'admin_invoice_resend' invoice.pk %}" class="btn btn-primary">
+                    {% bootstrap_icon 'send' %} Resend
+                </a>
+                <a href="{% url 'admin_invoice_delete' invoice.pk %}" class="btn btn-danger">
+                    {% bootstrap_icon 'remove-sign' %} Delete
+                </a>
+            </div>
         </div>
         <div class="table-responsive" style="overflow-x: inherit;">
             <table class="table table-striped">

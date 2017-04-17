@@ -79,9 +79,10 @@ def send_invoice_mails(request, invoices):
         except Exception as e:
             invoice_mail_failure.append((invoice.recipient, e))
 
-    messages.info(request, "{} invoice mails were successfully sent. ".format(num_invoice_mail_success))
+    if num_invoice_mail_success > 0:
+        messages.info(request, "{} invoice mails were successfully sent. ".format(num_invoice_mail_success))
     if len(invoice_mail_failure) > 0:
-        messages.error(request, "Sending mail(s) to the following user(s) failed: {}". \
+        messages.error(request, "Sending invoice mail(s) to the following user(s) failed: {}".
                        format(", ".join(["{} ({})".format(u, err) for u, err in invoice_mail_failure])))
 
 

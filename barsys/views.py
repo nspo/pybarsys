@@ -375,6 +375,15 @@ class InvoiceDetailView(DetailView):
         return context
 
 
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class InvoiceResendView(View):
+
+    def get(self, request, pk):
+        invoice = get_object_or_404(Invoice, pk=pk)
+        view_helpers.send_invoice_mails(request, [invoice])
+        return redirect("admin_invoice_list")
+
+
 # for debugging mail
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceMailDebugView(DetailView):
