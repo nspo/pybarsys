@@ -1,22 +1,26 @@
 {% extends 'barsys/main/with_sidebar_base.html' %}
 
 {% load bootstrap3 %}
+{% load barsys_helpers %}
 
 {% block bootstrap3_title %}History of {{ user.display_name }}{% endblock %}
 
 {% block sidebar_content %}
     <li><a href="{% url 'main_user_list' %}"><span class="glyphicon glyphicon-home pull-left"
-                                              aria-hidden="true"></span> Home</a></li>
+                                                   aria-hidden="true"></span> Home</a></li>
     <li><a href="{% url 'main_user_purchase' user.id %}"><span class="glyphicon glyphicon-shopping-cart pull-left"
-                                                          aria-hidden="true"></span> Purchase as {{ user.display_name }}
+                                                               aria-hidden="true"></span> Purchase
+        as {{ user.display_name }}
     </a></li>
     <li class="active"><a
-            href="{% url 'main_user_history' user.id %}">{% bootstrap_icon "th-list" extra_classes="pull-left" %} History
+            href="{% url 'main_user_history' user.id %}">{% bootstrap_icon "th-list" extra_classes="pull-left" %}
+        History
         of {{ user.display_name }}</a></li>
     <hr/>
 {% endblock %}
 {% block main_content %}
-    <h3>Unbilled purchases</h3>
+    <h3>Unbilled purchases {% if config.SUM_COST_USER_PURCHASE_HISTORY %}(Sum:
+        {{ user.purchases.unbilled.sum_cost|currency }}){% endif %}</h3>
     {% for category_name, products in categories %}
         <h4>{% bootstrap_icon "chevron-down" %} {{ category_name }}</h4>
         <table class="table table-striped">
@@ -38,16 +42,16 @@
 
     <h4>{% bootstrap_icon "list" %} Last purchases </h4>
     {% if last_purchases %}
-    <table class="table table-striped">
-        <tbody>
-        {% for purchase in last_purchases %}
-            <tr>
-                <td style="width: 180px;">{{ purchase.created_date }}</td>
-                <td> {{ purchase.quantity }}x {{ purchase.product_name }} ({{ purchase.product_amount }})</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+        <table class="table table-striped">
+            <tbody>
+            {% for purchase in last_purchases %}
+                <tr>
+                    <td style="width: 180px;">{{ purchase.created_date }}</td>
+                    <td> {{ purchase.quantity }}x {{ purchase.product_name }} ({{ purchase.product_amount }})</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     {% else %}
         {{ user.display_name }} has no recent purchases
     {% endif %}

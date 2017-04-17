@@ -153,6 +153,7 @@ from decimal import Decimal
 # Constance settings
 CONSTANCE_CONFIG = {
     'NUM_USER_PURCHASE_HISTORY': (15, "Number of purchases to show on user history page"),
+    'SUM_COST_USER_PURCHASE_HISTORY': (True, "Whether to show total cost of unbilled purchases on user history page"),
     'NUM_MAIN_LAST_PURCHASES': (5, "Number of purchases to show on main page"),
 
     'MAIL_INVOICE_SUBJECT': ('Invoice from Barsys bar', 'Subject of an invoice mail'),
@@ -167,7 +168,7 @@ CONSTANCE_CONFIG = {
 }
 
 CONSTANCE_CONFIG_FIELDSETS = {
-    'Main page': ('NUM_USER_PURCHASE_HISTORY', 'NUM_MAIN_LAST_PURCHASES',),
+    'Main page': ('NUM_USER_PURCHASE_HISTORY', 'SUM_COST_USER_PURCHASE_HISTORY', 'NUM_MAIN_LAST_PURCHASES',),
     'Mail': ('MAIL_INVOICE_SUBJECT', 'MAIL_NAME_OF_BAR', 'MAIL_CONTACT_EMAIL', 'MAIL_BANK_DETAILS',
              'MAIL_BALANCE_SEND_MONEY', 'MAIL_PAYMENT_REMINDER_SUBJECT'),
 }

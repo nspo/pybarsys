@@ -726,5 +726,6 @@ def main_user_history(request, user_id):
 
     context = {"user": user,
                "categories": categories,
-               "last_purchases": last_purchases}
+               "last_purchases": last_purchases,
+               "config": config}
     return render(request, "barsys/main/user_history.html", context)

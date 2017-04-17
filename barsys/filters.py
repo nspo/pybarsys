@@ -29,13 +29,14 @@ class PurchaseFilter(django_filters.FilterSet):
 
     class Meta:
         model = Purchase
-        fields = []
+        fields = ["user"]
 
 
 class ProductChangeActionFilter(django_filters.FilterSet):
     class Meta:
         model = ProductChangeAction
         fields = []
+
 
 class PaymentFilter(django_filters.FilterSet):
     comment = django_filters.CharFilter(lookup_expr='icontains')
