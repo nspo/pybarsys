@@ -1,15 +1,14 @@
-from .models import StatsDisplay, Purchase
-from django.utils import timezone
-from django.contrib import messages
-
-from django.template.loader import render_to_string
-from django.core.mail import send_mail, EmailMultiAlternatives
-from decimal import Decimal
-from constance import config
-from pybarsys import settings as pybarsys_settings
-from itertools import groupby
 from collections import OrderedDict
+from itertools import groupby
 
+from constance import config
+from django.contrib import messages
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils import timezone
+
+from pybarsys import settings as pybarsys_settings
+from .models import StatsDisplay, Purchase
 
 
 def get_renderable_stats_elements():
@@ -120,6 +119,7 @@ def send_reminder_mails(request, users):
 
 
 def group_users(ungrouped_users):
+    """ Group users by first letter of name """
     grouped_users = OrderedDict()
     for k, g in groupby(ungrouped_users, key=lambda u: u.display_name[0].upper()):
         if k in grouped_users:
@@ -127,6 +127,7 @@ def group_users(ungrouped_users):
         else:
             grouped_users[k] = list(g)
     return grouped_users
+
 
 def get_jump_to_data_lines(all_users):
     letter_groups_by_line = []
