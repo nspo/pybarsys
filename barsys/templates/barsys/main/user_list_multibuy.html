@@ -1,0 +1,106 @@
+{% extends 'barsys/main/with_sidebar_base.html' %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}User list - MultiBuy{% endblock %}
+
+{% block sidebar_content %}
+    <li><a href="{% url 'main_user_list' %}">{% bootstrap_icon "home" extra_classes="pull-left" %}
+        Home</a></li>
+    <li class="active"><a
+            href="{% url "main_user_list_multibuy" %}">{% bootstrap_icon "shopping-cart" extra_classes="pull-left" %}
+        MultiBuy </a></li>
+
+    <li><a>{% bootstrap_icon "share-alt" extra_classes="pull-left" %} Jump to</a></li>
+
+    {% for line in jump_to_data_lines %}
+        <div class="btn-group btn-group-justified btn-group-letters" role="group">
+            {% for title, jump_to_letter in line %}
+                <div class="btn-group" role="group">
+                    <a href="#users_{{ jump_to_letter }}">
+                        <button type="button" class="btn btn-default btn-letters">{{ title }}</button>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+    <hr/>
+    <form method="POST" id="users_form" style="margin-top: 15px;">
+        {% csrf_token %}
+
+        <div class="form-group">
+
+            <input type="text" style="text-align: center;" id="info_selected_users"
+                   class="form-control" value="0 user(s) selected" disabled>
+
+        </div>
+        <button type="submit" class="btn btn-success">Choose product</button>
+    </form>
+
+{% endblock %}
+
+{% block main_content %}
+    <h4>{% bootstrap_icon "star" %}</h4>
+    <hr/>
+    <div class="btn-group-horizontal" data-toggle="buttons">
+        {% for user in favorites %}
+            <label class="btn btn-lg btn-default btn-user">
+                <input type="checkbox" form="users_form" name="users" onchange="update_selected_users();"
+                       value="{{ user.id }}"> {{ user.display_name }}
+            </label>
+        {% endfor %}
+    </div>
+    {% if not favorites %}
+        There are no favorite users.
+    {% endif %}
+
+
+    {% for letter, users in all_users.items %}
+        <a name="users_{{ letter }}"></a>
+        <h4>{% bootstrap_icon "user" %} {{ letter }}</h4>
+        <hr/>
+        <div class="btn-group-horizontal" data-toggle="buttons">
+            {% for user in users %}
+                <label class="btn btn-lg btn-default btn-user">
+                    <input type="checkbox" form="users_form" name="users" onchange="update_selected_users();"
+                           value="{{ user.id }}"> {{ user.display_name }}
+                </label>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
+    {% if not all_users %}
+        <h4>{% bootstrap_icon "user" %} No users</h4>
+        <hr/>
+        There are no active users who are allowed to buy.
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript">
+        Array.prototype.unique = function () {
+            var n = {}, r = [];
+            for (var i = 0; i < this.length; i++) {
+                if (!n[this[i]]) {
+                    n[this[i]] = true;
+                    r.push(this[i]);
+                }
+            }
+            return r;
+        }
+
+        function num_selected_users() {
+            var selected_checkboxes = $("[type='checkbox']:checked");
+            var user_ids = []
+            for (var i = 0; i < selected_checkboxes.length; i++) {
+                user_ids.push(selected_checkboxes[i].value);
+            }
+            return user_ids.unique().length;
+        }
+
+        function update_selected_users() {
+            var num_users = num_selected_users();
+            document.getElementById("info_selected_users").value = num_users + " user(s) selected";
+        }
+    </script>
+{% endblock %}

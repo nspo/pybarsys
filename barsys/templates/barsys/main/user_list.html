@@ -7,7 +7,7 @@
 {% block sidebar_content %}
     <li class="active"><a href="{% url 'main_user_list' %}">{% bootstrap_icon "home" extra_classes="pull-left" %}
         Home</a></li>
-    <li><a href="#">{% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} MultiBuy </a></li>
+    <li><a href="{% url "main_user_list_multibuy" %}">{% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} MultiBuy </a></li>
 
     <li class="hidden-xs"><a>{% bootstrap_icon "th-list" extra_classes="pull-left" %} Last purchases</a>
         <table class="table table-striped table-sidebar">

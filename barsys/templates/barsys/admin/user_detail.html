@@ -40,22 +40,6 @@
                 <td>{% bool_to_icon object.is_admin %}</td>
             </tr>
 
-            <tr>
-                <th colspan="2"><h4>Account balance</h4></th>
-            </tr>
-
-            <tr>
-                <th style="padding-left: 25px;">Sum of payments</th>
-                <td>{{ object.payments.sum_amount|currency }}</td>
-            </tr>
-            <tr>
-                <th style="padding-left: 25px;">Sum of invoices</th>
-                <td>{{ object.invoices.sum_amount|currency }}</td>
-            </tr>
-            <tr class="table-total-row">
-                <th style="padding-left: 25px;">Current account balance</th>
-                <td>{{ object.account_balance|currency }}</td>
-            </tr>
 
             <tr>
                 <th>Purchases paid by other</th>
@@ -89,6 +73,28 @@
                 <th>Last modified</th>
                 <td>{{ object.modified_date }}</td>
             </tr>
+
+            <tr>
+                <th colspan="2"><h4>Account balance</h4></th>
+            </tr>
+
+            <tr>
+                <th style="padding-left: 25px;">Sum of payments</th>
+                <td>{{ object.payments.sum_amount|currency }}</td>
+            </tr>
+            <tr>
+                <th style="padding-left: 25px;">Sum of invoices</th>
+                <td>{{ object.invoices.sum_amount|currency }}</td>
+            </tr>
+            <tr class="table-total-row">
+                <th style="padding-left: 25px;">Current account balance</th>
+                <td>{{ object.account_balance|currency }}</td>
+            </tr>
+            <tr>
+                <th style="padding-left: 25px;">Sum of unbilled purchases</th>
+                <td>{{ object.purchases.unbilled.sum_cost|currency }}</td>
+            </tr>
+
             </tbody>
         </table>
 
@@ -120,7 +126,8 @@
                     <td>{{ p.product_price|currency }}</td>
                     <td>{{ p.cost|currency }}</td>
                     {% if p.has_invoice %}
-                        <td><a href="{% url 'admin_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a></td>
+                        <td><a href="{% url 'admin_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a>
+                        </td>
                     {% else %}
                         <td>{% bool_to_icon p.invoice %}</td>
                     {% endif %}

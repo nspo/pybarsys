@@ -3,23 +3,36 @@
 {% load bootstrap3 %}
 {% load barsys_helpers %}
 
-{% block bootstrap3_title %}Purchase as {{ user.display_name }}{% endblock %}
+{% block bootstrap3_title %}{% if multibuy %}Purchase as {{ users.count }} users{% else %}Purchase as
+    {{ user.display_name }}{% endif %}{% endblock %}
 
 {% block sidebar_content %}
     <li><a href="{% url 'main_user_list' %}">{% bootstrap_icon "home" extra_classes="pull-left" %} Home</a></li>
 
-    <li class="active"><a href="{% url 'main_user_purchase' user.id %}">
-        {% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} Purchase as {{ user.display_name }}</a></li>
-    <li><a href="{% url 'main_user_history' user.id %}">{% bootstrap_icon "th-list" extra_classes="pull-left" %} History
-        of {{ user.display_name }}</a></li>
+    {% if multibuy %}
+        <li class="active"><a href="">
+            {% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} Purchase as {{ users.count }} users</a></li>
+    {% else %}
+        <li class="active"><a href="{% url 'main_user_purchase' user.id %}">
+            {% bootstrap_icon "shopping-cart" extra_classes="pull-left" %} Purchase as {{ user.display_name }}</a></li>
+        <li><a href="{% url 'main_user_history' user.id %}">{% bootstrap_icon "th-list" extra_classes="pull-left" %}
+            History
+            of {{ user.display_name }}</a></li>
+    {% endif %}
     <hr/>
     <form method="POST" id="purchase_form" style="margin-top: 15px;">
         {% csrf_token %}
-        <input type="hidden" name="user_id" value="{{ user.pk }}">
+        {% if not multibuy %}
+            <input type="hidden" name="user_id" value="{{ user.pk }}">
+        {% endif %}
         <div class="form-group">
             <input type="text" style="text-align: center;" id="comment" name="comment"
-                   class="form-control" placeholder="Comment" maxlength="50">
+                   class="form-control" placeholder="Comment" maxlength="50"
+                   value="{{ form.comment.value|default_if_none:"" }}">
         </div>
+        {% if multibuy %}
+            <p class="help-block">MultiBuy: Quantity per user</p>
+        {% endif %}
         <div class="form-group">
             <div class="input-group">
                     <span class="input-group-btn">

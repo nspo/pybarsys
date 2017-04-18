@@ -1,32 +1,21 @@
-from django.shortcuts import render
-from django.shortcuts import get_list_or_404, get_object_or_404, redirect
-from .models import Product, Category, User, Purchase
-from .forms import SingleUserSinglePurchaseForm
-from .view_helpers import get_renderable_stats_elements
-from constance import config
-from collections import OrderedDict
-from .forms import *
-
-from django.views.generic import ListView, edit, View
-from django.views.generic.detail import DetailView
-
-from django.utils.decorators import method_decorator
-
-from django.contrib.auth.decorators import login_required
-from django.contrib.admin.views.decorators import staff_member_required
-
-from django_filters.views import FilterView
-from django.urls import reverse_lazy
-from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
 import csv
-from django.core import exceptions, paginator
+
 from django.contrib import messages
-
-from . import view_helpers
-
-from pybarsys import settings
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core import exceptions, paginator
+from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
+from django.shortcuts import get_list_or_404, get_object_or_404, redirect
+from django.shortcuts import render
+from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.generic import edit, View
+from django.views.generic.detail import DetailView
+from django_filters.views import FilterView
 
 from . import filters
+from . import view_helpers
+from .forms import *
+from .view_helpers import get_renderable_stats_elements
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
@@ -653,6 +642,7 @@ class ProductChangeActionExecuteView(View):
 # user area end
 
 
+
 class MainUserPurchaseView(View):
     def post(self, request, user_id):
         form = SingleUserSinglePurchaseForm(request.POST)
@@ -706,6 +696,97 @@ class MainUserListView(View):
                    "sidebar_stats_elements": sidebar_stats_elements,
                    "jump_to_data_lines": jump_to_data_lines}
         return render(request, 'barsys/main/user_list.html', context)
+
+
+class MainUserListMultiBuyView(View):
+    def get(self, request):
+        all_users_ungrouped = User.objects.active().buyers().order_by("display_name")
+
+        # Group by first letter of name
+        all_users = view_helpers.group_users(all_users_ungrouped)
+
+        jump_to_data_lines = view_helpers.get_jump_to_data_lines(all_users)
+
+        favorite_users = User.objects.active().buyers().favorites()
+
+        last_purchases = Purchase.objects.order_by("-created_date")[:config.NUM_MAIN_LAST_PURCHASES]
+
+        sidebar_stats_elements = get_renderable_stats_elements()
+
+        context = {"favorites": favorite_users,
+                   "all_users": all_users,
+                   "last_purchases": last_purchases,
+                   "sidebar_stats_elements": sidebar_stats_elements,
+                   "jump_to_data_lines": jump_to_data_lines}
+        return render(request, 'barsys/main/user_list_multibuy.html', context)
+
+    def post(self, request):
+        form = MultiUserChooseForm(request.POST)
+        if form.is_valid():
+            pks = [str(u.pk) for u in form.cleaned_data["users"]]
+            pkey_str = "/".join(pks)
+            return redirect("main_user_purchase_multibuy", user_pkey_str=pkey_str)
+        else:
+            messages.error(request, "Invalid form data")
+            return redirect("main_user_list_multibuy")
+
+
+class MainUserPurchaseMultiBuyView(View):
+    def get_users_qs(self, request, user_pkey_str):
+        """ Return queryset of users in user_pkey_str if all IDs are valid, or None otherwise """
+        try:
+            user_pks = [int(n) for n in user_pkey_str.split("/")]
+        except ValueError:
+            messages.error(request, "Invalid format of user IDs")
+            return None
+
+        users = User.objects.active().buyers().filter(pk__in=user_pks)
+        if users.count() is not len(user_pks):
+            # Not all users could be found
+            messages.error(request, "Not all requested users are active buyers")
+            return None
+
+        return users
+
+    def get(self, request, user_pkey_str):
+        users = self.get_users_qs(request, user_pkey_str)
+        if users is None:
+            return redirect("main_user_list_multibuy")
+
+        # users is a valid queryset
+        categories = get_list_or_404(Category)
+
+        context = {}
+
+        form = MultiUserSinglePurchaseForm()
+
+        context["multibuy"] = True
+        context["users"] = users
+        context["categories"] = categories
+        context["form"] = form
+
+        return render(request, "barsys/main/user_purchase.html", context)
+
+    def post(self, request, user_pkey_str):
+        users = self.get_users_qs(request, user_pkey_str)
+        if users is None:
+            return redirect("main_user_list_multibuy")
+
+        form = MultiUserSinglePurchaseForm(request.POST)
+        if form.is_valid():
+            product = Product.objects.get(pk=form.cleaned_data["product_id"])
+            quantity = form.cleaned_data["quantity"]
+            comment = form.cleaned_data["comment"]
+
+            for user in users:
+                purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
+                                    product_category=product.category.name, product_price=product.price,
+                                    quantity=quantity, comment=comment)
+                purchase.save()
+            return redirect("main_user_list")
+        else:
+            messages.error(request, "Invalid form data")
+            return redirect("main_user_purchase_multibuy", user_pkey_str=user_pkey_str)
 
 
 class MainUserHistoryView(View):
