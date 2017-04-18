@@ -653,11 +653,9 @@ class ProductChangeActionExecuteView(View):
 
 # user area end
 
-def main_user_purchase(request, user_id):
-    user = get_object_or_404(User.objects.active().buyers(), pk=user_id)
-    categories = get_list_or_404(Category)
 
-    if request.method == "POST":
+class MainUserPurchaseView(View):
+    def post(self, request, user_id):
         form = SingleUserSinglePurchaseForm(request.POST)
 
         if form.is_valid():
@@ -668,94 +666,100 @@ def main_user_purchase(request, user_id):
                                 product_category=product.category.name, product_price=product.price,
                                 quantity=form.cleaned_data["quantity"], comment=form.cleaned_data["comment"])
             purchase.save()
-            return redirect(main_user_list)
+            return redirect("main_user_list")
         else:
-            context = {"error_messages": ["Invalid form data"]}
-    else:
+            messages.error(request, "Invalid form data")
+            return redirect("main_user_purchase", user_id)
+
+    def get(self, request, user_id):
+        user = get_object_or_404(User.objects.active().buyers(), pk=user_id)
+        categories = get_list_or_404(Category)
+
         context = {}
 
-    form = SingleUserSinglePurchaseForm()
+        form = SingleUserSinglePurchaseForm()
 
-    context["user"] = user
-    context["categories"] = categories
-    context["form"] = form
+        context["user"] = user
+        context["categories"] = categories
+        context["form"] = form
 
-    return render(request, "barsys/main/user_purchase.html", context)
-
-
-def main_user_list(request):
-    all_users_ungrouped = User.objects.active().buyers().order_by("display_name")
-
-    # Group by first letter of name
-    all_users = OrderedDict()
-    for k, g in groupby(all_users_ungrouped, key=lambda u: u.display_name[0].upper()):
-        if k in all_users:
-            all_users[k] += g
-        else:
-            all_users[k] = list(g)
-
-    letter_groups_by_line = []
-    # create letter_groups for jumping to existing users in view
-    letter_group = OrderedDict()
-    letter_group["A - C"] = ['A', 'B', 'C']
-    letter_group["D - F"] = ['D', 'E', 'F']
-    letter_group["G - I"] = ['G', 'H', 'I']
-    letter_groups_by_line.append(letter_group)
-
-    letter_group = OrderedDict()
-    letter_group["J - L"] = ['J', 'K', 'L']
-    letter_group["M - O"] = ['M', 'N', 'O']
-    letter_groups_by_line.append(letter_group)
-
-    letter_group = OrderedDict()
-    letter_group["P - S"] = ['P', 'Q', 'R', 'S']
-    letter_group["T - V"] = ['T', 'U', 'V']
-    letter_group["W - Z"] = ['W', 'X', 'Y', 'Z']
-    letter_groups_by_line.append(letter_group)
-
-    # Where the button for this group should jump to
-    jump_to_data_lines = []
-
-    for line in letter_groups_by_line:
-        this_line = []
-        for index_group, (title, letters) in enumerate(line.items()):
-            for index_letter, letter in enumerate(letters):
-                if letter in all_users:
-                    # print("{} in {}, so choosing {}".format(letter, group, letter))
-                    this_line.append((title, letter))
-                    break
-                elif index_letter + 1 == len(letters):
-                    # print("{} not in {}, so choosing {}".format(letter, group, group[0]))
-                    this_line.append((title, letters[0]))
-                    break
-        jump_to_data_lines.append(this_line)
-
-    favorite_users = User.objects.active().buyers().favorites()
-
-    last_purchases = Purchase.objects.order_by("-created_date")[:config.NUM_MAIN_LAST_PURCHASES]
-
-    sidebar_stats_elements = get_renderable_stats_elements()
-
-    context = {"favorites": favorite_users,
-               "all_users": all_users,
-               "last_purchases": last_purchases,
-               "sidebar_stats_elements": sidebar_stats_elements,
-               "jump_to_data_lines": jump_to_data_lines,
-               "other_auto_jump_goal": True}
-    return render(request, 'barsys/main/user_list.html', context)
+        return render(request, "barsys/main/user_purchase.html", context)
 
 
-def main_user_history(request, user_id):
-    user = get_object_or_404(User.objects.active().buyers(), pk=user_id)
+class MainUserListView(View):
+    def get(self, request):
+        all_users_ungrouped = User.objects.active().buyers().order_by("display_name")
 
-    # Sum not yet billed product purchases grouped by product_category
-    categories = Purchase.objects.filter(user__pk=user_id, invoice=None).stats_purchases_by_category_and_product()
+        # Group by first letter of name
+        all_users = OrderedDict()
+        for k, g in groupby(all_users_ungrouped, key=lambda u: u.display_name[0].upper()):
+            if k in all_users:
+                all_users[k] += g
+            else:
+                all_users[k] = list(g)
 
-    last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[
-                     :config.NUM_USER_PURCHASE_HISTORY]
+        letter_groups_by_line = []
+        # create letter_groups for jumping to existing users in view
+        letter_group = OrderedDict()
+        letter_group["A - C"] = ['A', 'B', 'C']
+        letter_group["D - F"] = ['D', 'E', 'F']
+        letter_group["G - I"] = ['G', 'H', 'I']
+        letter_groups_by_line.append(letter_group)
 
-    context = {"user": user,
-               "categories": categories,
-               "last_purchases": last_purchases,
-               "config": config}
-    return render(request, "barsys/main/user_history.html", context)
+        letter_group = OrderedDict()
+        letter_group["J - L"] = ['J', 'K', 'L']
+        letter_group["M - O"] = ['M', 'N', 'O']
+        letter_groups_by_line.append(letter_group)
+
+        letter_group = OrderedDict()
+        letter_group["P - S"] = ['P', 'Q', 'R', 'S']
+        letter_group["T - V"] = ['T', 'U', 'V']
+        letter_group["W - Z"] = ['W', 'X', 'Y', 'Z']
+        letter_groups_by_line.append(letter_group)
+
+        # Where the button for this group should jump to
+        jump_to_data_lines = []
+
+        for line in letter_groups_by_line:
+            this_line = []
+            for index_group, (title, letters) in enumerate(line.items()):
+                for index_letter, letter in enumerate(letters):
+                    if letter in all_users:
+                        # print("{} in {}, so choosing {}".format(letter, group, letter))
+                        this_line.append((title, letter))
+                        break
+                    elif index_letter + 1 == len(letters):
+                        # print("{} not in {}, so choosing {}".format(letter, group, group[0]))
+                        this_line.append((title, letters[0]))
+                        break
+            jump_to_data_lines.append(this_line)
+
+        favorite_users = User.objects.active().buyers().favorites()
+
+        last_purchases = Purchase.objects.order_by("-created_date")[:config.NUM_MAIN_LAST_PURCHASES]
+
+        sidebar_stats_elements = get_renderable_stats_elements()
+
+        context = {"favorites": favorite_users,
+                   "all_users": all_users,
+                   "last_purchases": last_purchases,
+                   "sidebar_stats_elements": sidebar_stats_elements,
+                   "jump_to_data_lines": jump_to_data_lines}
+        return render(request, 'barsys/main/user_list.html', context)
+
+
+class MainUserHistoryView(View):
+    def get(self, request, user_id):
+        user = get_object_or_404(User.objects.active().buyers(), pk=user_id)
+
+        # Sum not yet billed product purchases grouped by product_category
+        categories = Purchase.objects.filter(user__pk=user_id, invoice=None).stats_purchases_by_category_and_product()
+
+        last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[
+                         :config.NUM_USER_PURCHASE_HISTORY]
+
+        context = {"user": user,
+                   "categories": categories,
+                   "last_purchases": last_purchases,
+                   "config": config}
+        return render(request, "barsys/main/user_history.html", context)

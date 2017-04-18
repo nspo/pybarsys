@@ -4,10 +4,11 @@ from . import views, filters
 
 urlpatterns = [
     # main page for purchasing products (main_*)
-    url(r'^$', views.main_user_list, name="root"),
-    url(r'^user/list/$', views.main_user_list, name="main_user_list"),
-    url(r'^user/(?P<user_id>[0-9]+)/purchase/$', views.main_user_purchase, name='main_user_purchase'),
-    url(r'^user/(?P<user_id>[0-9]+)/history/$', views.main_user_history, name='main_user_history'),
+    url(r'^$', views.MainUserListView.as_view(), name="root"),
+    url(r'^user/list/$', views.MainUserListView.as_view(), name="main_user_list"),
+    #url(r'^user/list/multibuy$', views.main_user_list_multibuy, name="main_user_list_multibuy"),
+    url(r'^user/(?P<user_id>[0-9]+)/purchase/$', views.MainUserPurchaseView.as_view(), name='main_user_purchase'),
+    url(r'^user/(?P<user_id>[0-9]+)/history/$', views.MainUserHistoryView.as_view(), name='main_user_history'),
 
     # user area (user_*)
     url(r'^admin/$', views.PurchaseListView.as_view(), name='user_home'),
