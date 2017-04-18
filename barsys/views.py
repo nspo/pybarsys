@@ -4,7 +4,6 @@ from .models import Product, Category, User, Purchase
 from .forms import SingleUserSinglePurchaseForm
 from .view_helpers import get_renderable_stats_elements
 from constance import config
-from itertools import groupby
 from collections import OrderedDict
 from .forms import *
 
@@ -691,48 +690,9 @@ class MainUserListView(View):
         all_users_ungrouped = User.objects.active().buyers().order_by("display_name")
 
         # Group by first letter of name
-        all_users = OrderedDict()
-        for k, g in groupby(all_users_ungrouped, key=lambda u: u.display_name[0].upper()):
-            if k in all_users:
-                all_users[k] += g
-            else:
-                all_users[k] = list(g)
+        all_users = view_helpers.group_users(all_users_ungrouped)
 
-        letter_groups_by_line = []
-        # create letter_groups for jumping to existing users in view
-        letter_group = OrderedDict()
-        letter_group["A - C"] = ['A', 'B', 'C']
-        letter_group["D - F"] = ['D', 'E', 'F']
-        letter_group["G - I"] = ['G', 'H', 'I']
-        letter_groups_by_line.append(letter_group)
-
-        letter_group = OrderedDict()
-        letter_group["J - L"] = ['J', 'K', 'L']
-        letter_group["M - O"] = ['M', 'N', 'O']
-        letter_groups_by_line.append(letter_group)
-
-        letter_group = OrderedDict()
-        letter_group["P - S"] = ['P', 'Q', 'R', 'S']
-        letter_group["T - V"] = ['T', 'U', 'V']
-        letter_group["W - Z"] = ['W', 'X', 'Y', 'Z']
-        letter_groups_by_line.append(letter_group)
-
-        # Where the button for this group should jump to
-        jump_to_data_lines = []
-
-        for line in letter_groups_by_line:
-            this_line = []
-            for index_group, (title, letters) in enumerate(line.items()):
-                for index_letter, letter in enumerate(letters):
-                    if letter in all_users:
-                        # print("{} in {}, so choosing {}".format(letter, group, letter))
-                        this_line.append((title, letter))
-                        break
-                    elif index_letter + 1 == len(letters):
-                        # print("{} not in {}, so choosing {}".format(letter, group, group[0]))
-                        this_line.append((title, letters[0]))
-                        break
-            jump_to_data_lines.append(this_line)
+        jump_to_data_lines = view_helpers.get_jump_to_data_lines(all_users)
 
         favorite_users = User.objects.active().buyers().favorites()
 
