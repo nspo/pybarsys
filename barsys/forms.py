@@ -1,4 +1,3 @@
-from constance import config
 from crispy_forms import layout
 from crispy_forms.helper import FormHelper
 from django import forms
@@ -50,8 +49,7 @@ class InvoicesCreateForm(forms.Form):
 
     send_payment_reminders = forms.BooleanField(required=False, initial=True,
                                                 help_text="Whether to send payment reminder mails to users with an "
-                                                          "account balance below {}".format(
-                                                           currency(config.MAIL_BALANCE_SEND_MONEY)))
+                                                          "account balance below config.MAIL_BALANCE_SEND_MONEY")
 
     def __init__(self, *args, **kwargs):
         super(InvoicesCreateForm, self).__init__(*args, **kwargs)
