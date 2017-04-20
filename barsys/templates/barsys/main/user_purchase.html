@@ -63,7 +63,7 @@
                 <h4>{{ category.name }}</h4>
                 <hr/>
                 {% for prod in category.get_products.active %}
-                    <label class="btn btn-default btn-product">
+                    <label class="btn btn-default btn-product btn-select">
                         <input type="radio" form="purchase_form" name="product_id"
                                value="{{ prod.pk }}" required>{% if prod.is_bold %}
                         <strong>{% endif %} {{ prod.name }}<br/>

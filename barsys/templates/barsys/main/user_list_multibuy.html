@@ -44,7 +44,7 @@
     <hr/>
     <div class="btn-group-horizontal" data-toggle="buttons">
         {% for user in favorites %}
-            <label class="btn btn-lg btn-default btn-user">
+            <label class="btn btn-lg btn-default btn-user btn-select">
                 <input type="checkbox" form="users_form" name="users" onchange="update_selected_users();"
                        value="{{ user.id }}"> {{ user.display_name }}
             </label>
@@ -61,7 +61,7 @@
         <hr/>
         <div class="btn-group-horizontal" data-toggle="buttons">
             {% for user in users %}
-                <label class="btn btn-lg btn-default btn-user">
+                <label class="btn btn-lg btn-default btn-user btn-select">
                     <input type="checkbox" form="users_form" name="users" onchange="update_selected_users();"
                            value="{{ user.id }}"> {{ user.display_name }}
                 </label>
@@ -102,5 +102,24 @@
             var num_users = num_selected_users();
             document.getElementById("info_selected_users").value = num_users + " user(s) selected";
         }
+
+
+        /* Add workaround for fastclick.js hover issue: https://github.com/ftlabs/fastclick/issues/83 */
+        var body = document.body;
+
+        window.addEventListener('touchstart', function () {
+            if (!body.classList.contains('disable-hover')) {
+                body.classList.add('disable-hover');
+            }
+
+        }, false);
+
+        window.addEventListener('touchend', function () {
+            if (body.classList.contains('disable-hover')) {
+                body.classList.remove('disable-hover');
+            }
+
+        }, false);
+
     </script>
 {% endblock %}

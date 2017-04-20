@@ -2,6 +2,27 @@
 
 }*/
 
+.btn-select.active {
+    background-color: #d0d0d0;
+    border-color: #337ab7;
+}
+
+.btn-select.active.focus {
+    outline: none;
+    background-color: #d0d0d0;
+    border-color: #337ab7;
+}
+
+.btn-select.focus {
+    outline: none;
+    border-color: #dbdbdb;
+}
+
+/* https://github.com/ftlabs/fastclick/issues/83#issuecomment-295723072 */
+.disable-hover {
+  pointer-events: none;
+}
+
 tr.table-total-row {
     font-weight:bold; border-top:2px solid #DDDDDD;
 }

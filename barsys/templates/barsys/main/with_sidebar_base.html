@@ -31,7 +31,15 @@
         </div>
     </div>
 
-    {#    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>#}
+    <script src="{% static 'barsys/fastclick.min.js' %}"></script>
+    <script type="text/javascript">
+        /* Activate fastclick.js, a workaround for old touch devices (e.g. iPad 1) that have a
+         large delay (>300 ms) before a click event is fired */
+        if ('addEventListener' in document) {
+            document.addEventListener('DOMContentLoaded', function () {
+                FastClick.attach(document.body);
+            }, false);
+        }</script>
 
     {% block extra_js %}{% endblock %}
 
