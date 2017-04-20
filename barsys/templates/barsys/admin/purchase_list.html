@@ -3,6 +3,7 @@
 {% load bootstrap3 %}
 {% load crispy_forms_tags %}
 {% load barsys_helpers %}
+{% load tz %}
 
 {% block above_table %}
     <h1 class="pull-left" style="margin-top: 0;">Purchases</h1>
@@ -27,7 +28,7 @@
 {% block tablebody %}
     {% for p in object_list %}
         <tr>
-            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{{ p.created_date|sdatetime }}</a></td>
+            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{{ p.created_date|localtime|sdatetime }}</a></td>
             <td><a href="{% url 'admin_user_detail' p.user.pk %}">{{ p.user.display_name }}</a></td>
             <td>{{ p.quantity }}</td>
             <td>{{ p.product_name }}</td>

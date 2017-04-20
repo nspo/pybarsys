@@ -1,4 +1,5 @@
 {% load barsys_helpers %}
+{% load tz %}
 <table>
 <thead class="left">
 <tr>
@@ -13,7 +14,7 @@
 <tbody>
 {% for p in purchases %}
     <tr>
-        <td>{{ p.created_date|sdatetime }}</td>
+        <td>{{ p.created_date|localtime|sdatetime }}</td>
         <td>{{ p.quantity }}</td>
         <td>{{ p.product_name }} ({{ p.product_amount }})</td>
         <td>{{ p.comment }}</td>

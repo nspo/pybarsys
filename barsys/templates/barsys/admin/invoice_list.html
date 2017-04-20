@@ -2,6 +2,7 @@
 
 {% load bootstrap3 %}
 {% load barsys_helpers %}
+{% load tz %}
 
 {% block above_table %}
     <h1 class="pull-left" style="margin-top: 0;">Invoices</h1>
@@ -21,7 +22,7 @@
 {% block tablebody %}
     {% for invoice in object_list %}
         <tr>
-            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|sdatetime }}</a></td>
+            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|localtime|sdatetime }}</a></td>
             <td>{{ invoice.recipient }}</td>
             <td>{{ invoice.amount|currency }}</td>
             <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>

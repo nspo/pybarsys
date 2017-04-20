@@ -1,4 +1,5 @@
 {% load barsys_helpers %}
+{% load tz %}
 <table class="table table-striped">
     <thead>
     <th>Time</th>
@@ -11,7 +12,7 @@
     <tbody>
     {% for p in purchases %}
         <tr>
-            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{{ p.created_date|sdatetime }}</a></td>
+            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{{ p.created_date|localtime|sdatetime }}</a></td>
             <td>{{ p.quantity }}</td>
             <td>{{ p.product_name }}</td>
             <td>{{ p.product_amount }}</td>

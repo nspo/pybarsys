@@ -1,5 +1,6 @@
 {% extends "email/html_email_base.html" %}
 {% load barsys_helpers %}
+{% load tz %}
 
 {% block main_content %}
     <h1>{{ config.MAIL_PURCHASE_NOTIFICATION_SUBJECT }}</h1>
@@ -24,6 +25,6 @@
 {% block footer %}
     You have purchased products for yourself with a total cost of {{ dependant.purchases.sum_cost|currency }} so
     far.<br/>
-    This mail was automatically generated on {{ invoice.created_date|sdate }} by
+    This mail was automatically generated on {{ invoice.created_date|localtime|sdate }} by
     <a href="https://github.com/nspo/pybarsys">pybarsys</a>.
 {% endblock %}

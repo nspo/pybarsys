@@ -1,10 +1,9 @@
-from bootstrap3.templatetags.bootstrap3 import bootstrap_icon
-from django.utils import formats
-from django.utils.timezone import localtime
-from django.conf import settings
-
-from django import template
 import locale
+
+from bootstrap3.templatetags.bootstrap3 import bootstrap_icon
+from django import template
+from django.conf import settings
+from django.utils import formats
 
 register = template.Library()
 
@@ -16,17 +15,21 @@ def bool_to_icon(value):
         return bootstrap_icon('remove')
 
 
-@register.filter(name='currency')
-def currency(value):
+def get_locale_str():
     """ Please tell me how to do this the right way """
-    if not value:
-        value = 0
-
     l = settings.LANGUAGE_CODE
     l_split = l.split('-')
     l = l_split[0].lower() + "_" + l_split[1].upper() + ".UTF-8"
 
-    locale.setlocale(locale.LC_ALL, l)
+    return l
+
+
+@register.filter(name='currency')
+def currency(value):
+    if not value:
+        value = 0
+
+    locale.setlocale(locale.LC_ALL, get_locale_str())
     return locale.currency(value, grouping=True)
 
 

@@ -1,4 +1,5 @@
 {% load barsys_helpers %}
+{% load tz %}
 <table>
     <thead class="left">
     <th>Time</th>
@@ -7,7 +8,7 @@
     <tbody>
     {% for i in invoices %}
         <tr>
-            <td>{{ i.created_date|sdatetime }}</td>
+            <td>{{ i.created_date|localtime|sdatetime }}</td>
             <td>{{ i.amount|currency }}</td>
         </tr>
     {% endfor %}

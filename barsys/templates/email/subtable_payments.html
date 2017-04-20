@@ -1,4 +1,5 @@
 {% load barsys_helpers %}
+{% load tz %}
 <table>
     <thead class="left">
     <th>Time</th>
@@ -9,7 +10,7 @@
     <tbody>
     {% for p in payments %}
         <tr>
-            <td>{{ p.created_date|sdatetime }}</td>
+            <td>{{ p.created_date|localtime|sdatetime }}</td>
             <td>{{ p.amount|currency }}</td>
             <td>{{ p.get_payment_method_display }}</td>
             <td>{{ p.comment }}</td>
