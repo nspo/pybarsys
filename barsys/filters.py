@@ -1,7 +1,6 @@
-from .models import *
 import django_filters
-from django.forms import DateTimeInput, SplitDateTimeWidget
-from django.db.models import DateTimeField
+
+from .models import *
 
 
 class UserFilter(django_filters.FilterSet):
@@ -12,7 +11,7 @@ class UserFilter(django_filters.FilterSet):
 
     class Meta:
         model = User
-        fields = ['is_active', 'is_buyer', 'is_favorite', 'is_admin']
+        fields = ['display_name', 'email', 'is_active', 'is_buyer', 'is_favorite', 'is_admin']
 
     def filter_has_purchases_paid_by_other(self, queryset, name, value):
         return queryset.filter(purchases_paid_by_other__isnull=not value)

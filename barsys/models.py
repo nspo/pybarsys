@@ -1,23 +1,22 @@
-from django.db import models
+import datetime
+from collections import defaultdict
+from decimal import Decimal
+from itertools import groupby
+
 from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
 )
-from collections import defaultdict
-from itertools import groupby
-from django.db.models import F
-import datetime
-from django.urls import reverse
-
-from django.utils import timezone
-from django.db.models import DecimalField
-from django.utils.translation import ugettext_lazy as _
-from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import IntegrityError
-from decimal import Decimal
-from barsys.templatetags.barsys_helpers import currency
-from django.utils.timezone import localtime
+from django.db import models
+from django.db.models import DecimalField
+from django.db.models import F
+from django.urls import reverse
 from django.utils import formats
+from django.utils.timezone import localtime
+
+from barsys.templatetags.barsys_helpers import currency
 
 
 class UserQuerySet(models.QuerySet):
@@ -423,7 +422,7 @@ class Purchase(models.Model):
     product_category = models.CharField(max_length=30, blank=False)
     product_name = models.CharField(max_length=40, blank=False)
     product_price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
-                                        validators=[MinValueValidator(Decimal('0.01'))])
+                                        validators=[MinValueValidator(Decimal('0.00'))])
     product_amount = models.CharField(max_length=10, blank=False)
     quantity = models.PositiveIntegerField(default=1, null=False, blank=False)
 
@@ -556,7 +555,7 @@ class StatsDisplay(models.Model):
     # A special boolean field that may only be True for one StatsDisplay
     # i.e. only one StatsDisplay can be the chosen one
     # Need to override save() for this
-    show_by_default = models.BooleanField(
+    show_by_default = models.BooleanField(default=False,
         help_text="Whether this should always be shown first. " \
                   "If not, it can be selected by cycling through the other ones, " \
                   "as long as any one is shown by default.")
