@@ -56,10 +56,16 @@ def get_renderable_stats_elements():
     return stats_elements
 
 
-def send_invoice_mails(request, invoices):
-    """ Send invoice mails to invoice recipients with a list of all purchases of that invoice """
+def send_invoice_mails(request, invoices, send_dependant_notifications=False):
+    """ Send invoice mails to invoice recipients with a list of all purchases of that invoice.
+        Optionally send purchase notifications to users whose purchases are paid by someone else.
+    """
     num_invoice_mail_success = 0
     invoice_mail_failure = []  # [(username, error), ...]
+
+    num_purchase_notif_mail_success = 0
+    purchase_notif_mail_failure = []
+
     for invoice in invoices:
         context = {}
         context["invoice"] = invoice
@@ -81,11 +87,39 @@ def send_invoice_mails(request, invoices):
         except Exception as e:
             invoice_mail_failure.append((invoice.recipient, e))
 
+        if send_dependant_notifications and invoice.has_dependant_purchases():
+            # send purchase notifications to dependants
+            for dependant, purchases in invoice.other_purchases_grouped():
+                notif_context = {}
+                notif_context["invoice"] = invoice
+                notif_context["config"] = config
+                notif_context["dependant"] = dependant
+                notif_context["purchases"] = purchases
+                content_plain = render_to_string("email/dependant_notification.plaintext.html", notif_context)
+                content_html = render_to_string("email/dependant_notification.html.html", notif_context)
+                try:
+                    msg = EmailMultiAlternatives(config.MAIL_PURCHASE_NOTIFICATION_SUBJECT, content_plain,
+                                                 pybarsys_settings.EMAIL_FROM_ADDRESS, [dependant.email],
+                                                 reply_to=[config.MAIL_CONTACT_EMAIL])
+                    msg.attach_alternative(content_html, "text/html")
+                    msg.send(fail_silently=False)
+
+                    num_purchase_notif_mail_success += 1
+                except Exception as e:
+                    purchase_notif_mail_failure.append((dependant, e))
+
+
     if num_invoice_mail_success > 0:
         messages.info(request, "{} invoice mails were successfully sent. ".format(num_invoice_mail_success))
     if len(invoice_mail_failure) > 0:
         messages.error(request, "Sending invoice mail(s) to the following user(s) failed: {}".
                        format(", ".join(["{} ({})".format(u, err) for u, err in invoice_mail_failure])))
+
+    if num_purchase_notif_mail_success > 0:
+        messages.info(request, "{} dependant notification mails were successfully sent. ".format(num_purchase_notif_mail_success))
+    if len(purchase_notif_mail_failure) > 0:
+        messages.error(request, "Sending dependant notification mail(s) to the following user(s) failed: {}".
+                       format(", ".join(["{} ({})".format(u, err) for u, err in purchase_notif_mail_failure])))
 
 
 def send_reminder_mails(request, users):

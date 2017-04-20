@@ -157,6 +157,7 @@ CONSTANCE_CONFIG = {
     'NUM_MAIN_LAST_PURCHASES': (5, "Number of purchases to show on main page"),
 
     'MAIL_INVOICE_SUBJECT': ('Invoice from Barsys bar', 'Subject of an invoice mail'),
+    'MAIL_PURCHASE_NOTIFICATION_SUBJECT': ('Purchase notification from Barsys bar', 'Subject of a purchase notification to dependants'),
     'MAIL_PAYMENT_REMINDER_SUBJECT': ('Payment reminder from Barsys bar', 'Subject of a payment reminder mail'),
     'MAIL_NAME_OF_BAR': ('Barsys bar', 'Name of the bar'),
     'MAIL_CONTACT_EMAIL': ('bar@example.com', 'Bar contact email address'),

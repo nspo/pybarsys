@@ -311,6 +311,12 @@ class Invoice(models.Model):
     def own_purchases(self):
         return self.purchases().paid_as_self(self.recipient)
 
+    def has_dependant_purchases(self):
+        if self.own_purchases().count() == self.purchases().count():
+            return False
+        else:
+            return True
+
     def other_purchases_grouped(self):
         """ Create a list of tuples in the format (User, PurchaseQuerySet) of purchases
             that the recipient paid for other users
@@ -556,9 +562,9 @@ class StatsDisplay(models.Model):
     # i.e. only one StatsDisplay can be the chosen one
     # Need to override save() for this
     show_by_default = models.BooleanField(default=False,
-        help_text="Whether this should always be shown first. " \
-                  "If not, it can be selected by cycling through the other ones, " \
-                  "as long as any one is shown by default.")
+                                          help_text="Whether this should always be shown first. " \
+                                                    "If not, it can be selected by cycling through the other ones, " \
+                                                    "as long as any one is shown by default.")
 
     class Meta:
         ordering = ["-show_by_default", "title"]

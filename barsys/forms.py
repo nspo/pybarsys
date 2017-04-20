@@ -18,13 +18,13 @@ class LoginForm(auth_forms.AuthenticationForm):
 class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
-        exclude = ('invoice', )
+        exclude = ('invoice',)
 
 
 class ProductChangeActionForm(forms.ModelForm):
     class Meta:
         model = ProductChangeAction
-        exclude = ('', )
+        exclude = ('',)
 
     def __init__(self, *args, **kwargs):
         super(ProductChangeActionForm, self).__init__(*args, **kwargs)
@@ -47,15 +47,21 @@ class InvoicesCreateForm(forms.Form):
                                                  "purchases instead of a real invoice. "
                                                  "If false, invoices will only be created internally.")
 
+    send_dependant_notifications = forms.BooleanField(required=False, initial=True,
+                                                      help_text="Whether to send purchase notifications to users who do"
+                                                                " not pay themselves (only valid if invoices are sent "
+                                                                "at all).")
+
     send_payment_reminders = forms.BooleanField(required=False, initial=True,
                                                 help_text="Whether to send payment reminder mails to users with an "
-                                                          "account balance below config.MAIL_BALANCE_SEND_MONEY")
+                                                          "account balance below config.MAIL_BALANCE_SEND_MONEY, but "
+                                                          "no unbilled purchases.")
 
     def __init__(self, *args, **kwargs):
         super(InvoicesCreateForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper(form=self)
-        self.helper["users"].wrap(layout.Field, size="30")
+        self.helper["users"].wrap(layout.Field, size="25")
 
         self.helper.add_input(layout.Submit('create', 'Create'))
         self.helper.add_input(layout.Reset('reset', 'Reset'))

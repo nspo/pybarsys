@@ -444,6 +444,7 @@ class InvoiceCreateView(edit.FormView):
     def form_valid(self, form):
         users = form.cleaned_data["users"]
         send_invoices = form.cleaned_data["send_invoices"]
+        send_dependant_notifications = form.cleaned_data["send_dependant_notifications"]
         send_payment_reminders = form.cleaned_data["send_payment_reminders"]
         skipped_users = []
         invoices = []
@@ -476,7 +477,8 @@ class InvoiceCreateView(edit.FormView):
 
         # Send invoice mails if wanted
         if send_invoices and len(invoices) > 0:
-            view_helpers.send_invoice_mails(self.request, invoices)
+            view_helpers.send_invoice_mails(self.request, invoices,
+                                            send_dependant_notifications=send_dependant_notifications)
         else:
             messages.info(self.request, "No invoice mails were sent.")
 

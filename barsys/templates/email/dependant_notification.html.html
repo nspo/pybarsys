@@ -1,0 +1,29 @@
+{% extends "email/html_email_base.html" %}
+{% load barsys_helpers %}
+
+{% block main_content %}
+    <h1>{{ config.MAIL_PURCHASE_NOTIFICATION_SUBJECT }}</h1>
+    <p>Hello, {{ dependant.display_name }}!</p>
+
+    <p>This is a notification of your latest purchases from <i>{{ config.MAIL_NAME_OF_BAR }}</i>. <br/>
+        {{ invoice.recipient }} is responsible to pay for your purchases, so you do not have to send money to us. He or she already received an invoice.</p>
+
+    <p>The total amount of your purchases on that invoice is {{ purchases.sum_cost|currency }}. They are:
+    </p>
+    <hr/>
+    <h2>Your purchases:</h2>
+    {% include "email/subtable_purchases.html" with purchases=purchases %}
+    <hr/>
+
+    <p>If you have any questions, feel free to contact <a
+            href="mailto:{{ config.MAIL_CONTACT_EMAIL }}">{{ config.MAIL_CONTACT_EMAIL }}</a> or {{ invoice.recipient }}.</p>
+
+    <p>Have a nice day!</p>
+{% endblock %}
+
+{% block footer %}
+    You have purchased products for yourself with a total cost of {{ dependant.purchases.sum_cost|currency }} so
+    far.<br/>
+    This mail was automatically generated on {{ invoice.created_date|sdate }} by
+    <a href="https://github.com/nspo/pybarsys">pybarsys</a>.
+{% endblock %}
