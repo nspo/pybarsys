@@ -175,6 +175,18 @@ CONSTANCE_CONFIG_FIELDSETS = {
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
+BOOTSTRAP3 = {
+    # The URL to the jQuery JavaScript file
+    'jquery_url': '/static/barsys/jquery/jquery.min.js',
+
+    # The Bootstrap base URL
+    'base_url': '/static/barsys/bootstrap-3.3.7-dist/',
+
+    # The complete URL to the Bootstrap CSS file (None means no theme)
+    'theme_url': '/static/barsys/bootstrap-3.3.7-dist/css/bootstrap-theme.css',
+
+}
+
 # Email settings
 EMAIL_HOST = 'localhost'
 # EMAIL_HOST_USER = 'no-reply@example.com'
