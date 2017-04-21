@@ -519,6 +519,7 @@ class PurchaseStatisticsByCategoryView(FilterView):
     def get_context_data(self, **kwargs):
         context = super(PurchaseStatisticsByCategoryView, self).get_context_data(**kwargs)
 
+        context["title"] = "Purchase statistics grouped by category"
         context["grouped_by"] = "product_category"
         context["grouped_by_title"] = "Category"
 
@@ -545,6 +546,7 @@ class PurchaseStatisticsByProductView(FilterView):
     def get_context_data(self, **kwargs):
         context = super(PurchaseStatisticsByProductView, self).get_context_data(**kwargs)
 
+        context["title"] = "Purchase statistics grouped by product"
         context["grouped_by"] = "product_name"
         context["grouped_by_title"] = "Product"
 
@@ -572,7 +574,7 @@ class ProductAutochangeSetListView(FilterView):
 
 
 class ProductAutochangeSetManageView(View):
-    template_name = "barsys/admin/productchangeset_form.html"
+    template_name = "barsys/admin/productautochangeset_form.html"
     new_title = "New product autochange set"
     update_title = "Update product autochange set"
 
