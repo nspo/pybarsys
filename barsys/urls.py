@@ -84,9 +84,9 @@ urlpatterns = [
         name='admin_purchase_statistics_by_product'),
 
     # ProductChangeAction
-    url(r'^admin/productchangeaction/list/$', views.ProductChangeActionListView.as_view(), name='admin_productchangeaction_list'),
-    url(r'^admin/productchangeaction/new/$', views.ProductChangeActionCreateView.as_view(), name='admin_productchangeaction_new'),
-    url(r'^admin/productchangeaction/(?P<pk>[0-9]+)/update/$', views.ProductChangeActionUpdateView.as_view(), name='admin_productchangeaction_update'),
-    url(r'^admin/productchangeaction/(?P<pk>[0-9]+)/execute/$', views.ProductChangeActionExecuteView.as_view(), name='admin_productchangeaction_execute'),
-    url(r'^admin/productchangeaction/(?P<pk>[0-9]+)/delete/$', views.ProductChangeActionDeleteView.as_view(), name='admin_productchangeaction_delete'),
+    url(r'^admin/productautochangeset/list/$', views.ProductAutochangeSetListView.as_view(), name='admin_productautochangeset_list'),
+    url(r'^admin/productautochangeset/new/$', views.ProductAutochangeSetManageView.as_view(), name='admin_productautochangeset_new'),
+    url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/update/$', views.ProductAutochangeSetManageView.as_view(), name='admin_productautochangeset_update'),
+    url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/execute/$', views.ProductAutochangeSetExecuteView.as_view(), name='admin_productautochangeset_execute'),
+    url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/delete/$', views.ProductAutochangeSetDeleteView.as_view(), name='admin_productautochangeset_delete'),
 ]

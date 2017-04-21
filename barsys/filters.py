@@ -31,10 +31,12 @@ class PurchaseFilter(django_filters.FilterSet):
         fields = ["user"]
 
 
-class ProductChangeActionFilter(django_filters.FilterSet):
+class ProductAutochangeSetFilter(django_filters.FilterSet):
+    title = django_filters.CharFilter(lookup_expr='icontains')
+    description = django_filters.CharFilter(lookup_expr='icontains')
     class Meta:
-        model = ProductChangeAction
-        fields = []
+        model = ProductAutochangeSet
+        fields = ['title', 'description']
 
 
 class PaymentFilter(django_filters.FilterSet):

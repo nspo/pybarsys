@@ -1,0 +1,21 @@
+{% extends 'barsys/admin/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+    <div class="container">
+        {% bootstrap_messages messages %}
+        <h1>{{ title }}</h1>
+        <form method="post" action="" class="">
+
+            {% crispy form %}
+            {% crispy formset formset.form.helper %}
+
+            <input class="submit btn btn-primary" type="submit" value="Save & add more">
+
+        </form>
+
+    </div>
+
+{% endblock %}

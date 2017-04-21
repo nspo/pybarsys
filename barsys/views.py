@@ -563,74 +563,74 @@ class PurchaseStatisticsByProductView(FilterView):
 
 
 # Statistics END
-# ProductChangeAction BEGIN
+# ProductAutochangeSet BEGIN
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductChangeActionListView(FilterView):
-    filterset_class = filters.ProductChangeActionFilter
-    template_name = "barsys/admin/productchangeaction_list.html"
+class ProductAutochangeSetListView(FilterView):
+    filterset_class = filters.ProductAutochangeSetFilter
+    template_name = "barsys/admin/productautochangeset_list.html"
     paginate_by = 10
 
 
+class ProductAutochangeSetManageView(View):
+    template_name = "barsys/admin/productchangeset_form.html"
+    new_title = "New product autochange set"
+    update_title = "Update product autochange set"
+
+    def post(self, request, pk=None):
+        if pk is None:
+            context = {'title': self.new_title}
+            pcs = ProductAutochangeSet()
+        else:
+            context = {'title': self.update_title}
+            pcs = get_object_or_404(ProductAutochangeSet, pk=pk)
+
+        formset = ProductAutochangeInlineFormSet(request.POST, request.FILES, instance=pcs, prefix="nested")
+        form = ProductAutochangeSetForm(request.POST, request.FILES, instance=pcs, prefix="main")
+
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.info(request, "Successfully saved {}".format(pcs))
+            return redirect("admin_productautochangeset_update", pk=pcs.pk)
+
+        context["form"] = form
+        context["formset"] = formset
+        return render(request, self.template_name, context)
+
+    def get(self, request, pk=None):
+        if pk is None:
+            context = {'title': self.new_title}
+            pcs = ProductAutochangeSet()
+        else:
+            context = {'title': self.update_title}
+            pcs = get_object_or_404(ProductAutochangeSet, pk=pk)
+
+        formset = ProductAutochangeInlineFormSet(instance=pcs, prefix="nested", )
+        form = ProductAutochangeSetForm(instance=pcs, prefix="main")
+
+        context["form"] = form
+        context["formset"] = formset
+        return render(request, self.template_name, context)
+
+
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductChangeActionCreateView(edit.CreateView):
-    model = ProductChangeAction
-    form_class = ProductChangeActionForm
-    template_name = "barsys/admin/generic_form.html"
-
-    def get_context_data(self, **kwargs):
-        context = super(ProductChangeActionCreateView, self).get_context_data(**kwargs)
-        context["title"] = "New product change action"
-
-        return context
+class ProductAutochangeSetDeleteView(CheckedDeleteView):
+    model = ProductAutochangeSet
+    success_url = reverse_lazy('admin_productautochangeset_list')
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductChangeActionUpdateView(edit.UpdateView):
-    model = ProductChangeAction
-    form_class = ProductChangeActionForm
-    template_name = "barsys/admin/generic_form.html"
-
-    def get_context_data(self, **kwargs):
-        context = super(ProductChangeActionUpdateView, self).get_context_data(**kwargs)
-        context["title"] = "Update product change action"
-
-        return context
-
-
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductChangeActionDeleteView(CheckedDeleteView):
-    model = ProductChangeAction
-    success_url = reverse_lazy('admin_productchangeaction_list')
-
-
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductChangeActionExecuteView(View):
+class ProductAutochangeSetExecuteView(View):
     def get(self, request, pk):
-        pca = get_object_or_404(ProductChangeAction, pk=pk)
+        pacs = get_object_or_404(ProductAutochangeSet, pk=pk)
 
-        if pca.toggle_active:
-            # Cache PKs as QuerySet would be evaluated only when calling update()
-            active_products = [p.pk for p in pca.products.all().filter(is_active=True)]
-            inactive_products = [p.pk for p in pca.products.all().filter(is_active=False)]
+        pacs.execute()
 
-            Product.objects.filter(pk__in=active_products).update(is_active=False)
-            Product.objects.filter(pk__in=inactive_products).update(is_active=True)
-
-        if pca.toggle_bold:
-            bold_products = [p.pk for p in pca.products.all().filter(is_bold=True)]
-            not_bold_products = [p.pk for p in pca.products.all().filter(is_bold=False)]
-
-            Product.objects.filter(pk__in=bold_products).update(is_bold=False)
-            Product.objects.filter(pk__in=not_bold_products).update(is_bold=True)
-
-        if pca.price is not None:
-            pca.products.all().update(price=pca.price)
-
-        messages.info(request, "Successfully executed {}".format(pca))
-        return redirect("admin_productchangeaction_list")
+        messages.info(request, "Successfully executed product autochange set: {}".format(pacs))
+        return redirect("admin_productautochangeset_list")
 
 
-# ProductChangeAction END
+# ProductAutochangeSet END
 
 
 

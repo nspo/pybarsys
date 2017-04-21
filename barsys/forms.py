@@ -21,19 +21,61 @@ class PurchaseForm(forms.ModelForm):
         exclude = ('invoice',)
 
 
-class ProductChangeActionForm(forms.ModelForm):
+class ProductAutochangeForm(forms.ModelForm):
     class Meta:
-        model = ProductChangeAction
-        exclude = ('',)
+        model = ProductAutochange
+        fields = ["product", 'change_active', 'change_bold', "set_price"]
 
     def __init__(self, *args, **kwargs):
-        super(ProductChangeActionForm, self).__init__(*args, **kwargs)
+        super(ProductAutochangeForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper(form=self)
-        self.helper["products"].wrap(layout.Field, size="10")
+        self.helper.form_tag = False
 
-        self.helper.add_input(layout.Submit('save', 'Save'))
-        self.helper.add_input(layout.Reset('reset', 'Reset'))
+        i = self.helper.layout.fields.index('set_price')
+        self.helper.layout.insert(i + 1, layout.Field("DELETE"))
+        self.helper.layout.insert(
+            i + 2,
+            layout.HTML('<hr />'))
+
+
+class ProductAutochangeInlineFormSet(
+    forms.inlineformset_factory(ProductAutochangeSet, ProductAutochange, form=ProductAutochangeForm, extra=1)):
+    def clean(self):
+        super(ProductAutochangeInlineFormSet, self).clean()
+
+        product_pks = []
+        num_productautochanges = 0
+        for form in self.forms:
+            if not form.is_valid():
+                continue  # do not return yet b/c otherwise user could delete the last PAc if it's invalid
+            if form.cleaned_data and not form.cleaned_data.get('DELETE'):
+                num_productautochanges += 1
+                if form.cleaned_data["product"].pk in product_pks:
+                    form.add_error("product", "Product {} cannot be autochanged multiple times.".format(
+                        form.cleaned_data["product"]))
+                else:
+                    product_pks.append(form.cleaned_data["product"].pk)
+
+        if num_productautochanges < 1:
+            raise ValidationError("At least one product autochange needs to be defined.")
+
+
+class ProductAutochangeSetForm(forms.ModelForm):
+    class Meta:
+        model = ProductAutochangeSet
+        fields = ('title', 'description')
+
+    def __init__(self, *args, **kwargs):
+        super(ProductAutochangeSetForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper(form=self)
+        self.helper.form_tag = False
+
+        i = self.helper.layout.fields.index('description')
+        self.helper.layout.insert(
+            i + 1,
+            layout.HTML('<hr />'))
 
 
 class InvoicesCreateForm(forms.Form):

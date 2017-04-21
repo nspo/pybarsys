@@ -598,26 +598,69 @@ class StatsDisplay(models.Model):
         return False
 
 
-class ProductChangeAction(models.Model):
-    """ Specific changes to apply to products """
+class ProductAutochange(models.Model):
+    """ Set of changes that can be applied to one product """
+    product = models.ForeignKey(Product)
+    pc_set = models.ForeignKey("ProductAutochangeSet")
+
+    set_price = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True,
+                                    validators=[MinValueValidator(Decimal('0'))],
+                                    help_text="If set, will change the price to this value")
+
+    NO_CHANGE = "NC"
+    CHANGE_TO_YES = "YES"
+    CHANGE_TO_NO = "NO"
+
+    BOOLEAN_CHANGE_CHOICES = ((NO_CHANGE, "No change"),
+                              (CHANGE_TO_YES, "Change to yes"),
+                              (CHANGE_TO_NO, "Change to no"),)
+
+    change_active = models.CharField(max_length=3,
+                                     choices=BOOLEAN_CHANGE_CHOICES,
+                                     default=NO_CHANGE)
+
+    change_bold = models.CharField(max_length=3,
+                                   choices=BOOLEAN_CHANGE_CHOICES,
+                                   default=NO_CHANGE)
+
+    def execute(self):
+        """ Execute product change """
+        product = self.product
+        if self.set_price is not None:
+            product.price = self.set_price
+
+        if self.change_active == self.CHANGE_TO_YES:
+            product.is_active = True
+        elif self.change_active == self.CHANGE_TO_NO:
+            product.is_active = False
+
+        if self.change_bold == self.CHANGE_TO_YES:
+            product.is_bold = True
+        elif self.change_bold == self.CHANGE_TO_NO:
+            product.is_bold = False
+
+        product.save()
+
+
+class ProductAutochangeSet(models.Model):
+    """ Set of product autochanges that can each be applied to a product """
     title = models.CharField(max_length=30, blank=False, unique=True)
-    products = models.ManyToManyField(Product, help_text="Only these products will be changed.")
-
-    toggle_active = models.BooleanField(help_text="Toggle active state of products (whether they "
-                                                  "are shown on main page)", default=False)
-    toggle_bold = models.BooleanField(help_text="Toggle bold state of products (whether they "
-                                                "are shown bold on main page)", default=False)
-
-    price = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True,
-                                validators=[MinValueValidator(Decimal('0'))],
-                                help_text="If set, PCA will change the price of selected products to this")
+    description = models.CharField(max_length=255, blank=True)
+    products = models.ManyToManyField(Product, through=ProductAutochange, help_text="These products will be changed.")
 
     def get_absolute_url(self):
-        return reverse("admin_productchangeaction_list")
+        return reverse("admin_productautochangeset_list")
 
     def cannot_be_deleted(self):
         return False
 
     def __str__(self):
-        return "Product change action {} (affects {})".format(self.title,
-                                                              ", ".join([p.name for p in self.products.all()]))
+        if self.products.all().count() > 0:
+            affects_str = "affects " + ", ".join([p.name for p in self.products.all()])
+        else:
+            affects_str = "affects none"
+        return "{} ({})".format(self.title, affects_str)
+
+    def execute(self):
+        for pac in self.productautochange_set.all():
+            pac.execute()
