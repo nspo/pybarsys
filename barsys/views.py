@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core import exceptions, paginator
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
-from django.shortcuts import get_list_or_404, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -665,7 +665,7 @@ class MainUserPurchaseView(View):
 
     def get(self, request, user_id):
         user = get_object_or_404(User.objects.active().buyers(), pk=user_id)
-        categories = get_list_or_404(Category)
+        categories = Category.objects.all()
 
         context = {}
 
@@ -757,7 +757,7 @@ class MainUserPurchaseMultiBuyView(View):
             return redirect("main_user_list_multibuy")
 
         # users is a valid queryset
-        categories = get_list_or_404(Category)
+        categories = Category.objects.all()
 
         context = {}
 
