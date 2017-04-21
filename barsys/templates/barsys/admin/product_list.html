@@ -18,9 +18,9 @@
         <th>Amount</th>
         <th>Price</th>
         <th>Active?</th>
-        <th>{% bootstrap_icon 'info-sign' %}</th>
-        <th>{% bootstrap_icon 'pencil' %}</th>
-        <th>{% bootstrap_icon 'trash' %}</th>
+        <th>{% bicon 'info-sign' %}</th>
+        <th>{% bicon 'pencil' %}</th>
+        <th>{% bicon 'trash' %}</th>
     </tr>
 {% endblock %}
 {% block tablebody %}
@@ -33,11 +33,11 @@
             <td>{{ product.price|currency }}</td>
             <td>{% bool_to_icon product.is_active %}</td>
             <td>
-                <a href="{% url 'admin_product_detail' product.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+                <a href="{% url 'admin_product_detail' product.pk %}">{% bicon 'info-sign' %}</a>
             </td>
-            <td><a href="{% url 'admin_product_update' product.pk %}">{% bootstrap_icon 'pencil' %}</a>
+            <td><a href="{% url 'admin_product_update' product.pk %}">{% bicon 'pencil' %}</a>
             </td>
-            <td><a href="{% url 'admin_product_delete' product.pk %}">{% bootstrap_icon 'trash' %}</a>
+            <td><a href="{% url 'admin_product_delete' product.pk %}">{% bicon 'trash' %}</a>
             </td>
         </tr>
     {% endfor %}

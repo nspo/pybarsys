@@ -1,6 +1,9 @@
-/* btn {
-
-}*/
+/* Glyphicon: bigger icons */
+.gi-1p5x{font-size: 1.5em;}
+.gi-2x{font-size: 2em;}
+.gi-3x{font-size: 3em;}
+.gi-4x{font-size: 4em;}
+.gi-5x{font-size: 5em;}
 
 .btn-select.active {
     background-color: #d0d0d0;

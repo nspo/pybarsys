@@ -14,9 +14,9 @@
     <tr>
         <th>Name</th>
         <th>Number of products</th>
-        <th>{% bootstrap_icon 'info-sign' %}</th>
-        <th>{% bootstrap_icon 'pencil' %}</th>
-        <th>{% bootstrap_icon 'trash' %}</th>
+        <th>{% bicon 'info-sign' %}</th>
+        <th>{% bicon 'pencil' %}</th>
+        <th>{% bicon 'trash' %}</th>
     </tr>
 {% endblock %}
 {% block tablebody %}
@@ -25,11 +25,11 @@
             <td><a href="{% url 'admin_category_detail' category.pk %}">{{ category.name }}</a></td>
             <td>{{ category.get_number_products }}</td>
             <td>
-                <a href="{% url 'admin_category_detail' category.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+                <a href="{% url 'admin_category_detail' category.pk %}">{% bicon 'info-sign' %}</a>
             </td>
-            <td><a href="{% url 'admin_category_update' category.pk %}">{% bootstrap_icon 'pencil' %}</a>
+            <td><a href="{% url 'admin_category_update' category.pk %}">{% bicon 'pencil' %}</a>
             </td>
-            <td><a href="{% url 'admin_category_delete' category.pk %}">{% bootstrap_icon 'trash' %}</a>
+            <td><a href="{% url 'admin_category_delete' category.pk %}">{% bicon 'trash' %}</a>
             </td>
         </tr>
     {% endfor %}

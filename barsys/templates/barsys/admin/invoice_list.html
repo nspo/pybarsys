@@ -15,8 +15,8 @@
         <th>Time</th>
         <th>Recipient</th>
         <th>Amount</th>
-        <th>{% bootstrap_icon 'info-sign' %}</th>
-        <th>{% bootstrap_icon 'trash' %}</th>
+        <th>{% bicon 'info-sign' %}</th>
+        <th>{% bicon 'trash' %}</th>
     </tr>
 {% endblock %}
 {% block tablebody %}
@@ -26,8 +26,8 @@
             </td>
             <td>{{ invoice.recipient }}</td>
             <td>{{ invoice.amount|currency }}</td>
-            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
-            <td><a href="{% url 'admin_invoice_delete' invoice.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bicon 'info-sign' %}</a></td>
+            <td><a href="{% url 'admin_invoice_delete' invoice.pk %}">{% bicon 'trash' %}</a></td>
         </tr>
     {% endfor %}
 {% endblock %}

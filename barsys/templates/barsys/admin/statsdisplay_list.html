@@ -19,9 +19,9 @@
         <th>Time period</th>
         <th>Sort by and show</th>
         <th>Show by default</th>
-        <th>{% bootstrap_icon 'info-sign' %}</th>
-        <th>{% bootstrap_icon 'pencil' %}</th>
-        <th>{% bootstrap_icon 'trash' %}</th>
+        <th>{% bicon 'info-sign' %}</th>
+        <th>{% bicon 'pencil' %}</th>
+        <th>{% bicon 'trash' %}</th>
     </tr>
 {% endblock %}
 {% block tablebody %}
@@ -34,9 +34,9 @@
             <td>{{ s.get_sort_by_and_show_display }}</td>
             <td>{% bool_to_icon s.show_by_default %}</td>
 
-            <td><a href="{% url 'admin_statsdisplay_detail' s.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
-            <td><a href="{% url 'admin_statsdisplay_update' s.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
-            <td><a href="{% url 'admin_statsdisplay_delete' s.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+            <td><a href="{% url 'admin_statsdisplay_detail' s.pk %}">{% bicon 'info-sign' %}</a></td>
+            <td><a href="{% url 'admin_statsdisplay_update' s.pk %}">{% bicon 'pencil' %}</a></td>
+            <td><a href="{% url 'admin_statsdisplay_delete' s.pk %}">{% bicon 'trash' %}</a></td>
         </tr>
     {% endfor %}
     </tbody>

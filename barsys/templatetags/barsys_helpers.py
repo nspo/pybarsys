@@ -7,12 +7,19 @@ from django.utils import formats
 
 register = template.Library()
 
+
+@register.simple_tag
+def bicon(icon):
+    """ Icon shortcut with easily changable default icon size """
+    return bootstrap_icon(icon, extra_classes="gi-1p5x")
+
+
 @register.simple_tag
 def bool_to_icon(value):
     if value:
-        return bootstrap_icon('ok')
+        return bicon("ok")
     else:
-        return bootstrap_icon('remove')
+        return bicon("remove")
 
 
 def get_locale_str():

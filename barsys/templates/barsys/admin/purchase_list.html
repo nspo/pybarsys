@@ -20,9 +20,9 @@
         <th>Product price</th>
         <th>Cost</th>
         <th>Invoiced?</th>
-        <th>{% bootstrap_icon 'info-sign' %}</th>
-        <th>{% bootstrap_icon 'pencil' %}</th>
-        <th>{% bootstrap_icon 'trash' %}</th>
+        <th>{% bicon 'info-sign' %}</th>
+        <th>{% bicon 'pencil' %}</th>
+        <th>{% bicon 'trash' %}</th>
     </tr>
 {% endblock %}
 {% block tablebody %}
@@ -41,14 +41,14 @@
                     {% bool_to_icon p.invoice %}
                 {% endif %}
             </td>
-            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{% bicon 'info-sign' %}</a></td>
             <td>
                 {% if not p.has_invoice %}
-                    <a href="{% url 'admin_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                    <a href="{% url 'admin_purchase_update' p.pk %}">{% bicon 'pencil' %}</a></td>
                 {% endif %}
             <td>
                 {% if not p.has_invoice %}
-                    <a href="{% url 'admin_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a>
+                    <a href="{% url 'admin_purchase_delete' p.pk %}">{% bicon 'trash' %}</a>
                 {% endif %}
             </td>
         </tr>
