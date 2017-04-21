@@ -22,7 +22,8 @@
 {% block tablebody %}
     {% for invoice in object_list %}
         <tr>
-            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|localtime|sdatetime }}</a></td>
+            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|localtime|sdatetime }}</a>
+            </td>
             <td>{{ invoice.recipient }}</td>
             <td>{{ invoice.amount|currency }}</td>
             <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
@@ -36,5 +37,19 @@
 {% endblock %}
 
 {% block additional_content %}
-    {% include "barsys/admin/list_filter.html" %}
+    {% include "barsys/admin/list_filter.html" with center=False %}
+
+    <div class="col-md-6">
+        <h2>Explanation</h2>
+        <p class="text-justify">
+            Invoices can automatically be created for unbilled purchases of a user. If a user is
+            responsible to pay for other
+            users (i.e. the other user is a dependant), the responsible user sees the purchases of the dependant on
+            their invoice and has to pay for them. The dependant can get a notification of their purchases (but this is
+            not to be seen as an invoice).<br/>
+            Only purchases that are on an invoice influence a user's account balance.<br/>
+            Users with an account balance below a certain threshold (e.g. {{ 0|currency }}) can get a payment reminder.
+        </p>
+
+    </div>
 {% endblock %}

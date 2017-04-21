@@ -7,12 +7,13 @@
     <div class="container">
         {% bootstrap_messages messages %}
         <h1>{{ title }}</h1>
-        <form method="post" action="" class="">
+        <form method="post" action="">
 
             {% crispy form %}
             {% crispy formset formset.form.helper %}
 
             <input class="submit btn btn-primary" type="submit" value="Save & add more">
+            <a class="btn btn-success" href="{% url 'admin_productautochangeset_list' %}">Return to list</a>
 
         </form>
 

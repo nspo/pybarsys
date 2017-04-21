@@ -30,6 +30,7 @@ class ProductAutochangeForm(forms.ModelForm):
         super(ProductAutochangeForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper(form=self)
+        self.helper.template = 'bootstrap/table_inline_formset.html'
         self.helper.form_tag = False
 
         i = self.helper.layout.fields.index('set_price')

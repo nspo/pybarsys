@@ -60,5 +60,18 @@
 {% endblock %}
 
 {% block additional_content %}
-    {% include "barsys/admin/list_filter.html" %}
+    {% include "barsys/admin/list_filter.html" with center=False %}
+
+    <div class="col-md-6">
+        <h2>Explanation</h2>
+        <p class="text-justify">Every active user that is a buyer is allowed to purchase products on the main page.<br/>
+            When a product is bought, the current product data (e.g. name and price) is copied and saved as a purchase
+            (with
+            further information about the purchase).
+            Changes to a product after it has already been bought therefore have no effect on the purchase.<br/>
+            The details of a purchase can be changed manually, as long as it has not been invoiced yet.
+            If an invoice exists but the purchase needs to be changed, the invoice needs to be deleted (and later
+            recreated).
+        </p>
+    </div>
 {% endblock %}

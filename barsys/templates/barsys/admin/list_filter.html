@@ -1,6 +1,6 @@
 {% load crispy_forms_tags %}
 
-<div class="col-md-6 col-md-offset-3">
+<div class="col-md-6 {% if center %}col-md-offset-3{% endif %}">
     <h2>Filter</h2>
     <form method="get" class="form">
         {{ filter.form|crispy }}
