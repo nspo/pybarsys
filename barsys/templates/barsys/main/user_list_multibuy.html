@@ -28,13 +28,13 @@
     <form method="POST" id="users_form" style="margin-top: 15px;">
         {% csrf_token %}
 
-        <div class="form-group">
+        <div class="form-group form-group-lg">
 
             <input type="text" style="text-align: center;" id="info_selected_users"
                    class="form-control" value="0 user(s) selected" disabled>
 
         </div>
-        <button type="submit" class="btn btn-success">Choose product</button>
+        <button type="submit" class="btn btn-success btn-lg">Choose product</button>
     </form>
 
 {% endblock %}
