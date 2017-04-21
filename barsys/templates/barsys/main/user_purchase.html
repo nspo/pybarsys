@@ -25,7 +25,7 @@
         {% if not multibuy %}
             <input type="hidden" name="user_id" value="{{ user.pk }}">
         {% endif %}
-        <div class="form-group">
+        <div class="form-group form-group-lg">
             <input type="text" style="text-align: center;" id="comment" name="comment"
                    class="form-control" placeholder="Comment" maxlength="50"
                    value="{{ form.comment.value|default_if_none:"" }}">
@@ -34,7 +34,7 @@
             <p class="help-block">MultiBuy: Quantity per user</p>
         {% endif %}
         <div class="form-group">
-            <div class="input-group">
+            <div class="input-group input-group-lg">
                     <span class="input-group-btn">
                         <button type="button" class="btn btn-default btn-number"
                                 onclick="javascript:decreaseQuantity();">
@@ -53,7 +53,7 @@
                 </span>
             </div>
         </div>
-        <button type="submit" class="btn btn-success">Submit</button>
+        <button type="submit" class="btn btn-success btn-lg">Purchase</button>
     </form>
 {% endblock %}
 {% block main_content %}
