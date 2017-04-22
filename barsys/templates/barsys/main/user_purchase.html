@@ -54,13 +54,13 @@
             </div>
         </div>
 
-        <div class="btn-group btn-group-justified" role="group" aria-label="...">
+        <div class="btn-group btn-group-justified" role="group">
             <div class="btn-group btn-group-lg" role="group">
-                <a href="{% url 'main_user_list' %}" class="btn btn-danger">Cancel</a>
+                <a href="{% url 'main_user_list' %}" class="btn btn-danger">{% bootstrap_icon "remove" %} Cancel</a>
             </div>
 
             <div class="btn-group btn-group-lg" role="group">
-                <button type="submit" class="btn btn-success">Purchase</button>
+                <button type="submit" class="btn btn-success">{% bootstrap_icon "shopping-cart" %} Purchase</button>
             </div>
         </div>
 
