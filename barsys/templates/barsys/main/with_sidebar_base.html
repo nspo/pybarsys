@@ -28,6 +28,9 @@
         </div>
     </div>
 
+    <a id="back-to-top" href="#" class="btn btn-primary btn-lg back-to-top">
+        <span class="glyphicon glyphicon-chevron-up"></span></a>
+
     <script src="{% static 'barsys/fastclick.min.js' %}"></script>
     <script type="text/javascript">
         /* Activate fastclick.js, a workaround for old touch devices (e.g. iPad 1) that have a
@@ -38,6 +41,31 @@
             }, false);
         }</script>
 
-    {% block extra_js %}{% endblock %}
+{% endblock %}
 
+{% block bootstrap3_extra_script %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(window).scroll(function () {
+                if ($(this).scrollTop() > 50) {
+                    $('#back-to-top').fadeIn();
+                } else {
+                    $('#back-to-top').fadeOut();
+                }
+            });
+            // scroll body to 0px on click
+            $('#back-to-top').click(function () {
+                $('#back-to-top').tooltip('hide');
+                $('body,html').animate({
+                    scrollTop: 0
+                }, 800);
+                return false;
+            });
+
+            $('#back-to-top').tooltip('show');
+
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
 {% endblock %}

@@ -1,3 +1,12 @@
+.back-to-top {
+    cursor: pointer;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display:none;
+}
+
+
 /* Glyphicon: bigger icons */
 .gi-1p5x{font-size: 1.5em;}
 .gi-2x{font-size: 2em;}
