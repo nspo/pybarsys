@@ -17,9 +17,9 @@
         <th>Title</th>
         <th>Description</th>
         <th>Number of products</th>
-        <th>{% bootstrap_icon 'flash' %}</th>
-        <th>{% bootstrap_icon 'pencil' %}</th>
-        <th>{% bootstrap_icon 'trash' %}</th>
+        <th>{% bicon 'flash' %}</th>
+        <th>{% bicon 'pencil' %}</th>
+        <th>{% bicon 'trash' %}</th>
     </tr>
 {% endblock %}
 {% block tablebody %}
@@ -28,11 +28,11 @@
             <td>{{ object.title }}</td>
             <td>{{ object.description|truncatechars:40 }}</td>
             <td>{{ object.products.all.count }}</td>
-            <td><a href="{% url 'admin_productautochangeset_execute' object.pk %}">{% bootstrap_icon 'flash' %}</a>
+            <td><a href="{% url 'admin_productautochangeset_execute' object.pk %}">{% bicon 'flash' %}</a>
             </td>
-            <td><a href="{% url 'admin_productautochangeset_update' object.pk %}">{% bootstrap_icon 'pencil' %}</a>
+            <td><a href="{% url 'admin_productautochangeset_update' object.pk %}">{% bicon 'pencil' %}</a>
             </td>
-            <td><a href="{% url 'admin_productautochangeset_delete' object.pk %}">{% bootstrap_icon 'trash' %}</a>
+            <td><a href="{% url 'admin_productautochangeset_delete' object.pk %}">{% bicon 'trash' %}</a>
             </td>
         </tr>
     {% endfor %}

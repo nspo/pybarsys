@@ -16,7 +16,7 @@
         <th>Title</th>
         <th>Filter category</th>
         <th>Filter product</th>
-        <th>Time period</th>
+        <th>Time period method</th>
         <th>Sort by and show</th>
         <th>Show by default</th>
         <th>{% bicon 'info-sign' %}</th>
@@ -30,7 +30,7 @@
             <td><a href="{% url 'admin_statsdisplay_detail' s.pk %}">{{ s.title }}</a></td>
             <td>{{ s.filter_category|default_if_none:"any" }}</td>
             <td>{{ s.filter_product|default_if_none:"any" }}</td>
-            <td>{{ s.time_period }}</td>
+            <td>{{ s.get_time_period_method_display }}</td>
             <td>{{ s.get_sort_by_and_show_display }}</td>
             <td>{% bool_to_icon s.show_by_default %}</td>
 

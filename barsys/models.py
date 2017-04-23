@@ -14,6 +14,7 @@ from django.db.models import DecimalField
 from django.db.models import F
 from django.urls import reverse
 from django.utils import formats
+from django.utils import timezone
 from django.utils.timezone import localtime
 
 from barsys.templatetags.barsys_helpers import currency
@@ -538,25 +539,35 @@ class StatsDisplay(models.Model):
     row_string = models.CharField(max_length=15, blank=True,
                                   help_text="This is shown on the right side of each stats row in the format "
                                             "'[row_string] [user_name]', so one example row could be "
-                                            "'10x Coffee by Peter' with 'Coffee by' being the ROW_STRING")
+                                            "'10x Coffee by Peter' with 'Coffee by' being the row_string")
 
     filter_category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True,
                                         help_text="If none, any category is used")
     filter_product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True,
                                        help_text="If none, any product is used")
 
-    time_period = models.DurationField(default=datetime.timedelta(weeks=1), help_text="Duration over which "
-                                                                                      "statistics are to be evaluated "
-                                                                                      "in the format "
-                                                                                      "'DAYS HOURS:MINUTES:SECONDS'")
+    FIXED_DURATION = "FIXED"
+    SINCE_MONDAY = "MONDAY"
+    SINCE_1ST = "1st"
+    SINCE_JAN_1ST = "JAN_1st"
+    TIME_PERIOD_METHOD_CHOICES = ((FIXED_DURATION, "Fixed duration"),
+                                  (SINCE_MONDAY, "Since Monday of current week (midnight)"),
+                                  (SINCE_1ST, "Since 1st of current month (midnight)"),
+                                  (SINCE_JAN_1ST, "Since January 1st of current year (midnight)"))
+    time_period_method = models.CharField(max_length=7, choices=TIME_PERIOD_METHOD_CHOICES, default=SINCE_MONDAY,
+                                          help_text="Method of how to determine the time frame in which purchases "
+                                                    "count into this statistics display.")
+
+    time_period = models.DurationField(default=datetime.timedelta(weeks=1),
+                                       help_text="Duration over which statistics are to be evaluated in the format "
+                                                 "'DAYS HOURS:MINUTES:SECONDS'. Only used if time period method "
+                                                 "is 'fixed duration'")
 
     SORT_BY_NUM_PURCHASES = "NP"
     SORT_BY_TOTAL_COST_SHOW_RANK = "TC"
     SORT_BY_AND_SHOW_CHOICES = ((SORT_BY_NUM_PURCHASES, "Sort by and show number of purchases"),
                                 (SORT_BY_TOTAL_COST_SHOW_RANK, "Sort by total cost and show rank"))
-    sort_by_and_show = models.CharField(max_length=2,
-                                        choices=SORT_BY_AND_SHOW_CHOICES,
-                                        default=SORT_BY_NUM_PURCHASES)
+    sort_by_and_show = models.CharField(max_length=2, choices=SORT_BY_AND_SHOW_CHOICES, default=SORT_BY_NUM_PURCHASES)
 
     # A special boolean field that may only be True for one StatsDisplay
     # i.e. only one StatsDisplay can be the chosen one
@@ -596,6 +607,23 @@ class StatsDisplay(models.Model):
 
     def cannot_be_deleted(self):
         return False
+
+    def time_period_begin(self):
+        if self.time_period_method == self.FIXED_DURATION:
+            return localtime(timezone.now()) - self.time_period
+        elif self.time_period_method == self.SINCE_MONDAY:
+            now = localtime(timezone.now())
+            last_monday = now - datetime.timedelta(days=now.weekday())
+            last_monday = last_monday.replace(hour=0, minute=0, second=0, microsecond=0) # midnight
+            return last_monday
+        elif self.time_period_method == self.SINCE_1ST:
+            now = localtime(timezone.now())
+            month_1st = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            return month_1st
+        elif self.time_period_method == self.SINCE_JAN_1ST:
+            now = localtime(timezone.now())
+            jan_1st = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            return jan_1st
 
 
 class ProductAutochange(models.Model):

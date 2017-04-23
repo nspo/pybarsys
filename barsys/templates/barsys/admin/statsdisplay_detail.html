@@ -15,7 +15,11 @@
             <tr><th>Title</th><td>{{ object.title }}</td></tr>
             <tr><th>Filter category</th><td>{{ object.filter_category|default_if_none:"any" }}</td><td></td></tr>
             <tr><th>Filter product</th><td>{{ object.filter_product|default_if_none:"any" }}</td></tr>
+            <tr><th>Time period method</th><td>{{ object.get_time_period_method_display }}</td></tr>
             <tr><th>Time period</th><td>{{ object.time_period }}</td></tr>
+            {# Don't show time_period_begin with |localtime b/c otherwise time of Jan 1st might be shown as #}
+            {# e.g. 23:00 b/c of daylight saving time #}
+            <tr><th>Begin of current time period</th><td>{{ object.time_period_begin|sdatetime }}</td></tr>
             <tr><th>Sort by and show</th><td>{{ object.get_sort_by_and_show_display }}</td></tr>
             <tr><th>Row string</th><td>{{ object.row_string }}</td></tr>
             <tr><th>Example row</th><td>{{ object.example_row }}</td></tr>

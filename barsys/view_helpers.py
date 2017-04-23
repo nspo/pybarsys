@@ -5,7 +5,6 @@ from constance import config
 from django.contrib import messages
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-from django.utils import timezone
 
 from pybarsys import settings as pybarsys_settings
 from .models import StatsDisplay, Purchase
@@ -28,8 +27,8 @@ def get_renderable_stats_elements():
         if stat.filter_product:
             filters["product_name"] = stat.filter_product.name
 
-        # filter by timedelta
-        filters["created_date__gte"] = timezone.now() - stat.time_period
+        # filter by time
+        filters["created_date__gte"] = stat.time_period_begin()
 
         stats_element["rows"] = []
         if stat.sort_by_and_show == StatsDisplay.SORT_BY_NUM_PURCHASES:
