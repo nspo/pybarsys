@@ -23,7 +23,7 @@
         <th>Admin?</th>
         <th>Favorite?</th>
         <th>Account balance</th>
-        <th>Paid by other</th>
+        <th>Dependant?</th>
         <th>{% bicon 'info-sign' %}</th>
         <th>{% bicon 'pencil' %}</th>
         <th>{% bicon 'trash' %}</th>
@@ -52,5 +52,17 @@
 {% endblock %}
 
 {% block additional_content %}
-    {% include "barsys/admin/list_filter.html" with center=True %}
+    {% include "barsys/admin/list_filter.html" with center=False %}
+
+    <div class="col-md-6">
+        <h2>Explanation</h2>
+        <p class="text-justify">
+            <strong>Buyers</strong> who are active are shown on the main purchasing page.<br />
+            Only <strong>active</strong> users may purchase products or be responsible for some other user's purchases.<br />
+            <strong>Dependants</strong> are users whose purchases are paid by some other user. Dependants will not get an invoice,
+            but a notification of their purchases. Dependants' purchases will be shown on the invoice of the users who
+            are responsible to pay for them.
+        </p>
+
+    </div>
 {% endblock %}
