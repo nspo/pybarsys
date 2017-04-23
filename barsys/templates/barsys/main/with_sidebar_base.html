@@ -45,24 +45,30 @@
 
 {% block bootstrap3_extra_script %}
     <script type="text/javascript">
+        function on_scroll_event() {
+            if ($(this).scrollTop() > 50) {
+                $('#back-to-top').css({'display': 'block'});
+            } else {
+                $('#back-to-top').css({'display': 'none'});
+            }
+        }
+
         $(document).ready(function () {
-            $(window).scroll(function () {
-                if ($(this).scrollTop() > 50) {
-                    $('#back-to-top').fadeIn();
-                } else {
-                    $('#back-to-top').fadeOut();
-                }
-            });
-            // scroll body to 0px on click
-            $('#back-to-top').click(function () {
-                $('#back-to-top').tooltip('hide');
-                $('body,html').animate({
-                    scrollTop: 0
-                }, 800);
-                return false;
+            $(window).on('touchend', function () {
+                on_scroll_event()
             });
 
-            $('#back-to-top').tooltip('show');
+            $(window).scroll(function () {
+                on_scroll_event()
+            });
+
+            // scroll body to 0px on click
+            $('#back-to-top').click(function () {
+                $('body,html').animate({
+                    scrollTop: 0
+                }, 1100);
+                return false;
+            });
 
         });
     </script>
