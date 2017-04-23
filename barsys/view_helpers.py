@@ -22,10 +22,11 @@ def get_renderable_stats_elements():
 
         # construct query filters step by step
         filters = {}
-        if stat.filter_category:
-            filters["product_category"] = stat.filter_category.name
-        if stat.filter_product:
-            filters["product_name"] = stat.filter_product.name
+        if stat.filter_by_category.all().count() > 0:
+            filters["product_category__in"] = [c.name for c in stat.filter_by_category.all()]
+
+        if stat.filter_by_product.all().count() > 0:
+            filters["product_name__in"] = [p.name for p in stat.filter_by_product.all()]
 
         # filter by time
         filters["created_date__gte"] = stat.time_period_begin()

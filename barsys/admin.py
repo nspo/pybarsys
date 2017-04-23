@@ -1,11 +1,7 @@
-from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Group
-from django.db import models
-from barsys.models import Category, Product, User, Purchase, Invoice, StatsDisplay
-from django.db.models import F, DecimalField
-from django.db.models.functions import Trunc
-from django.db.models import DateTimeField
+
+from barsys.models import Category, Product, User, Purchase, Invoice
 
 
 class NoEditForeignTablesInlineMixin(object):
@@ -84,16 +80,6 @@ admin.site.register(User, UserAdmin)
 
 admin.site.register(Invoice)
 
-
-class StatsDisplayAdmin(NoEditForeignTablesInlineMixin, admin.ModelAdmin):
-    list_display = ["title", "example_row", "filter_category", "filter_product", "sort_by_and_show",
-                    "show_by_default"]
-    readonly_fields = ["example_row"]
-
-    no_edit_foreign_tables_in_form = ["filter_category", "filter_product"]
-
-
-admin.site.register(StatsDisplay, StatsDisplayAdmin)
 
 if admin.site.is_registered(Group):
     admin.site.unregister(Group)

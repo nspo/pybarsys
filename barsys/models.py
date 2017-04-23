@@ -535,16 +535,14 @@ class Payment(models.Model):
 
 class StatsDisplay(models.Model):
     """ Admin-defined filters that can be shown as stats in frontend """
-    title = models.CharField(max_length=30, blank=False)
+    title = models.CharField(max_length=30, blank=False, unique=True)
     row_string = models.CharField(max_length=15, blank=True,
                                   help_text="This is shown on the right side of each stats row in the format "
                                             "'[row_string] [user_name]', so one example row could be "
                                             "'10x Coffee by Peter' with 'Coffee by' being the row_string")
 
-    filter_category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True,
-                                        help_text="If none, any category is used")
-    filter_product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True,
-                                       help_text="If none, any product is used")
+    filter_by_category = models.ManyToManyField(Category, blank=True, help_text="If none, all categories are used")
+    filter_by_product = models.ManyToManyField(Product, blank=True, help_text="If none, all products are used")
 
     FIXED_DURATION = "FIXED"
     SINCE_MONDAY = "MONDAY"
