@@ -65,11 +65,16 @@ table.table-sidebar td.td-big {
 .btn-user {
     width: 237px;
     margin-bottom: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .btn-product {
     width: 175px;
     margin-bottom: 5px;
+    overflow-x: hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
 
 .btn-group-letters {
