@@ -50,6 +50,10 @@
                 <td>{{ object.cost|currency }}</td>
             </tr>
             <tr>
+                <th>Free item description</th>
+                <td>{{ object.free_item_description }}</td>
+            </tr>
+            <tr>
                 <th>Invoice</th>
                 <td>{% if object.has_invoice %}
                     <a href="{% url 'admin_invoice_detail' object.invoice.pk %}">{{ object.invoice }}</a>

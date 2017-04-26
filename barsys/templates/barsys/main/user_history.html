@@ -47,7 +47,8 @@
             {% for purchase in last_purchases %}
                 <tr>
                     <td style="width: 180px;">{{ purchase.created_date }}</td>
-                    <td> {{ purchase.quantity }}x {{ purchase.product_name }} ({{ purchase.product_amount }})</td>
+                    <td> {{ purchase.quantity }}x {{ purchase.product_name }} ({{ purchase.product_amount }},
+                        {{ purchase.cost|currency }})</td>
                 </tr>
             {% endfor %}
             </tbody>

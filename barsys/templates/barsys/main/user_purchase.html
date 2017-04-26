@@ -33,6 +33,15 @@
         {% if multibuy %}
             <p class="help-block">MultiBuy: Quantity per user</p>
         {% endif %}
+        {% if not multibuy %}
+            <div class="form-group form-group-lg">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" name="give_away_free"> Give this away for free
+                    </label>
+                </div>
+            </div>
+        {% endif %}
         <div class="form-group">
             <div class="input-group input-group-lg">
                     <span class="input-group-btn">
@@ -69,6 +78,21 @@
 {% endblock %}
 {% block main_content %}
     <div class="btn-group-horizontal" data-toggle="buttons">
+        {% if free_items %}
+            <h4><strong>Free items</strong></h4>
+            <hr/>
+            {% for free_item in free_items %}
+                <label class="btn btn-default btn-product btn-select">
+                    <input type="radio" form="purchase_form" name="product_id"
+                           value="free_item_{{ free_item.pk }}" required> {{ free_item.product.name }}
+                    (<strong>{{ free_item.leftover_quantity }} left</strong>)<br/>
+                    ({{ free_item.product.amount }},
+                    <del>{{ free_item.product.price|currency }}</del>
+                    )
+                    {% if free_item.comment %}<br/>{{ free_item.comment }}{% endif %}
+                </label>
+            {% endfor %}
+        {% endif %}
         {% for category in categories %}
             {% if category.get_products.active %}
                 <h4>{{ category.name }}</h4>

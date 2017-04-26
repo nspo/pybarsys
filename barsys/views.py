@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.text import Truncator
 from django.views.generic import edit, View
 from django.views.generic.detail import DetailView
 from django_filters.views import FilterView
@@ -654,15 +655,55 @@ class MainUserPurchaseView(View):
 
         if form.is_valid():
             user = User.objects.get(pk=form.cleaned_data["user_id"])
-            product = Product.objects.get(pk=form.cleaned_data["product_id"])
+            if not form.is_free_item_purchase:
+                product = Product.objects.get(pk=form.cleaned_data["product_id"])
 
-            purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
-                                product_category=product.category.name, product_price=product.price,
-                                quantity=form.cleaned_data["quantity"], comment=form.cleaned_data["comment"])
-            purchase.save()
+                comment = form.cleaned_data["comment"]
+                if form.cleaned_data["give_away_free"]:
+                    if comment:
+                        comment += " (give away for free)"
+                    else:
+                        comment = "give away for free"
+
+                purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
+                                    product_category=product.category.name, product_price=product.price,
+                                    quantity=form.cleaned_data["quantity"], comment=comment)
+                purchase.save()
+
+                if form.cleaned_data["give_away_free"]:
+                    # create free item
+                    free_item = FreeItem.objects.create(giver=user, product=product,
+                                                        leftover_quantity=form.cleaned_data["quantity"],
+                                                        comment=form.cleaned_data["comment"], purchasable=True)
+                    messages.info(request, "Yay! You successfully purchased {}x {} for others! "
+                                           "Anyone may now buy that for free until there's none left.".format(
+                        free_item.leftover_quantity, product.name
+                    ))
+
+            else:
+                # free item purchase
+                free_item = FreeItem.objects.get(pk=form.cleaned_data["product_id"])
+                product = free_item.product
+                quantity = form.cleaned_data["quantity"]
+
+                comment = form.cleaned_data["comment"]
+                if comment:
+                    comment += " (free)"
+                else:
+                    comment = "free"
+
+                free_item.leftover_quantity -= quantity
+                free_item.save()
+
+                purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
+                                    product_category=product.category.name, product_price=Decimal(0),
+                                    quantity=quantity, comment=comment,
+                                    free_item_description=Truncator(free_item.verbose_str()).chars(120))
+                purchase.save()
+
             return redirect("main_user_list")
         else:
-            messages.error(request, "Invalid form data")
+            messages.error(request, form.errors)
             return redirect("main_user_purchase", user_id)
 
     def get(self, request, user_id):
@@ -676,6 +717,7 @@ class MainUserPurchaseView(View):
         context["user"] = user
         context["categories"] = categories
         context["form"] = form
+        context["free_items"] = FreeItem.objects.filter(purchasable=True, leftover_quantity__gte=1)
 
         return render(request, "barsys/main/user_purchase.html", context)
 
@@ -768,6 +810,7 @@ class MainUserPurchaseMultiBuyView(View):
         context["multibuy"] = True
         context["users"] = users
         context["categories"] = categories
+        context["free_items"] = FreeItem.objects.filter(purchasable=True, leftover_quantity__gte=1)
         context["form"] = form
 
         return render(request, "barsys/main/user_purchase.html", context)
@@ -778,19 +821,44 @@ class MainUserPurchaseMultiBuyView(View):
             return redirect("main_user_list_multibuy")
 
         form = MultiUserSinglePurchaseForm(request.POST)
-        if form.is_valid():
-            product = Product.objects.get(pk=form.cleaned_data["product_id"])
-            quantity = form.cleaned_data["quantity"]
-            comment = form.cleaned_data["comment"]
+        form.users_qs = users
 
-            for user in users:
-                purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
-                                    product_category=product.category.name, product_price=product.price,
-                                    quantity=quantity, comment=comment)
-                purchase.save()
+        if form.is_valid():
+            if not form.is_free_item_purchase:
+                product = Product.objects.get(pk=form.cleaned_data["product_id"])
+                quantity = form.cleaned_data["quantity"]
+                comment = form.cleaned_data["comment"]
+
+                for user in users:
+                    purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
+                                        product_category=product.category.name, product_price=product.price,
+                                        quantity=quantity, comment=comment)
+                    purchase.save()
+            else:
+                # free item purchase
+                free_item = FreeItem.objects.get(pk=form.cleaned_data["product_id"])
+                product = free_item.product
+                quantity_per_user = form.cleaned_data["quantity"]
+                total_quantity = quantity_per_user * users.count()
+
+                comment = form.cleaned_data["comment"]
+                if comment:
+                    comment += " (free)"
+                else:
+                    comment = "free"
+
+                free_item.leftover_quantity -= total_quantity
+                free_item.save()
+
+                for user in users:
+                    purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
+                                        product_category=product.category.name, product_price=Decimal(0),
+                                        quantity=quantity_per_user, comment=comment,
+                                        free_item_description=Truncator(free_item.verbose_str()).chars(120))
+                    purchase.save()
             return redirect("main_user_list")
         else:
-            messages.error(request, "Invalid form data")
+            messages.error(request, form.errors)
             return redirect("main_user_purchase_multibuy", user_pkey_str=user_pkey_str)
 
 
@@ -809,3 +877,43 @@ class MainUserHistoryView(View):
                    "last_purchases": last_purchases,
                    "config": config}
         return render(request, "barsys/main/user_history.html", context)
+
+
+# FreeItem BEGIN
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class FreeItemListView(FilterView):
+    filterset_class = filters.FreeItemFilter
+    template_name = "barsys/admin/freeitem_list.html"
+    paginate_by = 10
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class FreeItemCreateView(edit.CreateView):
+    model = FreeItem
+    form_class = FreeItemForm
+    template_name = "barsys/admin/generic_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(FreeItemCreateView, self).get_context_data(**kwargs)
+        context["title"] = "New free item"
+        return context
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class FreeItemUpdateView(edit.UpdateView):
+    model = FreeItem
+    form_class = FreeItemForm
+    template_name = "barsys/admin/generic_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(FreeItemUpdateView, self).get_context_data(**kwargs)
+        context["title"] = "Update free item"
+        return context
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class FreeItemDeleteView(CheckedDeleteView):
+    model = FreeItem
+    success_url = reverse_lazy('admin_freeitem_list')
+
+# FreeItem END

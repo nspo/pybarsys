@@ -1,3 +1,5 @@
+import re
+
 from crispy_forms import layout
 from crispy_forms.helper import FormHelper
 from django import forms
@@ -194,7 +196,7 @@ class MultiUserChooseForm(forms.Form):
     users = forms.ModelMultipleChoiceField(User.objects.active().buyers(), required=True)
 
 
-class SingleUserSinglePurchaseForm(forms.Form):
+class SinglePurchaseForm(forms.Form):
     def clean_quantity(self):
         quantity = self.cleaned_data["quantity"]
 
@@ -204,13 +206,52 @@ class SingleUserSinglePurchaseForm(forms.Form):
             return quantity
 
     def clean_product_id(self):
-        product_id = self.cleaned_data["product_id"]
+        orig_string = self.cleaned_data["product_id"]
+        product_id = orig_string
+
+        if product_id.startswith('free_item'):
+            # free item purchase
+            self.is_free_item_purchase = True
+            try:
+                # extract product ID
+                free_item_id = re.search('^free_item_([0-9]+)$', product_id).group(1)
+                free_item_id = int(free_item_id)
+            except (AttributeError, ValueError):
+                raise ValidationError("ID of free item is not valid")
+
+            try:
+                free_item = FreeItem.objects.get(pk=free_item_id)
+            except FreeItem.DoesNotExist:
+                raise ValidationError("Free item does not exist")
+
+            if not free_item.purchasable:
+                raise ValidationError("Free item is not purchasable")
+
+            if not free_item.leftover_quantity > 0:
+                raise ValidationError("No free items left")
+
+            return free_item_id
+        else:
+            # normal product purchase
+            self.is_free_item_purchase = False
+            try:
+                product_id = int(product_id)
+            except ValueError:
+                raise ValidationError("Product ID is not an integer")
+
         try:
-            product = Product.objects.get(pk=product_id)
+            product = Product.objects.active().get(pk=product_id)
             return product_id
         except Product.DoesNotExist:
             raise ValidationError("Invalid product ID")
 
+    quantity = forms.IntegerField()
+    product_id = forms.CharField()  # CharField b/c it could be "free_item_N"
+    comment = forms.CharField(max_length=50, required=False)
+    is_free_item_purchase = False
+
+
+class SingleUserSinglePurchaseForm(SinglePurchaseForm):
     def clean_user_id(self):
         user_id = self.cleaned_data["user_id"]
         try:
@@ -219,32 +260,41 @@ class SingleUserSinglePurchaseForm(forms.Form):
         except User.DoesNotExist:
             raise ValidationError("Invalid user ID")
 
-    quantity = forms.IntegerField()
-    product_id = forms.IntegerField()
+    def clean(self):
+        cleaned_data = super(SingleUserSinglePurchaseForm, self).clean()
+
+        if self.is_free_item_purchase:
+            free_item = FreeItem.objects.get(pk=cleaned_data.get('product_id'))
+            if free_item.leftover_quantity < cleaned_data.get('quantity'):
+                raise ValidationError({"quantity": "There are only {} items left, so you cannot purchase {}!".format(
+                    free_item.leftover_quantity,
+                    cleaned_data.get('quantity'))})
+            else:
+                pass
+
+            if cleaned_data.get("give_away_free"):
+                raise ValidationError({'give_away_free' : 'Items that are already free cannot be given away for free.'})
+
     user_id = forms.IntegerField()
-    comment = forms.CharField(max_length=50, required=False)
+    give_away_free = forms.BooleanField(required=False)
 
 
-class MultiUserSinglePurchaseForm(forms.Form):
-    def clean_quantity(self):
-        quantity = self.cleaned_data["quantity"]
-
-        if quantity < 1:
-            raise ValidationError("Invalid quantity")
-        else:
-            return quantity
-
-    def clean_product_id(self):
-        product_id = self.cleaned_data["product_id"]
-        try:
-            product = Product.objects.get(pk=product_id)
-            return product_id
-        except Product.DoesNotExist:
-            raise ValidationError("Invalid product ID")
-
-    quantity = forms.IntegerField()
-    product_id = forms.IntegerField()
+class MultiUserSinglePurchaseForm(SinglePurchaseForm):
     comment = forms.CharField(max_length=50, required=False, initial="MultiBuy")
+    users_qs = None  # has to be filled in manually
+
+    def clean(self):
+        cleaned_data = super(MultiUserSinglePurchaseForm, self).clean()
+
+        if self.is_free_item_purchase:
+            free_item = FreeItem.objects.get(pk=cleaned_data.get('product_id'))
+            needed_quantity = cleaned_data.get('quantity') * self.users_qs.count()
+            if free_item.leftover_quantity < needed_quantity:
+                raise ValidationError({"quantity": "There are only {} items left, so you cannot purchase {}!".format(
+                    free_item.leftover_quantity,
+                    needed_quantity)})
+            else:
+                pass
 
 
 class CategoryForm(forms.ModelForm):
@@ -263,6 +313,18 @@ class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
         exclude = ('',)
+
+
+class FreeItemForm(forms.ModelForm):
+    class Meta:
+        model = FreeItem
+        exclude = ('',)
+
+    def __init__(self, *args, **kwargs):
+        super(FreeItemForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper(form=self)
+        self.helper.add_input(layout.Submit('save', 'Save'))
 
 
 class StatsDisplayForm(forms.ModelForm):

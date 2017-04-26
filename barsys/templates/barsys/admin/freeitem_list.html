@@ -1,0 +1,58 @@
+{% extends 'barsys/admin/list_base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+{% load barsys_helpers %}
+{% load humanize %}
+
+{% block above_table %}
+    <h1 class="pull-left" style="margin-top: 0;">Free items</h1>
+    <a href="{% url 'admin_freeitem_new' %}">
+        <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Add new free item</button>
+    </a>
+{% endblock %}
+{% block tablehead %}
+    <tr>
+        <th>Product</th>
+        <th>Leftover quantity</th>
+        <th>Giver</th>
+        <th>Purchasable?</th>
+        <th>Comment?</th>
+        <th>{% bicon 'pencil' %}</th>
+        <th>{% bicon 'trash' %}</th>
+    </tr>
+{% endblock %}
+{% block tablebody %}
+    {% for free_item in object_list %}
+        <tr>
+            <td>{{ free_item.product.name }}</td>
+            <td>{{ free_item.leftover_quantity }}</td>
+            <td>{{ free_item.giver }}</td>
+            <td>{% bool_to_icon free_item.purchasable %}</td>
+            <td>{% bool_to_icon free_item.comment %}</td>
+            <td><a href="{% url 'admin_freeitem_update' free_item.pk %}">{% bicon 'pencil' %}</a>
+            </td>
+            <td><a href="{% url 'admin_freeitem_delete' free_item.pk %}">{% bicon 'trash' %}</a>
+            </td>
+        </tr>
+    {% endfor %}
+{% endblock %}
+{% block below_table %}
+    <p>{{ paginator.count }} results</p>
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+{% endblock %}
+
+{% block additional_content %}
+    {% include "barsys/admin/list_filter.html" with center=False %}
+
+    <div class="col-md-6">
+        <h2>Explanation</h2>
+        <p class="text-justify">
+            A free item is a specific amount of a product that can be "purchased" for free on the main purchasing page.<br/>
+            If an item is <strong>purchasable</strong>, it is shown there and can be bought by anyone with a cost of 0.
+            If it is not purchasable, only admins are able to change the amount that is still left.<br/>
+            Free items can be deleted by admins at any time without problems.
+        </p>
+
+    </div>
+{% endblock %}

@@ -51,6 +51,15 @@ class PaymentFilter(django_filters.FilterSet):
         fields = ["user"]
 
 
+class FreeItemFilter(django_filters.FilterSet):
+    comment = django_filters.CharFilter(lookup_expr='icontains')
+    leftover_quantity__gte = django_filters.NumberFilter(name='leftover_quantity', lookup_expr='gte')
+
+    class Meta:
+        model = FreeItem
+        fields = []
+
+
 class InvoiceFilter(django_filters.FilterSet):
     created_date = django_filters.DateTimeFromToRangeFilter(help_text="Format YYYY-MM-DD HH:MM. Time is 00:00 by default.")
     amount__gte = django_filters.NumberFilter(name='amount', lookup_expr='gte')

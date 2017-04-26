@@ -437,6 +437,9 @@ class Purchase(models.Model):
 
     invoice = models.ForeignKey(Invoice, on_delete=models.SET_NULL, blank=True, null=True)
 
+    free_item_description = models.CharField(max_length=120, blank=True,
+                                             help_text="Description of free item (only if this was purchased for free)")
+
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
@@ -612,7 +615,7 @@ class StatsDisplay(models.Model):
         elif self.time_period_method == self.SINCE_MONDAY:
             now = localtime(timezone.now())
             last_monday = now - datetime.timedelta(days=now.weekday())
-            last_monday = last_monday.replace(hour=0, minute=0, second=0, microsecond=0) # midnight
+            last_monday = last_monday.replace(hour=0, minute=0, second=0, microsecond=0)  # midnight
             return last_monday
         elif self.time_period_method == self.SINCE_1ST:
             now = localtime(timezone.now())
@@ -690,3 +693,51 @@ class ProductAutochangeSet(models.Model):
     def execute(self):
         for pac in self.productautochange_set.all():
             pac.execute()
+
+
+class FreeItem(models.Model):
+    """ Model to describe products which are free, but only for a limited number of purchases """
+    giver = models.ForeignKey(User, null=True, blank=True, help_text="User thanks to whom this product is free")
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    leftover_quantity = models.PositiveIntegerField(null=False, blank=False,
+                                                    help_text="How many items can still be purchased for free")
+
+    comment = models.CharField(max_length=50, blank=True)
+
+    purchasable = models.BooleanField(default=True,
+                                      help_text="Whether these free items are shown on the main purchase page. "
+                                                "If no, only admins can change the leftover quantity.")
+
+    # Dates
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return "Free {} ({} item(s) leftover)".format(self.product.name, self.leftover_quantity)
+
+    def verbose_str(self):
+        desc = "Free {} (".format(self.product.name)
+        if self.giver:
+            desc += "giver: {}, ".format(self.giver.display_name)
+        if self.comment:
+            desc += "comment: {}, ".format(self.comment)
+        desc += "{} item(s) leftover)".format(self.leftover_quantity)
+
+        return desc
+
+    def save(self, *args, **kw):
+        """ Extra check whether leftover_quantity >= 0 """
+        if self.leftover_quantity < 0:
+            raise IntegrityError("There may not be a leftover quantity smaller than zero")
+        super(FreeItem, self).save(*args, **kw)
+
+    def cannot_be_deleted(self):
+        return False
+
+    class Meta:
+        ordering = ["-leftover_quantity"]
+
+
+    def get_absolute_url(self):
+        return reverse('admin_freeitem_list')

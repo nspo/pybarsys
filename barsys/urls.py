@@ -89,4 +89,10 @@ urlpatterns = [
     url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/update/$', views.ProductAutochangeSetManageView.as_view(), name='admin_productautochangeset_update'),
     url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/execute/$', views.ProductAutochangeSetExecuteView.as_view(), name='admin_productautochangeset_execute'),
     url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/delete/$', views.ProductAutochangeSetDeleteView.as_view(), name='admin_productautochangeset_delete'),
+
+    # FreeItem
+    url(r'^admin/freeitem/list/$', views.FreeItemListView.as_view(), name='admin_freeitem_list'),
+    url(r'^admin/freeitem/new/$', views.FreeItemCreateView.as_view(), name='admin_freeitem_new'),
+    url(r'^admin/freeitem/(?P<pk>[0-9]+)/update/$', views.FreeItemUpdateView.as_view(), name='admin_freeitem_update'),
+    url(r'^admin/freeitem/(?P<pk>[0-9]+)/delete/$', views.FreeItemDeleteView.as_view(), name='admin_freeitem_delete'),
 ]
