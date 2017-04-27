@@ -437,6 +437,9 @@ class Purchase(models.Model):
 
     invoice = models.ForeignKey(Invoice, on_delete=models.SET_NULL, blank=True, null=True)
 
+    is_free_item_purchase = models.BooleanField(default=False, help_text="Whether this purchase was done with a free "
+                                                "item (i.e. it was shown as free on the main page)")
+
     free_item_description = models.CharField(max_length=120, blank=True,
                                              help_text="Description of free item (only if this was purchased for free)")
 

@@ -537,6 +537,16 @@ class PurchaseStatisticsByCategoryView(FilterView):
 
         return context
 
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(PurchaseStatisticsByCategoryView, self).get_filterset_kwargs(filterset_class)
+        if kwargs["data"] is None:
+            kwargs["data"] = {"is_free_item_purchase": False}
+        elif "is_free_item_purchase" not in kwargs["data"]:
+            kwargs["data"] = kwargs["data"].copy()
+            kwargs["data"]["is_free_item_purchase"] = False
+
+        return kwargs
+
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PurchaseStatisticsByProductView(FilterView):
@@ -563,6 +573,16 @@ class PurchaseStatisticsByProductView(FilterView):
         )
 
         return context
+
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(PurchaseStatisticsByProductView, self).get_filterset_kwargs(filterset_class)
+        if kwargs["data"] is None:
+            kwargs["data"] = {"is_free_item_purchase": False}
+        elif "is_free_item_purchase" not in kwargs["data"]:
+            kwargs["data"] = kwargs["data"].copy()
+            kwargs["data"]["is_free_item_purchase"] = False
+
+        return kwargs
 
 
 # Statistics END
@@ -697,7 +717,7 @@ class MainUserPurchaseView(View):
 
                 purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
                                     product_category=product.category.name, product_price=Decimal(0),
-                                    quantity=quantity, comment=comment,
+                                    quantity=quantity, comment=comment, is_free_item_purchase=True,
                                     free_item_description=Truncator(free_item.verbose_str()).chars(120))
                 purchase.save()
 
@@ -853,7 +873,7 @@ class MainUserPurchaseMultiBuyView(View):
                 for user in users:
                     purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
                                         product_category=product.category.name, product_price=Decimal(0),
-                                        quantity=quantity_per_user, comment=comment,
+                                        quantity=quantity_per_user, comment=comment, is_free_item_purchase=True,
                                         free_item_description=Truncator(free_item.verbose_str()).chars(120))
                     purchase.save()
             return redirect("main_user_list")

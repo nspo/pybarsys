@@ -50,6 +50,10 @@
                 <td>{{ object.cost|currency }}</td>
             </tr>
             <tr>
+                <th>Is free item purchase?</th>
+                <td>{% bool_to_icon object.is_free_item_purchase %}</td>
+            </tr>
+            <tr>
                 <th>Free item description</th>
                 <td>{{ object.free_item_description }}</td>
             </tr>

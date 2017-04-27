@@ -19,6 +19,7 @@
         <th>Product name</th>
         <th>Product price</th>
         <th>Cost</th>
+        <th>Free item purchase?</th>
         <th>Invoiced?</th>
         <th>{% bicon 'info-sign' %}</th>
         <th>{% bicon 'pencil' %}</th>
@@ -34,6 +35,7 @@
             <td>{{ p.product_name }}</td>
             <td>{{ p.product_price|currency }}</td>
             <td>{{ p.cost|currency }}</td>
+            <td>{% bool_to_icon p.is_free_item_purchase %}</td>
             <td>
                 {% if p.has_invoice %}
                     <a href="{% url 'admin_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a>
