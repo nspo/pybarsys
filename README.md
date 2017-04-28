@@ -18,6 +18,10 @@ A beverage shopping system for bars of small private organizations
 * Free items
   * Users can choose to "donate" products to all other users so that they can be purchased for no cost
   * Useful for birthday events etc.
+# Screenshots
+![](/docs/screenshots/screenshot-1.png?raw=true)
+![](/docs/screenshots/screenshot-10.png?raw=true)
+[More screenshot](docs/screenshots/)
 
 # Installation
 1. Download pybarsys into e.g. /var/www/pybarsys
