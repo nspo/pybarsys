@@ -20,10 +20,15 @@ python3 manage.py runserver
 4. Easiest/example method to deploy: apache2 with mod_wsgi (https://docs.djangoproject.com/en/1.11/howto/deployment/wsgi/modwsgi/)
 5. Install apache2 (if not yet installed)
 
-   ```apt-get install libapache2-mod-wsgi-py3 apache2```
-6. Create pybarsys apache2 config file (examples should work on Debian/Ubuntu and related Linux distributions):
+   ```sudo apt-get install libapache2-mod-wsgi-py3 apache2```
+6. Fix permissions (database access needs r/w in pybarsys folder and db.sqlite3)
+   ```
+   sudo chown www-data .
+   sudo chown www-data db.sqlite3
+   ```
+7. Create pybarsys apache2 config file (examples should work on Debian/Ubuntu and related Linux distributions):
 
-   ```vim /etc/apache2/sites-available/pybarsys.conf```
+   ```sudo vim /etc/apache2/sites-available/pybarsys.conf```
    
    File contents (example):
    ```
@@ -42,3 +47,5 @@ python3 manage.py runserver
    </Files>
    </Directory>
    ```
+8. Reload apache2
+   ```sudo service apache2 reload```
