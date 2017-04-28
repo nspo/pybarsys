@@ -19,9 +19,21 @@ A beverage shopping system for bars of small private organizations
   * Users can choose to "donate" products to all other users so that they can be purchased for no cost
   * Useful for birthday events etc.
 # Screenshots
-![](/docs/screenshots/screenshot-1.png?raw=true)
-![](/docs/screenshots/screenshot-10.png?raw=true)
-[More screenshot](docs/screenshots/)
+
+Screenshots | Screenshots | Screenshots 
+------------|-------------|------------
+foo|doo|doo
+![](/docs/screenshots/screenshot-1.png)|![](/docs/screenshots/screenshot-2.png)|![](/docs/screenshots/screenshot-3.png)
+foo|doo|doo
+![](/docs/screenshots/screenshot-4.png)|![](/docs/screenshots/screenshot-5.png)|![](/docs/screenshots/screenshot-6.png)
+foo|doo|doo
+![](/docs/screenshots/screenshot-7.png)|![](/docs/screenshots/screenshot-8.png)|![](/docs/screenshots/screenshot-9.png)
+foo|doo|doo
+![](/docs/screenshots/screenshot-10.png)|![](/docs/screenshots/screenshot-11.png)|![](/docs/screenshots/screenshot-12.png)
+foo|doo|doo
+![](/docs/screenshots/screenshot-13.png)|![](/docs/screenshots/screenshot-14.png)|![](/docs/screenshots/screenshot-15.png)
+foo|doo|doo
+![](/docs/screenshots/screenshot-16.png)|![](/docs/screenshots/screenshot-17.png)|![](/docs/screenshots/screenshot-18.png)
 
 # Installation
 1. Download pybarsys into e.g. /var/www/pybarsys
