@@ -25,14 +25,15 @@ urlpatterns = [
     url(r'^', include('barsys.urls')),
 
     # user area
-    url(r'^login/$', auth_views.LoginView.as_view(),
-        {'template_name': 'barsys/admin/login.html', 'authentication_form': LoginForm},
-        name="user_login"),
-    url(r'^logout/$', auth_views.logout, {'next_page': 'user_login'}, name="user_logout"),
+    url(r'^login/$',
+        auth_views.LoginView.as_view(template_name='barsys/admin/login.html', authentication_form=LoginForm,
+                                     redirect_authenticated_user=True), name="user_login"),
+    url(r'^logout/$', auth_views.LogoutView.as_view(next_page='user_login'), name="user_logout"),
 ]
 
 if settings.DEBUG:
     import debug_toolbar
+
     urlpatterns = [
-        url(r'^debug/', include(debug_toolbar.urls)),
-    ] + urlpatterns
+                      url(r'^debug/', include(debug_toolbar.urls)),
+                  ] + urlpatterns
