@@ -1,16 +1,11 @@
-{% load staticfiles %}
+{% extends 'bootstrap3/bootstrap3.html' %}
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barsys management</title>
-    <!-- Core CSS - Include with every page -->
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{% static 'barsys/style.css' %}" rel="stylesheet">
-</head>
-<body>
+{% load bootstrap3 %}
+{% load staticfiles %}
+{% block bootstrap3_title %}Barsys management{% endblock %}
+{% block bootstrap3_extra_head %}<meta name="viewport" content="width=device-width, initial-scale=1.0">{% endblock %}
+
+{% block bootstrap3_content %}
 <nav class="navbar navbar-default">
     <div class="container-fluid">
         <div class="navbar-header">
@@ -23,6 +18,7 @@
             </button>
             <a class="navbar-brand" href="{% url 'user_home' %}">Barsys management</a>
         </div>
+        {% if user.is_authenticated %}
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
                 <li>
@@ -73,20 +69,15 @@
                 </li>
 
             </ul>
-        </div>
+        </div>{% endif %}
     </div>
 </nav>
 
 {% block content %}
 {% endblock %}
 
-
-<!-- Core Scripts - Include with every page -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-{% block javascript %}
+{% block bootstrap3_extra_script %}
+{% block extra_js %}
 {% endblock %}
-
-
-</body>
-</html>
+{% endblock %}
+{% endblock %}
