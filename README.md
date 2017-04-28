@@ -99,7 +99,7 @@ A beverage shopping system for bars of small private organizations
 13. Adapt mail templates under barsys/templates/email/ to your own preferences
 
 # Bug reports
-Please feel free to add new issues in case you think you spotted a bug.
+Please feel free to open an issue in case you think you spotted a bug.
 
 # Donations and technical support
 In case you want to donate something to me for pybarsys, here's a paypal link: [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/NSpohrer)
