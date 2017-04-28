@@ -38,18 +38,22 @@ A beverage shopping system for bars of small private organizations
 4. Easiest/example method to deploy: apache2 with mod_wsgi (https://docs.djangoproject.com/en/1.11/howto/deployment/wsgi/modwsgi/)
 5. Install apache2 (if not yet installed)
 
-   ```sudo apt-get install libapache2-mod-wsgi-py3 apache2```
-6. Fix permissions (database access needs r/w in pybarsys folder and db.sqlite3)
+   ```bash
+   sudo apt-get install libapache2-mod-wsgi-py3 apache2
    ```
+6. Fix permissions (database access needs r/w in pybarsys folder and db.sqlite3)
+   ```bash
    sudo chown www-data .
    sudo chown www-data db.sqlite3
    ```
 7. Create pybarsys apache2 config file (examples should work on Debian/Ubuntu and related Linux distributions):
 
-   ```sudo vim /etc/apache2/sites-available/pybarsys.conf```
+   ```bash
+   sudo vim /etc/apache2/sites-available/pybarsys.conf
+   ```
    
    File contents (example):
-   ```
+   ```html
    Alias /static/admin/ /var/www/pybarsys/lib/python3.5/site-packages/django/contrib/admin/static/admin/
 
    <Directory /static/admin>
@@ -85,7 +89,8 @@ A beverage shopping system for bars of small private organizations
    * ...
    
 10. Create superuser
-   ```/v/w/pybarsys> sudo python3 manage.py shell
+   ```python
+   /v/w/pybarsys> sudo python3 manage.py shell
    from barsys.models import *
    u=User.objects.create_superuser(email="admin@example.com", password="example", display_name="Admin")
    ```
