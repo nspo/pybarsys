@@ -24,6 +24,8 @@ Screenshots | Screenshots | Screenshots
 ------------|-------------|------------
 Main page|Purchasing as a single user|Purchasing and "donating"
 ![](/docs/screenshots/screenshot-1.png)|![](/docs/screenshots/screenshot-2.png)|![](/docs/screenshots/screenshot-3.png)
+Purchasing with free items|Admin: free items|
+![](/docs/screenshots/screenshot-17.png)|![](/docs/screenshots/screenshot-16.png)|
 User history 1|User history 2|MultiBuy step 1: Buying as multiple users at once
 ![](/docs/screenshots/screenshot-4.png)|![](/docs/screenshots/screenshot-5.png)|![](/docs/screenshots/screenshot-6.png)
 MultiBuy step 2|Admin: purchase list|Admin: payment list
@@ -32,8 +34,8 @@ Admin: created invoices|Admin: updating stats display|Admin: updating product au
 ![](/docs/screenshots/screenshot-10.png)|![](/docs/screenshots/screenshot-11.png)|![](/docs/screenshots/screenshot-12.png)
 Admin: applied product autochange set|Purchase statistics 1|Purchase statistics 2
 ![](/docs/screenshots/screenshot-13.png)|![](/docs/screenshots/screenshot-14.png)|![](/docs/screenshots/screenshot-15.png)
-Free items|Purchasing with free items|Main interface on phone
-![](/docs/screenshots/screenshot-16.png)|![](/docs/screenshots/screenshot-17.png)|![](/docs/screenshots/screenshot-18.png)
+||Main interface on phone
+||![](/docs/screenshots/screenshot-18.png)
 
 # Installation
 1. Download pybarsys into e.g. /var/www/pybarsys
