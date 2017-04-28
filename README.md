@@ -93,6 +93,9 @@ A beverage shopping system for bars of small private organizations
    /v/w/pybarsys> sudo python3 manage.py shell
    from barsys.models import *
    u=User.objects.create_superuser(email="admin@example.com", password="example", display_name="Admin")
+   u.is_buyer = False
+   u.save()
+   u2=User.objects.create(email="jessica@example.com", display_name="Jessica")
    ```
 11. Login at http://localhost/admin/ and create other users, categories, products, ...
 12. Change other settings like bank account details at `Misc -> External admin interface (settings)`
