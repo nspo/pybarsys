@@ -49,3 +49,18 @@ python3 manage.py runserver
    ```
 8. Reload apache2
    ```sudo service apache2 reload```
+   
+9. Change pybarsys/settings.py
+   * Set own `SECRET_KEY`
+   * Make sure `DEBUG=False`
+   * Set `LANGUAGE_CODE` (e.g. `"de-de"` for German)
+   * Change mail settings (`EMAIL_HOST` etc.) to be able to send invoices
+   * ...
+   
+10. Create superuser
+   ```/v/w/pybarsys> sudo python3 manage.py shell
+   from barsys.models import *
+   u=User.objects.create_superuser(email="admin@example.com", password="example", display_name="Admin")
+   ```
+11. Login at http://localhost/admin/ and create other users, categories, products, ...
+
