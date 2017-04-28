@@ -34,8 +34,8 @@ A beverage shopping system for bars of small private organizations
    python3 manage.py runserver
    # CTRL+C
    ```
-3. Think about how to deploy Django: https://docs.djangoproject.com/en/1.11/howto/deployment/
-4. Easiest/example method to deploy: apache2 with mod_wsgi (https://docs.djangoproject.com/en/1.11/howto/deployment/wsgi/modwsgi/)
+3. Think about [how to deploy Django](https://docs.djangoproject.com/en/1.11/howto/deployment/)
+4. Easiest/example method to deploy: [apache2 with mod_wsgi](https://docs.djangoproject.com/en/1.11/howto/deployment/wsgi/modwsgi/)
 5. Install apache2 (if not yet installed)
 
    ```bash
