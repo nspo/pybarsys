@@ -32,15 +32,24 @@ python3 manage.py runserver
    
    File contents (example):
    ```
-   Alias /static/ /var/www/pybarsys/barsys/static/
-   
-   <Directory /var/www/pybarsys/barsys/static>
+   Alias /static/admin/ /var/www/pybarsys/lib/python3.5/site-packages/django/contrib/admin/static/admin/
+
+   <Directory /static/admin>
    Require all granted
    </Directory>
+
+
+   Alias /static/ /var/www/pybarsys/barsys/static/
+
+   <Directory /static>
+   Require all granted
+   </Directory>
+
+
    WSGIScriptAlias / /var/www/pybarsys/pybarsys/wsgi.py
    WSGIPythonHome /var/www/pybarsys
    WSGIPythonPath /var/www/pybarsys
-   
+
    <Directory /var/www/pybarsys/pybarsys>
    <Files wsgi.py>
    Require all granted
@@ -63,4 +72,5 @@ python3 manage.py runserver
    u=User.objects.create_superuser(email="admin@example.com", password="example", display_name="Admin")
    ```
 11. Login at http://localhost/admin/ and create other users, categories, products, ...
-
+12. Change other settings like bank account details at `Misc -> External admin interface (settings)`
+13. Adapt mail templates under barsys/templates/email/ to your own preferences
