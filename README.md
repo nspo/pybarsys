@@ -81,14 +81,14 @@ A beverage shopping system for bars of small private organizations
 8. Reload apache2
    ```sudo service apache2 reload```
    
-9. Change pybarsys/settings.py
+9. Change pybarsys/settings.py: switch to production settings file
+10. Change pybarsys/_settings/production.py:
    * Set own `SECRET_KEY`
-   * Make sure `DEBUG=False`
    * Set `LANGUAGE_CODE` (e.g. `"de-de"` for German)
    * Change mail settings (`EMAIL_HOST` etc.) to be able to send invoices
    * ...
    
-10. Create superuser
+11. Create superuser
    ```python
    /v/w/pybarsys> sudo python3 manage.py shell
    from barsys.models import *
@@ -97,9 +97,9 @@ A beverage shopping system for bars of small private organizations
    u.save()
    u2=User.objects.create(email="jessica@example.com", display_name="Jessica")
    ```
-11. Login at http://localhost/admin/ and create other users, categories, products, ...
-12. Change other settings like bank account details at `Misc -> External admin interface (settings)`
-13. Adapt mail templates under barsys/templates/email/ to your own preferences
+12. Login at http://localhost/admin/ and create other users, categories, products, ...
+13. Change other settings like bank account details at `Misc -> External admin interface (settings)`
+14. Adapt mail templates under barsys/templates/email/ to your own preferences
 
 # Bug reports
 Please feel free to open an issue in case you think you spotted a bug.
