@@ -34,8 +34,8 @@ Admin: created invoices|Admin: updating stats display|Admin: updating product au
 ![](/docs/screenshots/screenshot-10.png)|![](/docs/screenshots/screenshot-11.png)|![](/docs/screenshots/screenshot-12.png)
 Admin: applied product autochange set|Purchase statistics 1|Purchase statistics 2
 ![](/docs/screenshots/screenshot-13.png)|![](/docs/screenshots/screenshot-14.png)|![](/docs/screenshots/screenshot-15.png)
-||Main interface on phone
-||![](/docs/screenshots/screenshot-18.png)
+Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
+![](/docs/screenshots/screenshot-18.png)|![](/docs/screenshots/screenshot-19.png)|![](/docs/screenshots/screenshot-20.png)
 
 # Installation
 1. Download pybarsys into e.g. /var/www/pybarsys
