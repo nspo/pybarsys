@@ -24,8 +24,8 @@ Screenshots | Screenshots | Screenshots
 ------------|-------------|------------
 Main page|Purchasing as a single user|Purchasing and "donating"
 ![](/docs/screenshots/screenshot-1.png)|![](/docs/screenshots/screenshot-2.png)|![](/docs/screenshots/screenshot-3.png)
-Purchasing with free items|Admin: free items|
-![](/docs/screenshots/screenshot-17.png)|![](/docs/screenshots/screenshot-16.png)|
+Purchasing with free items|Admin: free items|Admin: invoice details on phone (responsive)
+![](/docs/screenshots/screenshot-17.png)|![](/docs/screenshots/screenshot-16.png)|![](/docs/screenshots/screenshot-21.png)
 User history 1|User history 2|MultiBuy step 1: Buying as multiple users at once
 ![](/docs/screenshots/screenshot-4.png)|![](/docs/screenshots/screenshot-5.png)|![](/docs/screenshots/screenshot-6.png)
 MultiBuy step 2|Admin: purchase list|Admin: payment list
