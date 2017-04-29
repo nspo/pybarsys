@@ -3,7 +3,7 @@ import re
 from crispy_forms import layout
 from crispy_forms.helper import FormHelper
 from django import forms
-from django.contrib.auth import forms as auth_forms, models as auth_models
+from django.contrib.auth import forms as auth_forms
 from django.utils.translation import ugettext_lazy as _
 
 from .models import *
@@ -112,18 +112,12 @@ class InvoicesCreateForm(forms.Form):
         self.helper.add_input(layout.Reset('reset', 'Reset'))
 
 
-class UserCreateForm(auth_forms.UserCreationForm):
-    class Meta:
-        model = User
-        fields = (
-            'email', 'display_name', 'password1', 'password2', "purchases_paid_by_other", 'is_active', 'is_buyer',
-            'is_favorite', 'is_admin')
-
-
-class UserChangeWithPasswordForm(forms.ModelForm):
+class UserCustomCreationForm(forms.ModelForm):
     """
     Mainly copied from auth.UserCreationForm, b/c UserChangeForm does not allow to change passwords
-    This is still based on auth.models.User, but the model will be overwritten in another class
+    
+    If at least one password field is filled in, the passwords are validated. If no password field is filled in,
+    the user's password is neither created nor changed.
     """
     purchases_paid_by_other = forms.ModelChoiceField(queryset=User.objects.active().pay_themselves(),
                                                      help_text=User._meta.get_field(
@@ -137,6 +131,7 @@ class UserChangeWithPasswordForm(forms.ModelForm):
         label=_("Password"),
         strip=False,
         widget=forms.PasswordInput,
+        help_text="If no password is entered, the user password will not be set or changed.",
         required=False
     )
     password2 = forms.CharField(
@@ -148,32 +143,26 @@ class UserChangeWithPasswordForm(forms.ModelForm):
     )
 
     class Meta:
-        model = auth_models.User
-        fields = ("username",)
-        field_classes = {'username': auth_forms.UsernameField}
-
-    def __init__(self, *args, **kwargs):
-        super(UserChangeWithPasswordForm, self).__init__(*args, **kwargs)
-        if self._meta.model.USERNAME_FIELD in self.fields:
-            self.fields[self._meta.model.USERNAME_FIELD].widget.attrs.update({'autofocus': ''})
+        model = User
+        fields = (
+            'email', 'display_name', 'password1', 'password2', "purchases_paid_by_other", 'is_active', 'is_buyer',
+            'is_favorite', 'is_admin')
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
         password2 = self.cleaned_data.get("password2")
         if password1 or password2:
-            if password1 and password2:
-                if password1 != password2:
-                    raise forms.ValidationError(
-                        self.error_messages['password_mismatch'],
-                        code='password_mismatch',
-                    )
+            if password1 != password2:
+                raise forms.ValidationError(
+                    self.error_messages['password_mismatch'],
+                    code='password_mismatch',
+                )
             # Validate only if at least one password was filled in
             auth_forms.password_validation.validate_password(self.cleaned_data.get('password2'), self.instance)
-        self.instance.username = self.cleaned_data.get('username')
         return password2
 
     def save(self, commit=True):
-        user = super(UserChangeWithPasswordForm, self).save(commit=False)
+        user = super(UserCustomCreationForm, self).save(commit=False)
 
         # Only save passwords that were filled in!
         if self.cleaned_data["password1"]:
@@ -184,12 +173,12 @@ class UserChangeWithPasswordForm(forms.ModelForm):
         return user
 
 
-class UserUpdateForm(UserChangeWithPasswordForm):
-    class Meta:
-        model = User
-        fields = (
-            'email', 'display_name', 'password1', 'password2', "purchases_paid_by_other", 'is_active', 'is_buyer',
-            'is_favorite', 'is_admin')
+class UserCreateForm(UserCustomCreationForm):
+    pass
+
+
+class UserUpdateForm(UserCustomCreationForm):
+    pass
 
 
 class MultiUserChooseForm(forms.Form):
