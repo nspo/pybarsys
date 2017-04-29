@@ -6,7 +6,7 @@ A beverage shopping system for bars of small private organizations - based on Dj
 * Products that are sorted into categories and can be purchased by all users in the main interface (e.g. on a tablet, phones or PCs)
 * Detailed information about every purchase
 * Creation of invoices for unbilled purchases
-* Creation of users (dependants/"friends") who do not pay themselves, but for whose purchases some other user is responsible
+* Management of users ("dependants"/"friends") who do not pay themselves, but for whose purchases some other user is responsible
 * Automatical mailing of 
   * invoices
   * payment reminders
