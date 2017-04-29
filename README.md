@@ -1,5 +1,5 @@
 # pybarsys
-A beverage shopping system for bars of small private organizations
+A beverage shopping system for bars of small private organizations - based on Django and Python 3.
 
 # Features
 * Responsive main interface and admin interface
