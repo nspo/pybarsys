@@ -50,7 +50,7 @@ table.table-sidebar td {
 table.table-sidebar td.td-small {
     width: 17%;
     text-align: right;
-    padding: 5px;
+    padding: 10px;
 }
 
 table.table-sidebar td.td-big {
@@ -59,7 +59,7 @@ table.table-sidebar td.td-big {
     text-overflow:ellipsis;
     white-space:nowrap;
     overflow:hidden;
-    padding: 5px;
+    padding: 10px;
 }
 
 .btn-user {
