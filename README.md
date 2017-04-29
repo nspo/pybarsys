@@ -1,5 +1,5 @@
 # pybarsys
-A beverage shopping system for bars of small private organizations
+A beverage shopping system for bars of small private organizations - based on Django and Python 3.
 
 # Features
 * Responsive main interface and admin interface
@@ -24,8 +24,8 @@ Screenshots | Screenshots | Screenshots
 ------------|-------------|------------
 Main page|Purchasing as a single user|Purchasing and "donating"
 ![](/docs/screenshots/screenshot-1.png)|![](/docs/screenshots/screenshot-2.png)|![](/docs/screenshots/screenshot-3.png)
-Purchasing with free items|Admin: free items|
-![](/docs/screenshots/screenshot-17.png)|![](/docs/screenshots/screenshot-16.png)|
+Purchasing with free items|Admin: free items|Admin: invoice details on phone (responsive)
+![](/docs/screenshots/screenshot-17.png)|![](/docs/screenshots/screenshot-16.png)|![](/docs/screenshots/screenshot-21.png)
 User history 1|User history 2|MultiBuy step 1: Buying as multiple users at once
 ![](/docs/screenshots/screenshot-4.png)|![](/docs/screenshots/screenshot-5.png)|![](/docs/screenshots/screenshot-6.png)
 MultiBuy step 2|Admin: purchase list|Admin: payment list
@@ -122,7 +122,5 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
 # Bug reports
 Please feel free to open an issue in case you think you spotted a bug.
 
-# Donations and technical support
+# Donations
 In case you want to donate something to me for pybarsys, here's a paypal link: [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/NSpohrer)
-
-Should you want to receive paid technical support or pay for the addition of new features, you can contact me at nicolai[at]xeve.de.
