@@ -49,7 +49,7 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    # Create database
    python3 manage.py migrate
    # Optional: test with builtin server
-   python3 manage.py runserver
+   python3 manage.py runserver 0.0.0.0:4000 --insecure
    # CTRL+C
    ```
 3. Think about [how to deploy Django](https://docs.djangoproject.com/en/1.11/howto/deployment/)
