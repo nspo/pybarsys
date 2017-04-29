@@ -1,6 +1,8 @@
 # pybarsys
 A beverage shopping system for bars of small private organizations - based on Django and Python 3.
 
+Developer: Nicolai Spohrer (nicolai[at]xeve.de)
+
 # Features
 * Responsive main interface and admin interface
 * Products that are sorted into categories and can be purchased by all users in the main interface (e.g. on a tablet, phones or PCs)
