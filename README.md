@@ -122,7 +122,5 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
 # Bug reports
 Please feel free to open an issue in case you think you spotted a bug.
 
-# Donations and technical support
+# Donations
 In case you want to donate something to me for pybarsys, here's a paypal link: [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/NSpohrer)
-
-Should you want to receive paid technical support or pay for the addition of new features, you can contact me at nicolai[at]xeve.de.
