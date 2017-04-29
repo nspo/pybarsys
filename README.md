@@ -18,7 +18,10 @@ A beverage shopping system for bars of small private organizations - based on Dj
 * Free items
   * Users can choose to "donate" products to all other users so that they can be purchased for no cost
   * Useful for birthday events etc.
-# Screenshots
+# Explanation & screenshots
+
+![](/docs/pybarsys-principle.png)
+Persons who are in the same computer network can access the pybarsys main interace (this could be changed with custom settings). Admins have to provide their email address and password to access the administration area.
 
 Screenshots | Screenshots | Screenshots 
 ------------|-------------|------------
