@@ -19,7 +19,7 @@
     <hr/>
 {% endblock %}
 {% block main_content %}
-    <h3>Unbilled purchases {% if config.SUM_COST_USER_PURCHASE_HISTORY %}(Sum:
+    <h3>Unbilled purchases {% if pybarsys_preferences.Misc.SUM_COST_USER_PURCHASE_HISTORY %}(Sum:
         {{ user.purchases.unbilled.sum_cost|currency }}){% endif %}</h3>
     {% for category_name, products in categories %}
         <h4>{% bootstrap_icon "chevron-down" %} {{ category_name }}</h4>
