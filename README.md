@@ -42,6 +42,9 @@ Admin: applied product autochange set|Purchase statistics 1|Purchase statistics 
 Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
 ![](/docs/screenshots/screenshot-18.png)|![](/docs/screenshots/screenshot-19.png)|![](/docs/screenshots/screenshot-20.png)
 
+# Limitations
+ * No complete German translation (only some buttons and all mail templates)
+ * [...]
 # Installation
 1. Download pybarsys into e.g. /var/www/pybarsys
 2. Setup virtualenv
@@ -104,11 +107,13 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
 8. Reload apache2
    ```sudo service apache2 reload```
    
-9. Change pybarsys/settings.py: switch to production settings file
-10. Change pybarsys/_settings/production.py:
+9. Change pybarsys/settings.py: switch to production_yourbar settings file
+10. Copy pybarsys/_settings/production.py to pybarsys/_settings/production_yourbar.py:
    * Set own `SECRET_KEY`
    * Set `LANGUAGE_CODE` (e.g. `"de-de"` for German)
+     * You can also switch to the German mail templates (with PybarsysPreferences)
    * Change mail settings (`EMAIL_HOST` etc.) to be able to send invoices
+   * Set PybarsysPreferences
    * ...
    
 11. Create superuser
