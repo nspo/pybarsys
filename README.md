@@ -1,12 +1,14 @@
 # pybarsys
 A beverage shopping system for bars of small private organizations - based on Django and Python 3.
 
+Developer: Nicolai Spohrer (nicolai[at]xeve.de)
+
 # Features
 * Responsive main interface and admin interface
 * Products that are sorted into categories and can be purchased by all users in the main interface (e.g. on a tablet, phones or PCs)
 * Detailed information about every purchase
 * Creation of invoices for unbilled purchases
-* Creation of users (dependants/"friends") who do not pay themselves, but for whose purchases some other user is responsible
+* Management of users ("dependants"/"friends") who do not pay themselves, but for whose purchases some other user is responsible
 * Automatical mailing of 
   * invoices
   * payment reminders
@@ -18,7 +20,10 @@ A beverage shopping system for bars of small private organizations - based on Dj
 * Free items
   * Users can choose to "donate" products to all other users so that they can be purchased for no cost
   * Useful for birthday events etc.
-# Screenshots
+# Explanation & screenshots
+
+![](/docs/pybarsys-principle.png)
+Persons who are in the same computer network can access the pybarsys main interace (this could be changed with custom settings). Admins have to provide their email address and password to access the administration area.
 
 Screenshots | Screenshots | Screenshots 
 ------------|-------------|------------
