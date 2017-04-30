@@ -1,0 +1,13 @@
+{% load barsys_helpers %}Hallo, {{ user.display_name }}!
+
+Dies ist eine Zahlungserinnerung von  {{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}.
+Dein aktueller Kontostand beträgt: {{ user.account_balance|currency }}
+
+Dein Kontostand beträgt weniger als {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, deshalb überweise bitte Geld an das folgende Bankkonto:
+{% include "./bank_account_details.plaintext.html" %}
+
+Um deine letzten Rechnungen und Zahlungen zu sehen, schaue bitte in die HTML-Version dieser E-Mail.
+
+Einen schönen Tag noch!
+----------------
+Diese E-Mail wurde automatisch generiert von pybarsys (https://github.com/nspo/pybarsys)

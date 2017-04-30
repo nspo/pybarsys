@@ -1,0 +1,38 @@
+{% extends "email/html_email_base.html" %}
+{% load barsys_helpers %}
+
+{% block main_content %}
+    <h1>{{ pybarsys_preferences.EMAIL.PAYMENT_REMINDER_SUBJECT }}</h1>
+    <p>Hallo, {{ user.display_name }}!</p>
+
+    <p>Dies ist eine Zahlungserinnerung von <i>{{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}</i>. <br/>
+        Dein aktueller Kontostand beträgt: <b>{{ user.account_balance|currency }}</b></p>
+
+    <p>Dein Kontostand beträgt weniger als {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, deshalb
+        überweise bitte Geld an das folgende Bankkonto:</p>
+    {% include "./bank_account_details.html.html" %}
+    <p/>
+
+    <hr/>
+
+    <h2>Deine letzten Rechnungen:</h2>
+    {% include "email/subtable_invoices.html" with invoices=last_invoices %}
+
+    <hr/>
+
+    <h2>Deine letzten Zahlungen:</h2>
+    {% include "email/subtable_payments.html" with payments=last_payments %}
+
+    <hr/>
+
+    <p>Falls du Fragen hast, kannst du gerne <a
+            href="mailto:{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}">{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}</a>
+        kontaktieren.
+    </p>
+
+    <p>Einen schönen Tag noch!</p>
+{% endblock %}
+
+{% block footer %}
+    Diese E-Mail wurde automatisch generiert von <a href="https://github.com/nspo/pybarsys">pybarsys</a>.
+{% endblock %}

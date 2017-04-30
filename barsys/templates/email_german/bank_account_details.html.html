@@ -1,0 +1,24 @@
+<table style="text-align: left;">
+    <tbody>
+    <tr>
+        <th>Empfänger</th>
+        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_RECIPIENT }}</td>
+    </tr>
+    <tr>
+        <th>IBAN</th>
+        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_NUMBER }}</td>
+    </tr>
+    <tr>
+        <th>BIC</th>
+        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_ROUTING_NUMBER }}</td>
+    </tr>
+    <tr>
+        <th>Bank</th>
+        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_BANK }}</td>
+    </tr>
+    <tr>
+        <th>Verwendungszweck</th>
+        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_PAYMENT_REFERENCE }} {{ recipient.display_name }}</td>
+    </tr>
+    </tbody>
+</table>

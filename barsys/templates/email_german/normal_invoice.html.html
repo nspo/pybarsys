@@ -1,0 +1,63 @@
+{% extends "email/html_email_base.html" %}
+{% load barsys_helpers %}
+{% load tz %}
+
+{% block main_content %}
+    <h1>{{ pybarsys_preferences.EMAIL.INVOICE_SUBJECT }}</h1>
+    <p>Hallo, {{ invoice.recipient.display_name }}!</p>
+
+    <p>Dies ist eine Rechnung von <i>{{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}</i>. <br/>
+        Dein aktueller Kontostand beträgt: <b>{{ invoice.recipient.account_balance|currency }}</b></p>
+
+    {% if invoice.recipient.account_balance <= pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY %}
+        <p>Dein Kontostand beträgt weniger als {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }},
+            deshalb schicke
+            bitte eine Überweisung an folgendes Konto:
+        </p>
+    {% else %}
+        <p>
+            Dein Kontostand beträgt mehr als {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }},
+            deshalb brauchst du zur Zeit kein Geld überweisen. Du kannst natürlich trotzdem schon Geld für zukünftige
+            Einkäufe überweisen.
+        </p>
+    {% endif %}
+
+    {% include "./bank_account_details.html.html" %}
+    <p/>
+
+    <p>Der Gesamtbetrag dieser Rechnung ist <b>{{ invoice.amount|currency }}</b>. Sie besteht aus folgenden Einkäufen:
+    </p>
+    <hr/>
+    <h2>Eigene Einkäufe:</h2>
+    {% include "./subtable_purchases.html" with purchases=own_purchases %}
+    <hr/>
+    {% for p_user, u_purchases in other_purchases_grouped %}
+        <h2>Einkäufe von {{ p_user }}:</h2>
+        {% include "./subtable_purchases.html" with purchases=u_purchases %}
+        <hr/>
+    {% endfor %}
+
+    <h2>Deine letzten Rechnungen (einschließlich dieser):</h2>
+    {% include "./subtable_invoices.html" with invoices=last_invoices %}
+
+    <hr/>
+
+    <h2>Deine letzten Zahlungen:</h2>
+    {% include "./subtable_payments.html" with payments=last_payments %}
+
+    <hr/>
+
+    <p>Falls du Fragen hast, kannst du gerne <a
+            href="mailto:{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}">{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}</a>
+        kontaktieren.
+    </p>
+
+    <p>Einen schönen Tag noch!</p>
+{% endblock %}
+
+{% block footer %}
+    Du hast bereits Produkte für dich selbst mit Gesamtkosten von {{ invoice.recipient.purchases.sum_cost|currency }}
+    gekauft.<br/>
+    Diese E-Mail wurde automatisch generiert am {{ invoice.created_date|localtime|sdate }} von
+    <a href="https://github.com/nspo/pybarsys">pybarsys</a>.
+{% endblock %}

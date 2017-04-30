@@ -2,8 +2,8 @@
 {% load tz %}
 <table>
     <thead class="left">
-    <th>Time</th>
-    <th>Amount</th>
+    <th>Datum</th>
+    <th>Betrag</th>
     </thead>
     <tbody>
     {% for i in invoices %}
@@ -14,7 +14,7 @@
     {% endfor %}
     {% if not invoices %}
         <tr>
-            <td colspan="2">None</td>
+            <td colspan="2">Keine</td>
         </tr>
     {% endif %}
     </tbody>

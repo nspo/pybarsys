@@ -43,4 +43,7 @@ EMAIL_USE_TLS = False  # True
 
 # Put the preferences you want to change here
 # PybarsysPreferences.EMAIL.CONTACT_EMAIL = "bar@ieee.org"
+# PybarsysPreferences.EMAIL.TEMPLATE_DIR = "email_german"
+# PybarsysPreferences.EMAIL.BANK_ACCOUNT_RECIPIENT = "Foo-Bank"
+# PybarsysPreferences.EMAIL.INVOICE_SUBJECT = "Barrechnung von der Foo-Bar"
 # ...

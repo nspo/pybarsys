@@ -1,0 +1,10 @@
+{% load barsys_helpers %}Hallo, {{ dependant.display_name }}!
+
+Dies ist eine Benachrichtigung über deine Einkäufe bei {{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}.
+{{ invoice.recipient }} ist verantwortlich für deine Einkäufe, deshalb musst du kein Geld überweisen. Er oder sie hat bereits eine Rechnung erhalten.
+
+Der Gesamtbetrag deiner Einkäufe auf dieser Rechnung ist {{ purchases.sum_cost|currency }}. Um eine Auflistung zu sehen, schau bitte in die HTML-Version dieser E-Mail.
+
+Einen schönen Tag noch!
+----------------
+Diese E-Mail wurde automatisch generiert von pybarsys (https://github.com/nspo/pybarsys)
