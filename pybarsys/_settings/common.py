@@ -15,9 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__ + "/..")))
 
-# Constance settings
-CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -30,8 +27,6 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'bootstrap3',
     'barsys.apps.BarsysConfig',
-    'constance',
-    'constance.backends.database',
     'django_filters',
     'crispy_forms',
 ]
@@ -114,34 +109,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.10/howto/static-files/
-from decimal import Decimal
-
-# Constance settings
-CONSTANCE_CONFIG = {
-    'NUM_USER_PURCHASE_HISTORY': (15, "Number of purchases to show on user history page"),
-    'SUM_COST_USER_PURCHASE_HISTORY': (True, "Whether to show total cost of unbilled purchases on user history page"),
-    'NUM_MAIN_LAST_PURCHASES': (5, "Number of purchases to show on main page"),
-
-    'MAIL_INVOICE_SUBJECT': ('Invoice from Barsys bar', 'Subject of an invoice mail'),
-    'MAIL_PURCHASE_NOTIFICATION_SUBJECT': ('Purchase notification from Barsys bar', 'Subject of a purchase notification to dependants'),
-    'MAIL_PAYMENT_REMINDER_SUBJECT': ('Payment reminder from Barsys bar', 'Subject of a payment reminder mail'),
-    'MAIL_NAME_OF_BAR': ('Barsys bar', 'Name of the bar'),
-    'MAIL_CONTACT_EMAIL': ('bar@example.com', 'Bar contact email address'),
-    'MAIL_BANK_DETAILS': ('Bank account No. 55542\n'
-                          'Routing No. 2718\n'
-                          'Royal Bank of Moldova', 'Bank account details'),
-    'MAIL_BALANCE_SEND_MONEY': (Decimal('0'), 'Below this account balance the user should send money.'),
-
-}
-
-CONSTANCE_CONFIG_FIELDSETS = {
-    'Main page': ('NUM_USER_PURCHASE_HISTORY', 'SUM_COST_USER_PURCHASE_HISTORY', 'NUM_MAIN_LAST_PURCHASES',),
-    'Mail': ('MAIL_INVOICE_SUBJECT', 'MAIL_NAME_OF_BAR', 'MAIL_CONTACT_EMAIL', 'MAIL_BANK_DETAILS',
-             'MAIL_BALANCE_SEND_MONEY', 'MAIL_PAYMENT_REMINDER_SUBJECT'),
-}
-
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 BOOTSTRAP3 = {
@@ -155,3 +122,48 @@ BOOTSTRAP3 = {
     'theme_url': '/static/barsys/bootstrap-3.3.7-dist/css/bootstrap-theme.css',
 
 }
+
+from decimal import Decimal
+
+
+class PybarsysPreferences:
+    """ Default preferences of pybarsys
+        They can be overridden in your production or dev settings file.
+    """
+
+    class EMAIL:
+        # subfolder in barsys/templates
+        TEMPLATE_DIR = 'email'
+
+        # Subject of an invoice mail
+        INVOICE_SUBJECT = 'Invoice from Barsys bar'
+
+        # Subject of a purchase notification to dependants
+        PURCHASE_NOTIFICATION_SUBJECT = 'Purchase notification from Barsys bar'
+
+        # Subject of a payment reminder mail
+        PAYMENT_REMINDER_SUBJECT = 'Payment reminder from Barsys bar'
+
+        # Bar contact email address
+        CONTACT_EMAIL = "bar@example.com"
+
+        # Name of bar in default templates
+        NAME_OF_BAR = "Barsys bar"
+
+        BANK_ACCOUNT_RECIPIENT = "Barsys bar"
+        BANK_ACCOUNT_NUMBER = "55542"
+        BANK_ACCOUNT_ROUTING_NUMBER = "2718"
+        BANK_ACCOUNT_BANK = "Royal Bank of Moldova"
+        # (Display name of the invoice recipient is always appended to payment reference)
+        BANK_ACCOUNT_PAYMENT_REFERENCE = "Bar debts"
+
+
+    class Misc:
+        # Number of purchases to show on user history page
+        NUM_USER_PURCHASE_HISTORY = 15
+        # Whether to show total cost of unbilled purchases on user history page
+        SUM_COST_USER_PURCHASE_HISTORY = True
+        # User should transfer money if balance is below this value
+        BALANCE_BELOW_TRANSFER_MONEY = Decimal('0')
+        # Number of purchases to show on main page
+        NUM_MAIN_LAST_PURCHASES = 5

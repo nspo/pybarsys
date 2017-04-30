@@ -1,5 +1,3 @@
-from .common import *
-
 # Put your production settings in this file!
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -17,3 +15,7 @@ EMAIL_HOST = 'localhost'
 EMAIL_FROM_ADDRESS = 'no-reply@example.com'
 EMAIL_PORT = 1025  # 587
 EMAIL_USE_TLS = False  # True
+
+# Put the preferences you want to change here
+# PybarsysPreferences.EMAIL.CONTACT_EMAIL = "bar@ieee.org"
+# ...

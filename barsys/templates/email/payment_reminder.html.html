@@ -2,31 +2,31 @@
 {% load barsys_helpers %}
 
 {% block main_content %}
-    <h1>{{ config.MAIL_PAYMENT_REMINDER_SUBJECT }}</h1>
+    <h1>{{ pybarsys_preferences.EMAIL.PAYMENT_REMINDER_SUBJECT }}</h1>
     <p>Hello, {{ user.display_name }}!</p>
 
-    <p>This is a payment reminder from <i>{{ config.MAIL_NAME_OF_BAR }}</i>. <br/>
+    <p>This is a payment reminder from <i>{{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}</i>. <br/>
         Your current account balance is: <b>{{ user.account_balance|currency }}</b></p>
 
-    <p>As your account balance is below {{ config.MAIL_BALANCE_SEND_MONEY|currency }}, please send money to the following bank
-        account:</p>
-    <div style="white-space: pre-wrap;">{{ config.MAIL_BANK_DETAILS }}</div>
+    <p>As your account balance is below {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY }}, please transfer
+        money to the following bank account:</p>
+    {% include "./bank_account_details.html.html" %}
     <p/>
 
-    <hr />
+    <hr/>
 
     <h2>Your last invoices:</h2>
     {% include "email/subtable_invoices.html" with invoices=last_invoices %}
 
-    <hr />
+    <hr/>
 
     <h2>Your last payments:</h2>
     {% include "email/subtable_payments.html" with payments=last_payments %}
 
-    <hr />
+    <hr/>
 
     <p>If you have any questions, feel free to contact <a
-            href="mailto:{{ config.MAIL_CONTACT_EMAIL }}">{{ config.MAIL_CONTACT_EMAIL }}</a>.</p>
+            href="mailto:{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}">{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}</a>.</p>
 
     <p>Have a nice day!</p>
 {% endblock %}

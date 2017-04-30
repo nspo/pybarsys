@@ -1,6 +1,6 @@
 import csv
+import os.path
 
-from constance import config
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core import exceptions, paginator
@@ -14,6 +14,7 @@ from django.views.generic import edit, View
 from django.views.generic.detail import DetailView
 from django_filters.views import FilterView
 
+from pybarsys.settings import PybarsysPreferences
 from . import filters
 from . import view_helpers
 from .forms import *
@@ -399,7 +400,7 @@ class InvoiceResendView(View):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceMailDebugView(DetailView):
     model = Invoice
-    template_name = "email/normal_invoice.html.html"
+    template_name = os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "normal_invoice.html.html")
 
     def get_context_data(self, **kwargs):
         context = super(InvoiceMailDebugView, self).get_context_data(**kwargs)
@@ -407,7 +408,8 @@ class InvoiceMailDebugView(DetailView):
         invoice = self.object
 
         context["invoice"] = invoice
-        context["config"] = config
+        context["recipient"] = invoice.recipient
+        context["pybarsys_preferences"] = PybarsysPreferences
         context["own_purchases"] = invoice.own_purchases()
         context["other_purchases_grouped"] = invoice.other_purchases_grouped()
         context["last_invoices"] = invoice.recipient.invoices()[:5]
@@ -427,7 +429,7 @@ class PaymentReminderMailDebugView(DetailView):
         user = self.object
 
         context["user"] = user
-        context["config"] = config
+        context["pybarsys_preferences"] = PybarsysPreferences
         context["last_invoices"] = user.invoices()[:5]
         context["last_payments"] = user.payments()[:5]
 
@@ -458,7 +460,7 @@ class InvoiceCreateView(edit.FormView):
                 invoices.append(invoice)
             else:
                 # print("{} has no purchases to pay for".format(user))
-                if send_payment_reminders and user.account_balance() < config.MAIL_BALANCE_SEND_MONEY:
+                if send_payment_reminders and user.account_balance() < PybarsysPreferences.Misc.BALANCE_BELOW_TRANSFER_MONEY:
                     users_to_remind.append(user)
                 skipped_users.append(user)
 
@@ -753,7 +755,7 @@ class MainUserListView(View):
 
         favorite_users = User.objects.active().buyers().favorites()
 
-        last_purchases = Purchase.objects.order_by("-created_date")[:config.NUM_MAIN_LAST_PURCHASES]
+        last_purchases = Purchase.objects.order_by("-created_date")[:PybarsysPreferences.Misc.NUM_MAIN_LAST_PURCHASES]
 
         sidebar_stats_elements = get_renderable_stats_elements()
 
@@ -776,7 +778,7 @@ class MainUserListMultiBuyView(View):
 
         favorite_users = User.objects.active().buyers().favorites()
 
-        last_purchases = Purchase.objects.order_by("-created_date")[:config.NUM_MAIN_LAST_PURCHASES]
+        last_purchases = Purchase.objects.order_by("-created_date")[:PybarsysPreferences.Misc.NUM_MAIN_LAST_PURCHASES]
 
         sidebar_stats_elements = get_renderable_stats_elements()
 
@@ -890,12 +892,12 @@ class MainUserHistoryView(View):
         categories = Purchase.objects.filter(user__pk=user_id, invoice=None).stats_purchases_by_category_and_product()
 
         last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[
-                         :config.NUM_USER_PURCHASE_HISTORY]
+                         :PybarsysPreferences.Misc.NUM_USER_PURCHASE_HISTORY]
 
         context = {"user": user,
                    "categories": categories,
                    "last_purchases": last_purchases,
-                   "config": config}
+                   "pybarsys_preferences": PybarsysPreferences}
         return render(request, "barsys/main/user_history.html", context)
 
 

@@ -3,42 +3,52 @@
 {% load tz %}
 
 {% block main_content %}
-    <h1>{{ config.MAIL_INVOICE_SUBJECT }}</h1>
+    <h1>{{ pybarsys_preferences.EMAIL.INVOICE_SUBJECT }}</h1>
     <p>Hello, {{ invoice.recipient.display_name }}!</p>
 
-    <p>This is an invoice from <i>{{ config.MAIL_NAME_OF_BAR }}</i>. <br/>
-        Your current account balance is: <b>{{ invoice.recipient.account_balance|currency }}</b></p>
+    <p>This is an invoice from <i>{{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}</i>. <br/>
+        Your current account balance is <b>{{ invoice.recipient.account_balance|currency }}</b></p>
 
-    <p>If your account balance is below {{ config.MAIL_BALANCE_SEND_MONEY|currency }}, please send money to the
-        following bank
-        account:</p>
-    <div style="white-space: pre-wrap;">{{ config.MAIL_BANK_DETAILS }}</div>
+    {% if invoice.recipient.account_balance <= pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY %}
+        <p>Your account balance is below {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, so
+            please transfer money to the following bank account:
+        </p>
+    {% else %}
+        <p>
+            Your account balance is above {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, so you
+            do not necessarily need to transfer any money at the moment. You can still deposit money for future
+            purchases though.
+        </p>
+    {% endif %}
+
+    {% include "./bank_account_details.html.html" %}
     <p/>
 
-    <p>The total amount of this invoice is <b>{{ invoice.amount|currency }}</b> and consists of the following purchases:
+    <p>The total amount of this invoice is <b>{{ invoice.amount|currency }}</b>. It consists of the following purchases:
     </p>
     <hr/>
     <h2>Own purchases:</h2>
-    {% include "email/subtable_purchases.html" with purchases=own_purchases %}
+    {% include "./subtable_purchases.html" with purchases=own_purchases %}
     <hr/>
     {% for p_user, u_purchases in other_purchases_grouped %}
         <h2>Purchases of {{ p_user }}:</h2>
-        {% include "email/subtable_purchases.html" with purchases=u_purchases %}
+        {% include "./subtable_purchases.html" with purchases=u_purchases %}
         <hr/>
     {% endfor %}
 
     <h2>Your last invoices (including this):</h2>
-    {% include "email/subtable_invoices.html" with invoices=last_invoices %}
+    {% include "./subtable_invoices.html" with invoices=last_invoices %}
 
-    <hr />
+    <hr/>
 
     <h2>Your last payments:</h2>
-    {% include "email/subtable_payments.html" with payments=last_payments %}
+    {% include "./subtable_payments.html" with payments=last_payments %}
 
     <hr/>
 
     <p>If you have any questions, feel free to contact <a
-            href="mailto:{{ config.MAIL_CONTACT_EMAIL }}">{{ config.MAIL_CONTACT_EMAIL }}</a>.</p>
+            href="mailto:{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}">{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}</a>.
+    </p>
 
     <p>Have a nice day!</p>
 {% endblock %}

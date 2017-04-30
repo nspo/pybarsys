@@ -1,12 +1,13 @@
+import os.path
 from collections import OrderedDict
 from itertools import groupby
 
-from constance import config
 from django.contrib import messages
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 from pybarsys import settings as pybarsys_settings
+from pybarsys.settings import PybarsysPreferences
 from .models import StatsDisplay, Purchase
 
 
@@ -68,18 +69,23 @@ def send_invoice_mails(request, invoices, send_dependant_notifications=False):
 
     for invoice in invoices:
         context = {}
+        context["pybarsys_preferences"] = PybarsysPreferences
         context["invoice"] = invoice
-        context["config"] = config
+        context["recipient"] = invoice.recipient
         context["own_purchases"] = invoice.own_purchases()
         context["other_purchases_grouped"] = invoice.other_purchases_grouped()
         context["last_invoices"] = invoice.recipient.invoices()[:5]
         context["last_payments"] = invoice.recipient.payments()[:5]
-        content_plain = render_to_string("email/normal_invoice.plaintext.html", context)
-        content_html = render_to_string("email/normal_invoice.html.html", context)
+        content_plain = render_to_string(
+            os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "normal_invoice.plaintext.html"
+                         ), context)
+        content_html = render_to_string(
+            os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "normal_invoice.html.html"),
+            context)
         try:
-            msg = EmailMultiAlternatives(config.MAIL_INVOICE_SUBJECT, content_plain,
+            msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.INVOICE_SUBJECT, content_plain,
                                          pybarsys_settings.EMAIL_FROM_ADDRESS, [invoice.recipient.email],
-                                         reply_to=[config.MAIL_CONTACT_EMAIL])
+                                         reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
             msg.attach_alternative(content_html, "text/html")
             msg.send(fail_silently=False)
 
@@ -91,23 +97,24 @@ def send_invoice_mails(request, invoices, send_dependant_notifications=False):
             # send purchase notifications to dependants
             for dependant, purchases in invoice.other_purchases_grouped():
                 notif_context = {}
+                notif_context["pybarsys_preferences"] = PybarsysPreferences
                 notif_context["invoice"] = invoice
-                notif_context["config"] = config
                 notif_context["dependant"] = dependant
                 notif_context["purchases"] = purchases
-                content_plain = render_to_string("email/dependant_notification.plaintext.html", notif_context)
-                content_html = render_to_string("email/dependant_notification.html.html", notif_context)
+                content_plain = render_to_string(os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR,
+                                                              "dependant_notification.plaintext.html"), notif_context)
+                content_html = render_to_string(os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR,
+                                                             "dependant_notification.html.html"), notif_context)
                 try:
-                    msg = EmailMultiAlternatives(config.MAIL_PURCHASE_NOTIFICATION_SUBJECT, content_plain,
+                    msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.PURCHASE_NOTIFICATION_SUBJECT, content_plain,
                                                  pybarsys_settings.EMAIL_FROM_ADDRESS, [dependant.email],
-                                                 reply_to=[config.MAIL_CONTACT_EMAIL])
+                                                 reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
                     msg.attach_alternative(content_html, "text/html")
                     msg.send(fail_silently=False)
 
                     num_purchase_notif_mail_success += 1
                 except Exception as e:
                     purchase_notif_mail_failure.append((dependant, e))
-
 
     if num_invoice_mail_success > 0:
         messages.info(request, "{} invoice mails were successfully sent. ".format(num_invoice_mail_success))
@@ -116,7 +123,8 @@ def send_invoice_mails(request, invoices, send_dependant_notifications=False):
                        format(", ".join(["{} ({})".format(u, err) for u, err in invoice_mail_failure])))
 
     if num_purchase_notif_mail_success > 0:
-        messages.info(request, "{} dependant notification mails were successfully sent. ".format(num_purchase_notif_mail_success))
+        messages.info(request, "{} dependant notification mails were successfully sent. ".format(
+            num_purchase_notif_mail_success))
     if len(purchase_notif_mail_failure) > 0:
         messages.error(request, "Sending dependant notification mail(s) to the following user(s) failed: {}".
                        format(", ".join(["{} ({})".format(u, err) for u, err in purchase_notif_mail_failure])))
@@ -128,16 +136,21 @@ def send_reminder_mails(request, users):
     reminder_mail_failure = []  # [(username, error), ...]
     for user in users:
         context = {}
+        context["pybarsys_preferences"] = PybarsysPreferences
         context["user"] = user
-        context["config"] = config
+        context["recipient"] = user
         context["last_invoices"] = user.invoices()[:5]
         context["last_payments"] = user.payments()[:5]
-        content_plain = render_to_string("email/payment_reminder.plaintext.html", context)
-        content_html = render_to_string("email/payment_reminder.html.html", context)
+        content_plain = render_to_string(
+            os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "payment_reminder.plaintext.html"),
+            context)
+        content_html = render_to_string(
+            os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "payment_reminder.html.html"),
+            context)
         try:
-            msg = EmailMultiAlternatives(config.MAIL_PAYMENT_REMINDER_SUBJECT, content_plain,
+            msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.PAYMENT_REMINDER_SUBJECT, content_plain,
                                          pybarsys_settings.EMAIL_FROM_ADDRESS, [user.email],
-                                         reply_to=[config.MAIL_CONTACT_EMAIL])
+                                         reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
             msg.attach_alternative(content_html, "text/html")
             msg.send(fail_silently=False)
 
