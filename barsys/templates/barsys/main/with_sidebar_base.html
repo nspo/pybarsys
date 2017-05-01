@@ -31,16 +31,6 @@
     <a id="back-to-top" href="#" class="btn btn-primary btn-lg back-to-top">
         <span class="glyphicon glyphicon-chevron-up"></span></a>
 
-    <script src="{% static 'barsys/fastclick.min.js' %}"></script>
-    <script type="text/javascript">
-        /* Activate fastclick.js, a workaround for old touch devices (e.g. iPad 1) that have a
-         large delay (>300 ms) before a click event is fired */
-        if ('addEventListener' in document) {
-            document.addEventListener('DOMContentLoaded', function () {
-                FastClick.attach(document.body);
-            }, false);
-        }</script>
-
 {% endblock %}
 
 {% block bootstrap3_extra_script %}

@@ -103,23 +103,5 @@
             document.getElementById("info_selected_users").value = num_users + " user(s) selected";
         }
 
-
-        /* Add workaround for fastclick.js hover issue: https://github.com/ftlabs/fastclick/issues/83 */
-        var body = document.body;
-
-        window.addEventListener('touchstart', function () {
-            if (!body.classList.contains('disable-hover')) {
-                body.classList.add('disable-hover');
-            }
-
-        }, false);
-
-        window.addEventListener('touchend', function () {
-            if (body.classList.contains('disable-hover')) {
-                body.classList.remove('disable-hover');
-            }
-
-        }, false);
-
     </script>
 {% endblock %}
