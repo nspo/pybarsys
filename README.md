@@ -43,7 +43,11 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
 ![](/docs/screenshots/screenshot-18.png)|![](/docs/screenshots/screenshot-19.png)|![](/docs/screenshots/screenshot-20.png)
 
 # Limitations
- * No complete German translation (only some buttons and all mail templates)
+ * No complete German translation (only mail templates and some automatic stuff)
+ * Based on the assumption that everyone with access to the main page may purchase products for all active users
+   * You should run the server in a trusted local area network
+   * Login needed for admin access of course
+   * Don't make this available to the internet...
  * [...]
 # Installation
 1. Download pybarsys into e.g. /var/www/pybarsys
