@@ -30,8 +30,8 @@
                     <td style="width: 250px;"><strong>{{ product.product_name }} ({{ product.product_amount }})</strong>
                     </td>
                     <td style="width:50px;">{{ product.total_quantity }}</td>
-                    <td>{% for i in ''|center:product.total_quantity %}| {% endfor %}</td>
-                    {# Hack to iterate over int #}
+                    <td class="hidden-xs">{% for i in ''|center:product.total_quantity %}{% if forloop.counter|divisibleby:5 and not forloop.first %}|&nbsp;&nbsp; {% else %}|&nbsp;{% endif %}{% endfor %}</td>
+                    {# |center: Hack to iterate over int #}
                 </tr>
             {% endfor %}
             </tbody>
@@ -48,7 +48,8 @@
                 <tr>
                     <td style="width: 180px;">{{ purchase.created_date }}</td>
                     <td> {{ purchase.quantity }}x {{ purchase.product_name }} ({{ purchase.product_amount }},
-                        {{ purchase.cost|currency }})</td>
+                        {{ purchase.cost|currency }})
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
