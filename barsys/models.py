@@ -236,7 +236,7 @@ class Product(models.Model):
 
     class Meta:
         unique_together = ["name", "amount"]
-        ordering = ["category__name", "name", ]
+        ordering = ["category__name", "-is_bold", "name", ]
 
     def cannot_be_deleted(self):
         return False
@@ -438,7 +438,7 @@ class Purchase(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.SET_NULL, blank=True, null=True)
 
     is_free_item_purchase = models.BooleanField(default=False, help_text="Whether this purchase was done with a free "
-                                                "item (i.e. it was shown as free on the main page)")
+                                                                         "item (i.e. it was shown as free on the main page)")
 
     free_item_description = models.CharField(max_length=120, blank=True,
                                              help_text="Description of free item (only if this was purchased for free)")
@@ -740,7 +740,6 @@ class FreeItem(models.Model):
 
     class Meta:
         ordering = ["-leftover_quantity"]
-
 
     def get_absolute_url(self):
         return reverse('admin_freeitem_list')
