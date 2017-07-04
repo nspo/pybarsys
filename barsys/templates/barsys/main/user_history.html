@@ -55,7 +55,12 @@
             </tbody>
         </table>
     {% else %}
-        {{ user.display_name }} has no recent purchases
+        <p>{{ user.display_name }} has no recent purchases</p>
+    {% endif %}
+    {% if last_invoice %}
+        <p>The last invoice for this user was created on {{ last_invoice.created_date|sdate }}</p>
+    {% else %}
+        <p>No invoices have been created for this user yet.</p>
     {% endif %}
 
 {% endblock %}

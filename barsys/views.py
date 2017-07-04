@@ -922,9 +922,15 @@ class MainUserHistoryView(View):
         last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[
                          :PybarsysPreferences.Misc.NUM_USER_PURCHASE_HISTORY]
 
+        if user.invoices().count() > 0:
+            last_invoice = user.invoices()[0]
+        else:
+            last_invoice = None
+
         context = {"user": user,
                    "categories": categories,
                    "last_purchases": last_purchases,
+                   "last_invoice": last_invoice,
                    "pybarsys_preferences": PybarsysPreferences}
         return render(request, "barsys/main/user_history.html", context)
 
