@@ -18,7 +18,8 @@ from pybarsys.settings import PybarsysPreferences
 from . import filters
 from . import view_helpers
 from .forms import *
-from .view_helpers import get_renderable_stats_elements
+from .view_helpers import get_renderable_stats_elements, get_most_bought_product_for_user, \
+    get_most_bought_product_in_time
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
@@ -741,27 +742,7 @@ class MainUserPurchaseView(View):
         context["form"] = form
         context["free_items"] = FreeItem.objects.filter(purchasable=True, leftover_quantity__gte=1)
 
-        # PurchaseQuerySet to use for selecting most bought product
-        purchase_query_set = None
-        if user.purchases().unbilled().count() > 0:
-            # most bought product of unbilled purchases
-            purchase_query_set = user.purchases().unbilled()
-        elif Invoice.objects.filter(purchase__user=user).distinct().count() > 0:
-            # most bought product by this user on last invoice that had a purchase of him/her
-            # works both when user pays themselves and when not
-            purchase_query_set = Invoice.objects.filter(purchase__user=user).distinct()[0].purchases().filter(user=user)
-        else:
-            # user has no purchases yet, just use all purchases of last 4 hours
-            purchase_query_set = Purchase.objects.filter(created_date__gte=timezone.now() - timezone.timedelta(hours=4))
-
-        if purchase_query_set is None or purchase_query_set.count() < 1:
-            most_bought_product = {'product_amount': '', 'product_name': ''}
-        else:
-            most_bought_product = \
-                purchase_query_set.values("product_name", "product_amount").annotate(
-                    total_quantity=models.Sum("quantity")).order_by("-total_quantity")[0]
-
-        context["most_bought_product"] = most_bought_product
+        context["most_bought_product"] = get_most_bought_product_for_user(user)
 
         return render(request, "barsys/main/user_purchase.html", context)
 
@@ -858,14 +839,13 @@ class MainUserPurchaseMultiBuyView(View):
         context["form"] = form
 
         # Show most bought product of last 4 hours
-        purchase_query_set = Purchase.objects.filter(created_date__gte=timezone.now() - timezone.timedelta(hours=4))
+        most_bought_product = get_most_bought_product_in_time(4)
 
-        if purchase_query_set is None or purchase_query_set.count() < 1:
+        if most_bought_product is None:
+            most_bought_product = get_most_bought_product_in_time(24)
+
+        if most_bought_product is None:
             most_bought_product = {'product_amount': '', 'product_name': ''}
-        else:
-            most_bought_product = \
-                purchase_query_set.values("product_name", "product_amount").annotate(
-                    total_quantity=models.Sum("quantity")).order_by("-total_quantity")[0]
 
         context["most_bought_product"] = most_bought_product
 

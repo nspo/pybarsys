@@ -4,11 +4,13 @@ from itertools import groupby
 
 from django.contrib import messages
 from django.core.mail import EmailMultiAlternatives
+from django.db import models
 from django.template.loader import render_to_string
+from django.utils import timezone
 
 from pybarsys import settings as pybarsys_settings
 from pybarsys.settings import PybarsysPreferences
-from .models import StatsDisplay, Purchase
+from .models import StatsDisplay, Purchase, Invoice, Product
 
 
 def get_renderable_stats_elements():
@@ -214,3 +216,45 @@ def get_jump_to_data_lines(all_users):
         jump_to_data_lines.append(this_line)
 
     return jump_to_data_lines
+
+
+def get_most_bought_product_in_queryset(purchase_query_set):
+    # Try to get the most bought product in purchase_query_set that is currently available to buy
+    most_bought_products = purchase_query_set.values("product_name", "product_amount").annotate(
+        total_quantity=models.Sum("quantity")).order_by("-total_quantity")
+    for prod in most_bought_products:
+        if Product.objects.active().filter(name=prod["product_name"], amount=prod["product_amount"]).count() > 0:
+            return prod
+            # else continue
+    return None  # None found or None still available
+
+
+def get_most_bought_product_in_time(hours):
+    return get_most_bought_product_in_queryset(
+            Purchase.objects.filter(created_date__gte=timezone.now() - timezone.timedelta(hours=hours)))
+
+def get_most_bought_product_for_user(user):
+    most_bought_product = None
+    if user.purchases().unbilled().count() > 0:
+        # most bought product of unbilled purchases
+        most_bought_product = get_most_bought_product_in_queryset(user.purchases().unbilled())
+
+    if most_bought_product is None and Invoice.objects.filter(purchase__user=user).distinct().count() > 0:
+        # most bought product by this user on last invoice that had a purchase of him/her
+        # works both when user pays themselves and when not
+        most_bought_product = get_most_bought_product_in_queryset(
+            Invoice.objects.filter(purchase__user=user).distinct()[0].purchases().filter(user=user))
+
+    if most_bought_product is None:
+        # user has no purchases yet, just use all purchases of last 4 hours
+        most_bought_product = get_most_bought_product_in_time(hours=4)
+
+    if most_bought_product is None:
+        # okay, so maybe last 24 hours?
+        most_bought_product = get_most_bought_product_in_time(hours=24)
+
+    if most_bought_product is None:
+        # Found none :(
+        most_bought_product = {'product_amount': '', 'product_name': ''}
+
+    return most_bought_product
