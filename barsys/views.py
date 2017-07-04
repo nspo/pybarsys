@@ -858,10 +858,16 @@ class MainUserPurchaseMultiBuyView(View):
         context["form"] = form
 
         # Show most bought product of last 4 hours
-        context["most_bought_product"] = \
-            Purchase.objects.filter(created_date__gte=timezone.now() - timezone.timedelta(hours=4)).values(
-                "product_name", "product_amount").annotate(
-                total_quantity=models.Sum("quantity")).order_by("-total_quantity")[0]
+        purchase_query_set = Purchase.objects.filter(created_date__gte=timezone.now() - timezone.timedelta(hours=4))
+
+        if purchase_query_set is None or purchase_query_set.count() < 1:
+            most_bought_product = {'product_amount': '', 'product_name': ''}
+        else:
+            most_bought_product = \
+                purchase_query_set.values("product_name", "product_amount").annotate(
+                    total_quantity=models.Sum("quantity")).order_by("-total_quantity")[0]
+
+        context["most_bought_product"] = most_bought_product
 
         return render(request, "barsys/main/user_purchase.html", context)
 
