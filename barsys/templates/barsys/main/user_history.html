@@ -48,7 +48,7 @@
                 <tr>
                     <td style="width: 180px;">{{ purchase.created_date }}</td>
                     <td> {{ purchase.quantity }}x {{ purchase.product_name }} ({{ purchase.product_amount }},
-                        {{ purchase.cost|currency }})
+                        {{ purchase.cost|currency }}{% if purchase.comment %}, &quot;{{ purchase.comment }}&quot;{% endif %})
                     </td>
                 </tr>
             {% endfor %}
