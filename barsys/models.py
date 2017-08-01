@@ -182,7 +182,7 @@ class User(AbstractBaseUser):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=30, unique=True, blank=False)
+    name = models.CharField(max_length=40, unique=True, blank=False)
 
     def __str__(self):
         return "{}".format(self.name)
@@ -223,7 +223,7 @@ class Product(models.Model):
                                                                   "as long as the amount is different")
     price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
                                 validators=[MinValueValidator(Decimal('0.01'))])
-    amount = models.CharField(max_length=10, blank=False)
+    amount = models.CharField(max_length=12, blank=False)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, null=False)
 
     is_active = models.BooleanField(default=True, help_text="Whether this product is shown on the purchasing page")
@@ -426,11 +426,11 @@ class PurchaseManager(models.Manager):
 class Purchase(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=False)
     # Don't save product reference as foreign key, b/c it could be changed after purchase
-    product_category = models.CharField(max_length=30, blank=False)
+    product_category = models.CharField(max_length=40, blank=False)
     product_name = models.CharField(max_length=40, blank=False)
     product_price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
                                         validators=[MinValueValidator(Decimal('0.00'))])
-    product_amount = models.CharField(max_length=10, blank=False)
+    product_amount = models.CharField(max_length=12, blank=False)
     quantity = models.PositiveIntegerField(default=1, null=False, blank=False)
 
     comment = models.CharField(max_length=50, blank=True, help_text="An optional comment for this purchase")
