@@ -30,9 +30,6 @@
                    class="form-control" placeholder="Comment" maxlength="50"
                    value="{{ form.comment.value|default_if_none:"" }}">
         </div>
-        {% if multibuy %}
-            <p class="help-block">MultiBuy: Quantity per user</p>
-        {% endif %}
         {% if not multibuy %}
             <div class="form-group form-group-lg">
                 <div class="checkbox">
@@ -41,6 +38,16 @@
                     </label>
                 </div>
             </div>
+        {% endif %}
+        <div class="form-group form-group-lg">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" name="purchase_more_for_same_users"> Purchase more for same user(s)
+                </label>
+            </div>
+        </div>
+        {% if multibuy %}
+            <p class="help-block">MultiBuy: Quantity per user</p>
         {% endif %}
         <div class="form-group">
             <div class="input-group input-group-lg">

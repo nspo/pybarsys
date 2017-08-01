@@ -238,6 +238,7 @@ class SinglePurchaseForm(forms.Form):
     product_id = forms.CharField()  # CharField b/c it could be "free_item_N"
     comment = forms.CharField(max_length=50, required=False)
     is_free_item_purchase = False
+    purchase_more_for_same_users = forms.BooleanField(required=False)
 
 
 class SingleUserSinglePurchaseForm(SinglePurchaseForm):

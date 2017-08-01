@@ -453,7 +453,7 @@ class Purchase(models.Model):
         ordering = ["-created_date"]
 
     def __str__(self):
-        return "{}x {} ({})".format(self.quantity, self.product_name, self.user.display_name)
+        return "{}x {} ({}, {})".format(self.quantity, self.product_name, self.user.display_name, currency(self.cost()))
 
     def cost(self):
         return self.quantity * self.product_price

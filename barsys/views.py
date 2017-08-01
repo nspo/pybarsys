@@ -18,6 +18,7 @@ from pybarsys.settings import PybarsysPreferences
 from . import filters
 from . import view_helpers
 from .forms import *
+from .templatetags.barsys_helpers import currency
 from .view_helpers import get_renderable_stats_elements, get_most_bought_product_for_user, \
     get_most_bought_product_in_time
 
@@ -724,7 +725,14 @@ class MainUserPurchaseView(View):
                                     free_item_description=Truncator(free_item.verbose_str()).chars(120))
                 purchase.save()
 
-            return redirect("main_user_list")
+            if form.cleaned_data["purchase_more_for_same_users"]:
+                # notify user of successful purchase, so they are not confused b/c they
+                # stay on the same page
+                messages.info(request, "Purchase successful: {}".format(purchase))
+
+                return redirect("main_user_purchase", user_id)
+            else:
+                return redirect("main_user_list")
         else:
             messages.error(request, form.errors)
             return redirect("main_user_purchase", user_id)
@@ -892,7 +900,14 @@ class MainUserPurchaseMultiBuyView(View):
                                         quantity=quantity_per_user, comment=comment, is_free_item_purchase=True,
                                         free_item_description=Truncator(free_item.verbose_str()).chars(120))
                     purchase.save()
-            return redirect("main_user_list")
+            if form.cleaned_data["purchase_more_for_same_users"]:
+                messages.info(request, "Successfully purchased {}x {} ({}) for the following users: {}".format(
+                    purchase.quantity, purchase.product_name, currency(purchase.cost()),
+                    ", ".join(u.display_name for u in users)))
+
+                return redirect("main_user_purchase_multibuy", user_pkey_str=user_pkey_str)
+            else:
+                return redirect("main_user_list")
         else:
             messages.error(request, form.errors)
             return redirect("main_user_purchase_multibuy", user_pkey_str=user_pkey_str)
