@@ -697,6 +697,9 @@ class ProductAutochangeSet(models.Model):
         for pac in self.productautochange_set.all():
             pac.execute()
 
+    class Meta:
+        ordering = ["title"]
+
 
 class FreeItem(models.Model):
     """ Model to describe products which are free, but only for a limited number of purchases """

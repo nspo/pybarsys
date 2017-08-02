@@ -29,7 +29,15 @@ class ProductAutochangeForm(forms.ModelForm):
         fields = ["product", 'change_active', 'change_bold', "set_price"]
 
     def __init__(self, *args, **kwargs):
+        # get manually added parent reference (sometimes this is strangely called without one)
+        parent = kwargs.pop("parent") if "parent" in kwargs else None
+
         super(ProductAutochangeForm, self).__init__(*args, **kwargs)
+
+        if parent and parent.pk and not self.instance.pk:
+            # if this is a new ProductAutochange, then exclude all products that
+            # already have been selected in the parent PASet
+            self.fields["product"].queryset = Product.objects.exclude(pk__in=parent.products.all())
 
         self.helper = FormHelper(form=self)
         self.helper.template = 'bootstrap/table_inline_formset.html'
@@ -44,6 +52,11 @@ class ProductAutochangeForm(forms.ModelForm):
 
 class ProductAutochangeInlineFormSet(
     forms.inlineformset_factory(ProductAutochangeSet, ProductAutochange, form=ProductAutochangeForm, extra=1)):
+    def get_form_kwargs(self, index):
+        kwargs = super(ProductAutochangeInlineFormSet, self).get_form_kwargs(index)
+        kwargs.update({'parent': self.instance})
+        return kwargs
+
     def clean(self):
         super(ProductAutochangeInlineFormSet, self).clean()
 
@@ -61,7 +74,7 @@ class ProductAutochangeInlineFormSet(
                     product_pks.append(form.cleaned_data["product"].pk)
 
         if num_productautochanges < 1:
-            raise ValidationError("At least one product autochange needs to be defined.")
+            form.add_error(None, ValidationError("At least one product autochange needs to be defined."))
 
 
 class ProductAutochangeSetForm(forms.ModelForm):
