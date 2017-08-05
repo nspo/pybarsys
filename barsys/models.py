@@ -554,10 +554,16 @@ class StatsDisplay(models.Model):
     SINCE_MONDAY = "MONDAY"
     SINCE_1ST = "1st"
     SINCE_JAN_1ST = "JAN_1st"
+    SINCE_TODAY_MIDNIGHT = "TOD_MID"
+    SINCE_4pm = "4pm"
+
     TIME_PERIOD_METHOD_CHOICES = ((FIXED_DURATION, "Fixed duration"),
                                   (SINCE_MONDAY, "Since Monday of current week (midnight)"),
                                   (SINCE_1ST, "Since 1st of current month (midnight)"),
-                                  (SINCE_JAN_1ST, "Since January 1st of current year (midnight)"))
+                                  (SINCE_JAN_1ST, "Since January 1st of current year (midnight)"),
+                                  (SINCE_TODAY_MIDNIGHT, "Since midnight (00:00) of current day"),
+                                  (SINCE_4pm, "Since last time it was 4pm (16:00)"))
+
     time_period_method = models.CharField(max_length=7, choices=TIME_PERIOD_METHOD_CHOICES, default=SINCE_MONDAY,
                                           help_text="Method of how to determine the time frame in which purchases "
                                                     "count into this statistics display.")
@@ -628,6 +634,20 @@ class StatsDisplay(models.Model):
             now = localtime(timezone.now())
             jan_1st = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
             return jan_1st
+        elif self.time_period_method == self.SINCE_TODAY_MIDNIGHT:
+            now = localtime(timezone.now())
+            midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            return midnight
+        elif self.time_period_method == self.SINCE_4pm:
+            now = localtime(timezone.now())
+            if now.hour >= 16:
+                # kein Bier vor vier
+                last4pm = now.replace(hour=16, minute=0, second=0, microsecond=0)
+            else:
+                yesterday = now - datetime.timedelta(days=1)
+                last4pm = yesterday.replace(hour=16, minute=0, second=0, microsecond=0)
+
+            return last4pm
 
 
 class ProductAutochange(models.Model):
