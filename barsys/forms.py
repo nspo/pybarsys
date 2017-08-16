@@ -264,9 +264,12 @@ class SingleUserSinglePurchaseForm(SinglePurchaseForm):
             raise ValidationError("Invalid user ID")
 
     def clean(self):
-        cleaned_data = super(SingleUserSinglePurchaseForm, self).clean()
+        super(SingleUserSinglePurchaseForm, self).clean()
+        cleaned_data = self.cleaned_data
 
-        if self.is_free_item_purchase:
+        if self.is_free_item_purchase and not self.has_error("product_id"):
+            # only make additional checks if basic checks have no error
+
             free_item = FreeItem.objects.get(pk=cleaned_data.get('product_id'))
             if free_item.leftover_quantity < cleaned_data.get('quantity'):
                 raise ValidationError({"quantity": "There are only {} items left, so you cannot purchase {}!".format(
@@ -287,9 +290,10 @@ class MultiUserSinglePurchaseForm(SinglePurchaseForm):
     users_qs = None  # has to be filled in manually
 
     def clean(self):
-        cleaned_data = super(MultiUserSinglePurchaseForm, self).clean()
+        super(MultiUserSinglePurchaseForm, self).clean()
+        cleaned_data = self.cleaned_data
 
-        if self.is_free_item_purchase:
+        if self.is_free_item_purchase and not self.has_error("product_id"):
             free_item = FreeItem.objects.get(pk=cleaned_data.get('product_id'))
             needed_quantity = cleaned_data.get('quantity') * self.users_qs.count()
             if free_item.leftover_quantity < needed_quantity:
