@@ -18,7 +18,8 @@
 {% endblock %}
 {% block tablehead %}
     <tr>
-        <th>Time</th>
+        <th>Created</th>
+        <th>Value date</th>
         <th>User</th>
         <th>Amount</th>
         <th>Payment method</th>
@@ -34,6 +35,7 @@
             <td>
                 <a href="{% url 'admin_payment_detail' object.pk %}">{{ object.created_date|localtime|sdatetime }}</a>
             </td>
+            <td>{{ object.value_date|sdate }}</td>
             <td><a href="{% url 'admin_user_detail' object.user.pk %}">{{ object.user }}</a></td>
             <td>{{ object.amount|currency }}</td>
             <td>{{ object.get_payment_method_display }}</td>

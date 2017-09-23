@@ -331,11 +331,12 @@ class PaymentExportView(FilterView):
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
 
         writer = csv.writer(response)
-        writer.writerow(['created', 'email', 'display_name', 'amount', 'payment_method', 'comment'])
+        writer.writerow(['created', 'value_date', 'email', 'display_name', 'amount', 'payment_method', 'comment'])
 
         for obj in self.object_list:
             writer.writerow(
-                [obj.created_date, obj.user.email, obj.user.display_name, obj.amount, obj.get_payment_method_display(),
+                [obj.created_date, obj.value_date, obj.user.email, obj.user.display_name, obj.amount,
+                 obj.get_payment_method_display(),
                  obj.comment])
 
         return response

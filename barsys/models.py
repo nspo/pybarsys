@@ -524,6 +524,9 @@ class Payment(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
 
+    value_date = models.DateField(default=datetime.date.today, help_text="Date when payment is considered effective "
+                                                                         "(only for display)")
+
     objects = PaymentQuerySet.as_manager()
 
     def get_absolute_url(self):

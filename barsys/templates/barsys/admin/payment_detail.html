@@ -23,6 +23,10 @@
                 <td>{{ object.modified_date }}</td>
             </tr>
             <tr>
+                <th>Value date</th>
+                <td>{{ object.value_date }}</td>
+            </tr>
+            <tr>
                 <th>User</th>
                 <td><a href="{% url 'admin_user_detail' object.user.pk %}">{{ object.user }}</a></td>
             </tr>
