@@ -61,6 +61,10 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+    def get_by_natural_key(self, username):
+        """ Match username/email case-insensitive """
+        return self.get(**{self.model.USERNAME_FIELD + '__iexact': username})
+
 
 from django.db.models import Q
 
