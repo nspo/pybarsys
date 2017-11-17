@@ -117,7 +117,7 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    * Set `LANGUAGE_CODE` (e.g. `"de-de"` for German)
      * You can also switch to the German mail templates (with PybarsysPreferences)
    * Change mail settings (`EMAIL_HOST` etc.) to be able to send invoices
-   * Set PybarsysPreferences
+   * Set PybarsysPreferences (have a look at `common.py` to see all options)
    * ...
    
 11. Create superuser
@@ -130,8 +130,7 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    u2=User.objects.create(email="jessica@example.com", display_name="Jessica")
    ```
 12. Login at http://localhost/admin/ and create other users, categories, products, ...
-13. Change other settings like bank account details at `Misc -> External admin interface (settings)`
-14. Adapt mail templates under barsys/templates/email/ to your own preferences
+13. Adapt mail templates under barsys/templates/email/ to your own preferences
 
 # Bug reports
 Please feel free to open an issue in case you think you spotted a bug.
