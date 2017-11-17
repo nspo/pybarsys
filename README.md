@@ -4,19 +4,19 @@ A beverage shopping system for bars of small private organizations - based on Dj
 Developer: Nicolai Spohrer (nicolai[at]xeve.de)
 
 # Features
-* Responsive main interface and admin interface
+* Responsive main and admin interface
 * Products that are sorted into categories and can be purchased by all users in the main interface (e.g. on a tablet, phones or PCs)
 * Detailed information about every purchase
 * Creation of invoices for unbilled purchases
-* Management of users ("dependants"/"friends") who do not pay themselves, but for whose purchases some other user is responsible
-* Automatical mailing of 
+* Management of users who do not pay themselves ("dependants"/"friends"), but for whose purchases some other user is responsible
+* Semi-automatical mailing of 
   * invoices
   * payment reminders
   * purchase notifications for dependants
 * Management of payments from and to user accounts
 * Configurable statistical displays on main page
 * Statistics in admin interface
-* Automatical changes of product attributes: set "happy hour prices" etc. once by creating a `product autochange set` and apply them with one single click
+* Semi-automatical changes of product attributes: set "happy hour prices" etc. once by creating a `product autochange set` and apply them with one single click
 * Free items
   * Users can choose to "donate" products to all other users so that they can be purchased for no cost
   * Useful for birthday events etc.
