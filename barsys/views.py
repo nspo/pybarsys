@@ -526,8 +526,8 @@ class PurchaseStatisticsByCategoryView(FilterView):
         context = super(PurchaseStatisticsByCategoryView, self).get_context_data(**kwargs)
 
         context["title"] = "Purchase statistics grouped by category"
-        context["grouped_by"] = "product_category"
-        context["grouped_by_title"] = "Category"
+        context["grouped_by"] = ["product_category"]
+        context["grouped_by_title"] = ["Category"]
 
         context["summary"] = list(
             context["filter"].qs
@@ -563,12 +563,12 @@ class PurchaseStatisticsByProductView(FilterView):
         context = super(PurchaseStatisticsByProductView, self).get_context_data(**kwargs)
 
         context["title"] = "Purchase statistics grouped by product"
-        context["grouped_by"] = "product_name"
-        context["grouped_by_title"] = "Product"
+        context["grouped_by"] = ["product_name", "product_amount"]
+        context["grouped_by_title"] = ["Product", "Amount"]
 
         context["summary"] = list(
             context["filter"].qs
-                .values("product_name")
+                .values("product_name", "product_amount")
                 .annotate(**PurchaseStatisticsByCategoryView.metrics)
                 .order_by("-total_sales")
         )

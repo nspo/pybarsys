@@ -20,6 +20,7 @@ class UserFilter(django_filters.FilterSet):
 
 class PurchaseFilter(django_filters.FilterSet):
     product_name = django_filters.CharFilter(lookup_expr='icontains')
+    product_amount = django_filters.CharFilter(lookup_expr='icontains')
     product_category = django_filters.CharFilter(lookup_expr='icontains')
     invoice = django_filters.BooleanFilter(method='filter_has_invoice', label="Invoiced")
     created_date = django_filters.DateTimeFromToRangeFilter(

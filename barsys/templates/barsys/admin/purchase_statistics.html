@@ -10,7 +10,9 @@
 {% endblock %}
 {% block tablehead %}
     <tr>
-        <th>{{ grouped_by_title }}</th>
+        {% for title in grouped_by_title %}
+            <th>{{ title }}</th>
+        {% endfor %}
         <th>Number of purchases</th>
         <th>Average quantity</th>
         <th>Total quantity</th>
@@ -21,7 +23,9 @@
 {% block tablebody %}
     {% for line in summary %}
         <tr>
-            <td>{{ line|keyvalue:grouped_by }}</td>
+            {% for key in grouped_by %}
+                <td>{{ line|keyvalue:key }}</td>
+            {% endfor %}
             <td>{{ line.num_purchases }}</td>
             <td>{{ line.average_quantity|intcomma }}</td>
             <td>{{ line.total_quantity }}</td>
@@ -30,7 +34,13 @@
         </tr>
     {% endfor %}
     <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
-        <td> Total</td>
+        {% for dummy in grouped_by %}
+            {% if forloop.counter0 == 0 %}
+                <td> Total</td>
+            {% else %}
+                <td></td>
+            {% endif %}
+        {% endfor %}
         <td> {{ summary_total.num_purchases|default_if_none:0 }} </td>
         <td> {{ summary_total.average_quantity|default_if_none:0|intcomma }} </td>
         <td> {{ summary_total.total_quantity|default_if_none:0 }} </td>
