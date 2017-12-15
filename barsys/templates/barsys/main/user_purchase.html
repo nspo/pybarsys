@@ -48,6 +48,10 @@
         </div>
         {% if multibuy %}
             <p class="help-block">MultiBuy: Quantity per user</p>
+            <p class="help-block">Purchasing as:
+                {% for u in users %}{% if forloop.first %}{% elif forloop.last %} & {% else %}, {% endif %}
+                    {{ u.display_name }}{% endfor %}
+            </p>
         {% endif %}
         <div class="form-group">
             <div class="input-group input-group-lg">
