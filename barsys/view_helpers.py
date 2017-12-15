@@ -39,12 +39,16 @@ def get_renderable_stats_elements():
             top_five = Purchase.objects.filter(**filters).stats_purchases_by_user(limit=5)
             for user, total_quantity in top_five:
                 stats_element["rows"].append({"left": "{}x".format(total_quantity),
-                                              "right": "{} {}".format(stat.row_string, user.display_name)})
+                                              "row_string": stat.row_string,
+                                              "user_name": user.display_name,
+                                              "user_id": user.id})
         else:
             top_five = Purchase.objects.filter(**filters).stats_cost_by_user(limit=5)
             for u_index, (user, total_cost) in enumerate(top_five):
                 stats_element["rows"].append({"left": "{}.".format(u_index + 1),
-                                              "right": "{} {}".format(stat.row_string, user.display_name)})
+                                              "row_string": stat.row_string,
+                                              "user_name": user.display_name,
+                                              "user_id": user.id})
 
         if index + 1 < len(all_displays):
             # toggle next one on

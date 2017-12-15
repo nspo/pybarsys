@@ -9,7 +9,8 @@
         {% for row in data.rows %}
             <tr>
                 <td class="td-small">{{ row.left }}</td>
-                <td class="td-big">{{ row.right }}</td>
+                <td class="td-big">{{ row.row_string }} <a
+                        href="{% url 'main_user_purchase' row.user_id %}">{{ row.user_name }}</a></td>
             </tr>
         {% endfor %}
         </tbody>
