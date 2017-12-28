@@ -42,7 +42,7 @@
 {% block main_content %}
     <h4>{% bootstrap_icon "star" %}</h4>
     <hr/>
-    <div class="btn-group-horizontal" data-toggle="buttons">
+    <div class="btn-group-horizontal btn-group-users" data-toggle="buttons">
         {% for user in favorites %}
             <label class="btn btn-lg btn-default btn-user btn-select">
                 <input type="checkbox" form="users_form" name="users" onchange="update_selected_users();"
@@ -59,7 +59,7 @@
         <a name="users_{{ letter }}"></a>
         <h4>{% bootstrap_icon "user" %} {{ letter }}</h4>
         <hr/>
-        <div class="btn-group-horizontal" data-toggle="buttons">
+        <div class="btn-group-horizontal btn-group-users" data-toggle="buttons">
             {% for user in users %}
                 <label class="btn btn-lg btn-default btn-user btn-select">
                     <input type="checkbox" form="users_form" name="users" onchange="update_selected_users();"

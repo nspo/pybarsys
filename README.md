@@ -131,7 +131,6 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    ```
 12. Login at http://localhost/admin/ and create other users, categories, products, ...
 13. Adapt mail templates under barsys/templates/email/ to your own preferences
-14. Add custom CSS in barsys/static/barsys/custom.css
 
 # Bug reports
 Please feel free to open an issue in case you think you spotted a bug.

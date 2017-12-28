@@ -48,7 +48,7 @@
 {% block main_content %}
     <h4>{% bootstrap_icon "star" %}</h4>
     <hr/>
-    <div class="btn-group-horizontal">
+    <div class="btn-group-horizontal btn-group-users">
         {% for user in favorites %}
             <a href="{% url 'main_user_purchase' user.id %}"
                class="btn btn-lg btn-default btn-user">{{ user.display_name }}</a>
@@ -63,7 +63,7 @@
         <a name="users_{{ letter }}"></a>
         <h4>{% bootstrap_icon "user" %} {{ letter }}</h4>
         <hr/>
-        <div class="btn-group-horizontal">
+        <div class="btn-group-horizontal btn-group-users">
             {% for user in users %}
                 <a href="{% url 'main_user_purchase' user.id %}"
                    class="btn btn-lg btn-default btn-user">{{ user.display_name }}</a>

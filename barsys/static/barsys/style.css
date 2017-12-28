@@ -3,16 +3,29 @@
     position: fixed;
     bottom: 20px;
     left: 20px;
-    display:none;
+    display: none;
 }
 
-
 /* Glyphicon: bigger icons */
-.gi-1p5x{font-size: 1.5em;}
-.gi-2x{font-size: 2em;}
-.gi-3x{font-size: 3em;}
-.gi-4x{font-size: 4em;}
-.gi-5x{font-size: 5em;}
+.gi-1p5x {
+    font-size: 1.5em;
+}
+
+.gi-2x {
+    font-size: 2em;
+}
+
+.gi-3x {
+    font-size: 3em;
+}
+
+.gi-4x {
+    font-size: 4em;
+}
+
+.gi-5x {
+    font-size: 5em;
+}
 
 .btn-select.active {
     background-color: #d0d0d0;
@@ -32,15 +45,18 @@
 
 /* https://github.com/ftlabs/fastclick/issues/83#issuecomment-295723072 */
 .disable-hover {
-  pointer-events: none;
+    pointer-events: none;
 }
 
 tr.table-total-row {
-    font-weight:bold; border-top:2px solid #DDDDDD;
+    font-weight: bold;
+    border-top: 2px solid #DDDDDD;
 }
 
 table.table-sidebar {
-    text-align: left; table-layout: fixed; margin-bottom: 0;
+    text-align: left;
+    table-layout: fixed;
+    margin-bottom: 0;
 }
 
 table.table-sidebar td {
@@ -56,9 +72,9 @@ table.table-sidebar td.td-small {
 table.table-sidebar td.td-big {
     width: 83%;
     /* Write ... in lines that are too long */
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    overflow:hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
     padding: 10px;
 }
 
@@ -69,12 +85,29 @@ table.table-sidebar td.td-big {
     text-overflow: ellipsis;
 }
 
+@media (max-width: 767px) {
+    .btn-user {
+        width: 270px;
+    }
+
+    .btn-group-users {
+        text-align: center;
+    }
+}
+
+@media (min-width: 1280px) {
+    .btn-user {
+        width: 290px;
+        margin-right: 10px;
+    }
+}
+
 .btn-product {
     width: 175px;
     margin-bottom: 5px;
     overflow-x: hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .btn-group-letters {
@@ -85,7 +118,6 @@ table.table-sidebar td.td-big {
 .btn-letters {
     font-size: 1.2em;
 }
-
 
 hr {
     margin-top: 5px;
