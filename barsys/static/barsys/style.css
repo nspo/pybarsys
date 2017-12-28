@@ -79,27 +79,10 @@ table.table-sidebar td.td-big {
 }
 
 .btn-user {
-    width: 237px;
+    width: 236px;
     margin-bottom: 10px;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-@media (max-width: 767px) {
-    .btn-user {
-        width: 270px;
-    }
-
-    .btn-group-users {
-        text-align: center;
-    }
-}
-
-@media (min-width: 1280px) {
-    .btn-user {
-        width: 290px;
-        margin-right: 10px;
-    }
 }
 
 .btn-product {
@@ -109,6 +92,30 @@ table.table-sidebar td.td-big {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+@media (max-width: 767px) {
+    .btn-user {
+        width: 155px;
+        font-size: small;
+    }
+
+    .btn-group-users {
+        text-align: center;
+    }
+
+    .btn-product {
+        width: 155px;
+    }
+
+}
+
+@media (min-width: 1280px) {
+    .btn-user {
+        width: 290px;
+        margin-right: 10px;
+    }
+}
+
 
 .btn-group-letters {
     /*padding-right: 10px;*/
