@@ -36,15 +36,17 @@ def get_renderable_stats_elements():
 
         stats_element["rows"] = []
         if stat.sort_by_and_show == StatsDisplay.SORT_BY_NUM_PURCHASES:
-            top_five = Purchase.objects.filter(**filters).stats_purchases_by_user(limit=5)
-            for user, total_quantity in top_five:
+            top_users = Purchase.objects.filter(**filters).stats_purchases_by_user(
+                limit=PybarsysPreferences.Misc.NUM_MAIN_USERS_IN_STATSDISPLAY)
+            for user, total_quantity in top_users:
                 stats_element["rows"].append({"left": "{}x".format(total_quantity),
                                               "row_string": stat.row_string,
                                               "user_name": user.display_name,
                                               "user_id": user.id})
         else:
-            top_five = Purchase.objects.filter(**filters).stats_cost_by_user(limit=5)
-            for u_index, (user, total_cost) in enumerate(top_five):
+            top_users = Purchase.objects.filter(**filters).stats_cost_by_user(
+                limit=PybarsysPreferences.Misc.NUM_MAIN_USERS_IN_STATSDISPLAY)
+            for u_index, (user, total_cost) in enumerate(top_users):
                 stats_element["rows"].append({"left": "{}.".format(u_index + 1),
                                               "row_string": stat.row_string,
                                               "user_name": user.display_name,

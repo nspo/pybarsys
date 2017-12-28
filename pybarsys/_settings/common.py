@@ -167,3 +167,5 @@ class PybarsysPreferences:
         BALANCE_BELOW_TRANSFER_MONEY = Decimal('0')
         # Number of purchases to show on main page
         NUM_MAIN_LAST_PURCHASES = 5
+        # Number of users to show in a StatsDisplay on main page
+        NUM_MAIN_USERS_IN_STATSDISPLAY = 5
