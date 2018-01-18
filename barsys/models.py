@@ -730,7 +730,8 @@ class ProductAutochangeSet(models.Model):
 
 class FreeItem(models.Model):
     """ Model to describe products which are free, but only for a limited number of purchases """
-    giver = models.ForeignKey(User, null=True, blank=True, help_text="User thanks to whom this product is free")
+    giver = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL,
+                              help_text="User thanks to whom this product is free")
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     leftover_quantity = models.PositiveIntegerField(null=False, blank=False,
