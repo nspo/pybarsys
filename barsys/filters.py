@@ -49,8 +49,8 @@ class ProductAutochangeSetFilter(django_filters.FilterSet):
 
 class PaymentFilter(django_filters.FilterSet):
     comment = django_filters.CharFilter(lookup_expr='icontains')
-    amount__gte = django_filters.NumberFilter(name='amount', lookup_expr='gte')
-    amount__lte = django_filters.NumberFilter(name='amount', lookup_expr='lte')
+    amount__gte = django_filters.NumberFilter(field_name='amount', lookup_expr='gte')
+    amount__lte = django_filters.NumberFilter(field_name='amount', lookup_expr='lte')
 
     created_date = django_filters.DateTimeFromToRangeFilter(
         help_text="Format YYYY-MM-DD HH:MM. Time is 00:00 by default.")
@@ -62,7 +62,7 @@ class PaymentFilter(django_filters.FilterSet):
 
 class FreeItemFilter(django_filters.FilterSet):
     comment = django_filters.CharFilter(lookup_expr='icontains')
-    leftover_quantity__gte = django_filters.NumberFilter(name='leftover_quantity', lookup_expr='gte')
+    leftover_quantity__gte = django_filters.NumberFilter(field_name='leftover_quantity', lookup_expr='gte')
 
     class Meta:
         model = FreeItem
@@ -72,8 +72,8 @@ class FreeItemFilter(django_filters.FilterSet):
 class InvoiceFilter(django_filters.FilterSet):
     created_date = django_filters.DateTimeFromToRangeFilter(
         help_text="Format YYYY-MM-DD HH:MM. Time is 00:00 by default.")
-    amount__gte = django_filters.NumberFilter(name='amount', lookup_expr='gte')
-    amount__lte = django_filters.NumberFilter(name='amount', lookup_expr='lte')
+    amount__gte = django_filters.NumberFilter(field_name='amount', lookup_expr='gte')
+    amount__lte = django_filters.NumberFilter(field_name='amount', lookup_expr='lte')
 
     class Meta:
         model = Invoice
