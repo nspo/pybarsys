@@ -18,10 +18,21 @@ def get_renderable_stats_elements():
     stats_elements = []
 
     all_displays = StatsDisplay.objects.order_by("-show_by_default")
+    if PybarsysPreferences.Misc.SHUFFLE_STATSDISPLAY_ORDER:
+        all_displays = all_displays.order_by("?")
+
     for index, stat in enumerate(all_displays):
         stats_element = {"stats_id": "stats_{}".format(stat.pk),
                          "show_by_default": stat.show_by_default,
                          "title": stat.title}
+
+        if PybarsysPreferences.Misc.SHUFFLE_STATSDISPLAY_ORDER:
+            # always show the StatsDisplay that is at the start first, irrespective of show_by_default, b/c
+            # result has been shuffled already
+            if index == 0:
+                stats_element["show_by_default"] = True
+            else:
+                stats_element["show_by_default"] = False
 
         # construct query filters step by step
         filters = {}

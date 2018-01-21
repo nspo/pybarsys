@@ -169,3 +169,6 @@ class PybarsysPreferences:
         NUM_MAIN_LAST_PURCHASES = 5
         # Number of users to show in a StatsDisplay on main page
         NUM_MAIN_USERS_IN_STATSDISPLAY = 5
+        # Whether to randomize order of StatsDisplays and show a random one first
+        # (irrespective of show_by_default setting)
+        SHUFFLE_STATSDISPLAY_ORDER = False
