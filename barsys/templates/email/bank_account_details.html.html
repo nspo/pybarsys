@@ -1,3 +1,4 @@
+{% load barsys_helpers %}
 <table style="text-align: left;">
     <tbody>
     <tr>
@@ -18,7 +19,7 @@
     </tr>
     <tr>
         <th>Payment reference</th>
-        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_PAYMENT_REFERENCE }} {{ recipient.display_name }}</td>
+        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_PAYMENT_REFERENCE }} {{ recipient.display_name|clean_str }}</td>
     </tr>
     </tbody>
 </table>

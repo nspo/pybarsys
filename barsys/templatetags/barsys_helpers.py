@@ -1,4 +1,5 @@
 import locale
+from re import sub as re_sub
 
 from bootstrap3.templatetags.bootstrap3 import bootstrap_icon
 from django import template
@@ -49,6 +50,24 @@ def keyvalue(dict, key):
 def sdatetime(value):
     return formats.date_format(value, "SHORT_DATETIME_FORMAT")
 
+
 @register.filter
 def sdate(value):
     return formats.date_format(value, "SHORT_DATE_FORMAT")
+
+
+@register.filter
+def clean_str(instr):
+    # clean string and only leave characters compatible with SEPA
+
+    replace_dict = {
+        "ä": "ae", "Ä": "Ae", "ö": "oe", "Ö": "Oe", "ü": "ue", "Ü": "Ue", "ß": "ss",
+        '"': "-", "'": "-"
+    }
+    result_str = instr
+    for k, v in replace_dict.items():
+        result_str = result_str.replace(k, v)
+
+    result_str = re_sub(r'[^A-Za-z0-9 .,\-+]+', '', result_str)
+
+    return result_str
