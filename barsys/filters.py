@@ -48,12 +48,16 @@ class ProductAutochangeSetFilter(django_filters.FilterSet):
 
 
 class PaymentFilter(django_filters.FilterSet):
+    payment_method = django_filters.ChoiceFilter(choices=Payment.PAYMENT_METHOD_CHOICES)
+
     comment = django_filters.CharFilter(lookup_expr='icontains')
     amount__gte = django_filters.NumberFilter(field_name='amount', lookup_expr='gte')
     amount__lte = django_filters.NumberFilter(field_name='amount', lookup_expr='lte')
 
     created_date = django_filters.DateTimeFromToRangeFilter(
         help_text="Format YYYY-MM-DD HH:MM. Time is 00:00 by default.")
+
+    value_date = django_filters.DateFromToRangeFilter(help_text="Format YYYY-MM-DD.")
 
     class Meta:
         model = Payment
