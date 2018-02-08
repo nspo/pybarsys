@@ -1,0 +1,29 @@
+{% extends 'barsys/admin/list_base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+{% load barsys_helpers %}
+{% load humanize %}
+
+{% block above_table %}
+    <h1 class="pull-left" style="margin-top: 0;">Users by account balance</h1>
+{% endblock %}
+{% block tablehead %}
+    <tr>
+        <th>User</th>
+        <th>Account balance</th>
+
+    </tr>
+{% endblock %}
+{% block tablebody %}
+    {% for u, account_balance in users %}
+        <tr>
+            <td>{{ u }}</td>
+            <td>{{ account_balance|currency }}</td>
+        </tr>
+    {% endfor %}
+{% endblock %}
+
+{% block additional_content %}
+    {% include "barsys/admin/list_filter.html" with center=True %}
+{% endblock %}

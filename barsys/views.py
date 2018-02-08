@@ -590,6 +590,63 @@ class PurchaseStatisticsByProductView(FilterView):
         return kwargs
 
 
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PurchaseStatisticsByUserView(FilterView):
+    filterset_class = filters.PurchaseFilter
+    template_name = "barsys/admin/purchase_statistics.html"
+    paginate_by = 10
+
+    def get_context_data(self, **kwargs):
+        context = super(PurchaseStatisticsByUserView, self).get_context_data(**kwargs)
+
+        context["title"] = "Purchase statistics grouped by user"
+        context["grouped_by"] = ["user__display_name"]
+        context["grouped_by_title"] = ["User"]
+
+        context["summary"] = list(
+            context["filter"].qs
+                .values("user", "user__display_name")
+                .annotate(**PurchaseStatisticsByCategoryView.metrics)
+                .order_by("-total_sales")
+        )
+
+        context["summary_total"] = dict(
+            context["filter"].qs.aggregate(**PurchaseStatisticsByCategoryView.metrics)
+        )
+
+        return context
+
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(PurchaseStatisticsByUserView, self).get_filterset_kwargs(filterset_class)
+        if kwargs["data"] is None:
+            kwargs["data"] = {"is_free_item_purchase": False}
+        elif "is_free_item_purchase" not in kwargs["data"]:
+            kwargs["data"] = kwargs["data"].copy()
+            kwargs["data"]["is_free_item_purchase"] = False
+
+        return kwargs
+
+
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class UserStatisticsByAccountBalance(FilterView):
+    filterset_class = filters.UserFilter
+    template_name = "barsys/admin/user_account_balance_statistics.html"
+    paginate_by = 10
+
+    def get_context_data(self, **kwargs):
+        context = super(UserStatisticsByAccountBalance, self).get_context_data(**kwargs)
+
+        users_with_balance = []
+        for u in context["filter"].qs:
+            # probably sloooow
+            users_with_balance.append((u, u.account_balance()))
+
+        users_sorted = sorted(users_with_balance, key=lambda tup: tup[1])
+
+        context["users"] = users_sorted
+
+        return context
+
 # Statistics END
 # ProductAutochangeSet BEGIN
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')

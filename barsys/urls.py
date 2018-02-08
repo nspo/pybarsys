@@ -82,6 +82,10 @@ urlpatterns = [
         name='admin_purchase_statistics_by_category'),
     url(r'^admin/statistics/purchase/by_product/', views.PurchaseStatisticsByProductView.as_view(),
         name='admin_purchase_statistics_by_product'),
+    url(r'^admin/statistics/purchase/by_user/', views.PurchaseStatisticsByUserView.as_view(),
+        name='admin_purchase_statistics_by_user'),
+    url(r'^admin/statistics/user/by_account_balance/', views.UserStatisticsByAccountBalance.as_view(),
+        name='admin_user_statistics_by_account_balance'),
 
     # ProductChangeAction
     url(r'^admin/productautochangeset/list/$', views.ProductAutochangeSetListView.as_view(), name='admin_productautochangeset_list'),
