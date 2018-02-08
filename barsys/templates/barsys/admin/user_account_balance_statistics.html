@@ -12,14 +12,16 @@
     <tr>
         <th>User</th>
         <th>Account balance</th>
-
+        <th>Last payment</th>
     </tr>
 {% endblock %}
 {% block tablebody %}
     {% for u, account_balance in users %}
         <tr>
-            <td>{{ u }}</td>
+            <td><a href="{% url 'admin_user_detail' u.pk %}">{{ u.display_name }}</a></td>
             <td>{{ account_balance|currency }}</td>
+            <td>{% if u.payments %}{{ u.payments.0.amount|currency }}, {{ u.payments.0.value_date|sdate }}{% else %}
+                None{% endif %}</td>
         </tr>
     {% endfor %}
 {% endblock %}
