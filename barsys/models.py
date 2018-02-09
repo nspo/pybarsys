@@ -511,7 +511,7 @@ class PaymentQuerySet(models.QuerySet):
 
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
-    amount = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
+    amount = models.DecimalField(max_digits=6, decimal_places=2, blank=False, null=False,
                                  help_text="Positive amounts are deposits by the user. "
                                            "Negative amounts are payouts to the user.")
     comment = models.CharField(max_length=100, blank=True)
