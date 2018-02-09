@@ -54,15 +54,19 @@ urlpatterns = [
     url(r'^admin/payment/(?P<pk>[0-9]+)/update/$', views.PaymentUpdateView.as_view(), name='admin_payment_update'),
     url(r'^admin/payment/(?P<pk>[0-9]+)/delete/$', views.PaymentDeleteView.as_view(), name='admin_payment_delete'),
 
-    # Invoice
+    # Invoice / Payment reminder
     url(r'^admin/invoice/list/$', views.InvoiceListView.as_view(), name='admin_invoice_list'),
     url(r'^admin/invoice/new/$', views.InvoiceCreateView.as_view(), name='admin_invoice_new'),
     url(r'^admin/invoice/(?P<pk>[0-9]+)/detail/$', views.InvoiceDetailView.as_view(), name='admin_invoice_detail'),
     url(r'^admin/invoice/(?P<pk>[0-9]+)/resend/$', views.InvoiceResendView.as_view(), name='admin_invoice_resend'),
 
+    url(r'^admin/user/(?P<pk>[0-9]+)/payment_reminder/send', views.PaymentReminderSendView.as_view(),
+        name='admin_user_payment_reminder_send'),
+
     # Mail debug
     url(r'^admin/invoice/(?P<pk>[0-9]+)/mail/$', views.InvoiceMailDebugView.as_view(), name='admin_invoice_mail'),
-    url(r'^admin/user/(?P<pk>[0-9]+)/payment_reminder$', views.PaymentReminderMailDebugView.as_view(), name='admin_user_payment_reminder'),
+    url(r'^admin/user/(?P<pk>[0-9]+)/payment_reminder/mail', views.PaymentReminderMailDebugView.as_view(),
+        name='admin_user_payment_reminder_mail'),
     # Mail debug END
 
     url(r'^admin/invoice/(?P<pk>[0-9]+)/delete/$', views.InvoiceDeleteView.as_view(), name='admin_invoice_delete'),
@@ -88,11 +92,16 @@ urlpatterns = [
         name='admin_user_statistics_by_account_balance'),
 
     # ProductChangeAction
-    url(r'^admin/productautochangeset/list/$', views.ProductAutochangeSetListView.as_view(), name='admin_productautochangeset_list'),
-    url(r'^admin/productautochangeset/new/$', views.ProductAutochangeSetManageView.as_view(), name='admin_productautochangeset_new'),
-    url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/update/$', views.ProductAutochangeSetManageView.as_view(), name='admin_productautochangeset_update'),
-    url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/execute/$', views.ProductAutochangeSetExecuteView.as_view(), name='admin_productautochangeset_execute'),
-    url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/delete/$', views.ProductAutochangeSetDeleteView.as_view(), name='admin_productautochangeset_delete'),
+    url(r'^admin/productautochangeset/list/$', views.ProductAutochangeSetListView.as_view(),
+        name='admin_productautochangeset_list'),
+    url(r'^admin/productautochangeset/new/$', views.ProductAutochangeSetManageView.as_view(),
+        name='admin_productautochangeset_new'),
+    url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/update/$', views.ProductAutochangeSetManageView.as_view(),
+        name='admin_productautochangeset_update'),
+    url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/execute/$', views.ProductAutochangeSetExecuteView.as_view(),
+        name='admin_productautochangeset_execute'),
+    url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/delete/$', views.ProductAutochangeSetDeleteView.as_view(),
+        name='admin_productautochangeset_delete'),
 
     # FreeItem
     url(r'^admin/freeitem/list/$', views.FreeItemListView.as_view(), name='admin_freeitem_list'),

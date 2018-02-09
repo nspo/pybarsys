@@ -4,56 +4,52 @@
 {% load barsys_helpers %}
 {% load humanize %}
 {% block content %}
-
-    <div class="container">
-
-        <div>
-            <h1 class="pull-left" style="margin-top: 0;">Invoice details</h1>
-            <div class="btn-group pull-right" role="group">
-                <a href="{% url 'admin_invoice_resend' invoice.pk %}" class="btn btn-primary">
-                    {% bootstrap_icon 'send' %} Resend
-                </a>
-                <a href="{% url 'admin_invoice_delete' invoice.pk %}" class="btn btn-danger">
-                    {% bootstrap_icon 'remove-sign' %} Delete
-                </a>
-            </div>
+    <div>
+        <h1 class="pull-left" style="margin-top: 0;">Invoice details</h1>
+        <div class="btn-group pull-right" role="group">
+            <a href="{% url 'admin_invoice_resend' invoice.pk %}" class="btn btn-primary">
+                {% bootstrap_icon 'send' %} Resend
+            </a>
+            <a href="{% url 'admin_invoice_delete' invoice.pk %}" class="btn btn-danger">
+                {% bootstrap_icon 'remove-sign' %} Delete
+            </a>
         </div>
-        <div class="table-responsive" style="overflow-x: inherit;">
-            <table class="table table-striped">
-                <tbody>
+    </div>
+    <div class="table-responsive" style="overflow-x: inherit;">
+        <table class="table table-striped">
+            <tbody>
+            <tr>
+                <th>Time</th>
+                <td>{{ invoice.created_date }}</td>
+            </tr>
+            <tr>
+                <th>Recipient</th>
+                <td><a href="{% url 'admin_user_detail' invoice.recipient.pk %}">{{ invoice.recipient }}</a></td>
+            </tr>
+            <tr>
+                <th>Amount</th>
+                <td>{{ invoice.amount|currency }}</td>
+            </tr>
+            <tr>
+                <th colspan="2"><h4>Own purchases</h4></th>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-left: 25px; padding-right: 0;">
+                    {% include 'barsys/admin/purchases_subtable.html' with purchases=own_purchases %}
+                </td>
+            </tr>
+            {% for p_user, purchases in other_purchases_grouped %}
                 <tr>
-                    <th>Time</th>
-                    <td>{{ invoice.created_date }}</td>
-                </tr>
-                <tr>
-                    <th>Recipient</th>
-                    <td><a href="{% url 'admin_user_detail' invoice.recipient.pk %}">{{ invoice.recipient }}</a></td>
-                </tr>
-                <tr>
-                    <th>Amount</th>
-                    <td>{{ invoice.amount|currency }}</td>
-                </tr>
-                <tr>
-                    <th colspan="2"><h4>Own purchases</h4></th>
+                    <th colspan="2"><h4>Purchases by <a
+                            href="{% url 'admin_user_detail' p_user.pk %}">{{ p_user.display_name }}</a></h4></th>
                 </tr>
                 <tr>
                     <td colspan="2" style="padding-left: 25px; padding-right: 0;">
-                        {% include 'barsys/admin/purchases_subtable.html' with purchases=own_purchases %}
+                        {% include 'barsys/admin/purchases_subtable.html' with purchases=purchases %}
                     </td>
                 </tr>
-                {% for p_user, purchases in other_purchases_grouped %}
-                    <tr>
-                        <th colspan="2"><h4>Purchases by <a
-                                href="{% url 'admin_user_detail' p_user.pk %}">{{ p_user.display_name }}</a></h4></th>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="padding-left: 25px; padding-right: 0;">
-                            {% include 'barsys/admin/purchases_subtable.html' with purchases=purchases %}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 {% endblock %}

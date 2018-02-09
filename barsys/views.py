@@ -399,6 +399,13 @@ class InvoiceResendView(View):
         return redirect("admin_invoice_list")
 
 
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class PaymentReminderSendView(View):
+    def get(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        view_helpers.send_reminder_mails(request, [user])
+        return redirect("admin_user_detail", pk=pk)
+
 # for debugging mail
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceMailDebugView(DetailView):
@@ -431,7 +438,7 @@ class PaymentReminderMailDebugView(DetailView):
 
         user = self.object
 
-        context["user"] = user
+        context["recipient"] = user
         context["pybarsys_preferences"] = PybarsysPreferences
         context["last_invoices"] = user.invoices()[:5]
         context["last_payments"] = user.payments()[:5]

@@ -4,19 +4,16 @@
 {% load crispy_forms_tags %}
 {% block content %}
 
-    <div class="container">
-        {% bootstrap_messages messages %}
-        <h1>{{ title }}</h1>
-        <form method="post" action="">
+    {% bootstrap_messages messages %}
+    <h1>{{ title }}</h1>
+    <form method="post" action="">
 
-            {% crispy form %}
-            {% crispy formset formset.form.helper %}
+        {% crispy form %}
+        {% crispy formset formset.form.helper %}
 
-            <input class="submit btn btn-primary" type="submit" value="Save & add more">
-            <a class="btn btn-success" href="{% url 'admin_productautochangeset_list' %}">Return to list</a>
+        <input class="submit btn btn-primary" type="submit" value="Save & add more">
+        <a class="btn btn-success" href="{% url 'admin_productautochangeset_list' %}">Return to list</a>
 
-        </form>
-
-    </div>
+    </form>
 
 {% endblock %}

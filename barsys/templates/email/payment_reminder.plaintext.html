@@ -1,7 +1,7 @@
-{% load barsys_helpers %}Hello, {{ user.display_name }}!
+{% load barsys_helpers %}Hello, {{ recipient.display_name }}!
 
 This is a payment reminder from {{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}.
-Your current account balance is: {{ user.account_balance|currency }}
+Your current account balance is: {{ recipient.account_balance|currency }}
 
 As your account balance is below {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, please send money to the following bank account:
 {% include "./bank_account_details.plaintext.html" %}

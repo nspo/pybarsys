@@ -76,8 +76,11 @@
     </div>
 </nav>
 
-{% block content %}
-{% endblock %}
+    <div class="container">
+        {% bootstrap_messages messages %}
+        {% block content %}
+        {% endblock %}
+    </div>
 
 {% block bootstrap3_extra_script %}
 {% block extra_js %}
