@@ -33,6 +33,9 @@ class UserQuerySet(models.QuerySet):
     def pay_themselves(self):
         return self.filter(purchases_paid_by_other=None)
 
+    def purchases(self):
+        return Purchase.objects.filter(user__in=self)
+
 
 class UserManager(BaseUserManager):
     def get_queryset(self):

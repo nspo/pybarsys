@@ -20,7 +20,7 @@ from . import view_helpers
 from .forms import *
 from .templatetags.barsys_helpers import currency
 from .view_helpers import get_renderable_stats_elements, get_most_bought_product_for_user, \
-    get_most_bought_product_in_time
+    get_most_bought_product_for_users
 
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
@@ -911,14 +911,7 @@ class MainUserPurchaseMultiBuyView(View):
         context["free_items"] = FreeItem.objects.filter(purchasable=True, leftover_quantity__gte=1)
         context["form"] = form
 
-        # Show most bought product of last 4 hours
-        most_bought_product = get_most_bought_product_in_time(4)
-
-        if most_bought_product is None:
-            most_bought_product = get_most_bought_product_in_time(24)
-
-        if most_bought_product is None:
-            most_bought_product = {'product_amount': '', 'product_name': ''}
+        most_bought_product = get_most_bought_product_for_users(users)
 
         context["most_bought_product"] = most_bought_product
 

@@ -236,9 +236,10 @@ def get_jump_to_data_lines(all_users):
 
 
 def get_most_bought_product_in_queryset(purchase_query_set):
-    # Try to get the most bought product in purchase_query_set that is currently available to buy
-    most_bought_products = purchase_query_set.values("product_name", "product_amount").annotate(
-        total_quantity=models.Sum("quantity")).order_by("-total_quantity")
+    # Try to get the product bought most often in purchase_query_set that is currently available to buy
+
+    most_bought_products = purchase_query_set.values("product_name", "product_amount").order_by().annotate(
+        models.Count("product_name"), num_purchases=models.Count("product_amount")).order_by("-num_purchases")
     for prod in most_bought_products:
         if Product.objects.active().filter(name=prod["product_name"], amount=prod["product_amount"]).count() > 0:
             return prod
@@ -248,7 +249,8 @@ def get_most_bought_product_in_queryset(purchase_query_set):
 
 def get_most_bought_product_in_time(hours):
     return get_most_bought_product_in_queryset(
-            Purchase.objects.filter(created_date__gte=timezone.now() - timezone.timedelta(hours=hours)))
+        Purchase.objects.filter(created_date__gte=timezone.now() - timezone.timedelta(hours=hours)))
+
 
 def get_most_bought_product_for_user(user):
     most_bought_product = None
@@ -272,6 +274,25 @@ def get_most_bought_product_for_user(user):
 
     if most_bought_product is None:
         # Found none :(
+        most_bought_product = {'product_amount': '', 'product_name': ''}
+
+    return most_bought_product
+
+
+def get_most_bought_product_for_users(users):
+    most_bought_product = None
+    if users.purchases().unbilled().count() > 0:
+        # most bought product of unbilled purchases
+        most_bought_product = get_most_bought_product_in_queryset(users.purchases().unbilled())
+
+    if most_bought_product is None:
+        # Show most bought product of last 4 hours
+        most_bought_product = get_most_bought_product_in_time(4)
+
+    if most_bought_product is None:
+        most_bought_product = get_most_bought_product_in_time(24)
+
+    if most_bought_product is None:
         most_bought_product = {'product_amount': '', 'product_name': ''}
 
     return most_bought_product
