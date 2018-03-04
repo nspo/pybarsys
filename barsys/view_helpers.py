@@ -199,20 +199,20 @@ def get_jump_to_data_lines(all_users):
     letter_groups_by_line = []
     # create letter_groups for jumping to existing users in view
     letter_group = OrderedDict()
-    letter_group["A - C"] = ['A', 'B', 'C']
-    letter_group["D - F"] = ['D', 'E', 'F']
-    letter_group["G - I"] = ['G', 'H', 'I']
+    letter_group["A B C"] = ['A', 'B', 'C']
+    letter_group["D E F"] = ['D', 'E', 'F']
+    letter_group["G H I"] = ['G', 'H', 'I']
     letter_groups_by_line.append(letter_group)
 
     letter_group = OrderedDict()
-    letter_group["J - L"] = ['J', 'K', 'L']
-    letter_group["M - O"] = ['M', 'N', 'O']
+    letter_group["J K L"] = ['J', 'K', 'L']
+    letter_group["M N O"] = ['M', 'N', 'O']
     letter_groups_by_line.append(letter_group)
 
     letter_group = OrderedDict()
-    letter_group["P - S"] = ['P', 'Q', 'R', 'S']
-    letter_group["T - V"] = ['T', 'U', 'V']
-    letter_group["W - Z"] = ['W', 'X', 'Y', 'Z']
+    letter_group["P Q R S"] = ['P', 'Q', 'R', 'S']
+    letter_group["T U V"] = ['T', 'U', 'V']
+    letter_group["W X Y Z"] = ['W', 'X', 'Y', 'Z']
     letter_groups_by_line.append(letter_group)
 
     # Where the button for this group should jump to
