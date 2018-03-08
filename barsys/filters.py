@@ -19,6 +19,8 @@ class UserFilter(django_filters.FilterSet):
 
 
 class PurchaseFilter(django_filters.FilterSet):
+    username = django_filters.CharFilter(field_name="user__display_name", lookup_expr='icontains')
+
     product_name = django_filters.CharFilter(lookup_expr='icontains')
     product_amount = django_filters.CharFilter(lookup_expr='icontains')
     product_category = django_filters.CharFilter(lookup_expr='icontains')
@@ -76,8 +78,11 @@ class FreeItemFilter(django_filters.FilterSet):
 class InvoiceFilter(django_filters.FilterSet):
     created_date = django_filters.DateTimeFromToRangeFilter(
         help_text="Format YYYY-MM-DD HH:MM. Time is 00:00 by default.")
-    amount__gte = django_filters.NumberFilter(field_name='amount', lookup_expr='gte')
-    amount__lte = django_filters.NumberFilter(field_name='amount', lookup_expr='lte')
+    purchases__gte = django_filters.NumberFilter(field_name='amount_purchases', lookup_expr='gte', label="Purchases >=")
+    purchases__lte = django_filters.NumberFilter(field_name='amount_purchases', lookup_expr='lte', label="Purchases <=")
+
+    payments__gte = django_filters.NumberFilter(field_name='amount_payments', lookup_expr='gte', label="Payments >=")
+    payments__lte = django_filters.NumberFilter(field_name='amount_payments', lookup_expr='lte', label="Payments <=")
 
     class Meta:
         model = Invoice

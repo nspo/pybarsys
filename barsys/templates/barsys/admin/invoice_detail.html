@@ -17,7 +17,7 @@
     </div>
     <div class="table-responsive" style="overflow-x: inherit;">
         <table class="table table-striped">
-            <tbody>
+            <hr>
             <tr>
                 <th>Time</th>
                 <td>{{ invoice.created_date }}</td>
@@ -27,8 +27,16 @@
                 <td><a href="{% url 'admin_user_detail' invoice.recipient.pk %}">{{ invoice.recipient }}</a></td>
             </tr>
             <tr>
-                <th>Amount</th>
-                <td>{{ invoice.amount|currency }}</td>
+                <th>{% bootstrap_icon "plus" %} Purchases</th>
+                <td>{{ invoice.amount_purchases|currency }}</td>
+            </tr>
+            <tr>
+                <th>{% bootstrap_icon "minus" %} Payments</th>
+                <td>{{ invoice.amount_payments|currency }}</td>
+            </tr>
+            <tr>
+                <th>{% bootstrap_icon "arrow-right" %} Due</th>
+                <td>{{ invoice.due|currency }}</td>
             </tr>
             <tr>
                 <th colspan="2"><h4>Own purchases</h4></th>
@@ -49,6 +57,14 @@
                     </td>
                 </tr>
             {% endfor %}
+            <tr>
+                <th colspan="2"><h4>Payments</h4></th>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-left: 25px; padding-right: 0;">
+                    {% include 'barsys/admin/payments_subtable.html' with payments=invoice.payments %}
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>

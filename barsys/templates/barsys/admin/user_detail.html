@@ -81,21 +81,17 @@
             <th colspan="2"><h4>Account balance</h4></th>
         </tr>
 
-        <tr>
-            <th style="padding-left: 25px;">Sum of payments</th>
-            <td>{{ object.payments.sum_amount|currency }}</td>
-        </tr>
-        <tr>
-            <th style="padding-left: 25px;">Sum of invoices</th>
-            <td>{{ object.invoices.sum_amount|currency }}</td>
-        </tr>
         <tr class="table-total-row">
             <th style="padding-left: 25px;">Current account balance</th>
             <td>{{ object.account_balance|currency }}</td>
         </tr>
         <tr>
-            <th style="padding-left: 25px;">Sum of unbilled purchases</th>
+            <th style="padding-left: 25px;">{% bootstrap_icon "minus" %} Unbilled purchases</th>
             <td>{{ object.purchases.unbilled.sum_cost|currency }}</td>
+        </tr>
+        <tr>
+            <th style="padding-left: 25px;">{% bootstrap_icon "plus" %} Unbilled payments</th>
+            <td>{{ object.payments.unbilled.sum_amount|currency }}</td>
         </tr>
 
         </tbody>
@@ -159,9 +155,10 @@
         <tr>
             <th>Created</th>
             <th>Value date</th>
-            <th>Amount</th>
             <th>Payment method</th>
             <th>Comment</th>
+            <th>Invoiced?</th>
+            <th>Amount</th>
 
             <th>{% bootstrap_icon 'info-sign' %}</th>
             <th>{% bootstrap_icon 'pencil' %}</th>
@@ -173,13 +170,24 @@
             <tr>
                 <td><a href="{% url 'admin_payment_detail' p.pk %}">{{ p.created_date }}</a></td>
                 <td>{{ p.value_date|sdate }}</td>
-                <td>{{ p.amount|currency }}</td>
                 <td>{{ p.get_payment_method_display }}</td>
                 <td>{% bool_to_icon p.comment %}</td>
+                {% if p.has_invoice %}
+                    <td><a href="{% url 'admin_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a>
+                    </td>
+                {% else %}
+                    <td>{% bool_to_icon p.invoice %}</td>
+                {% endif %}
+                <td>{{ p.amount|currency }}</td>
 
                 <td><a href="{% url 'admin_payment_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
-                <td><a href="{% url 'admin_payment_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
-                <td><a href="{% url 'admin_payment_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+                {% if p.has_invoice %}
+                    <td></td>
+                    <td></td>
+                {% else %}
+                    <td><a href="{% url 'admin_payment_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                    <td><a href="{% url 'admin_payment_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+                {% endif %}
             </tr>
         {% endfor %}
         </tbody>
@@ -195,7 +203,7 @@
         <tr>
             <th>Time</th>
             <th>Recipient</th>
-            <th>Amount</th>
+            <th>Due</th>
             <th>{% bootstrap_icon 'info-sign' %}</th>
             <th>{% bootstrap_icon 'trash' %}</th>
         </tr>
@@ -206,7 +214,7 @@
                 <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|sdatetime }}</a>
                 </td>
                 <td>{{ invoice.recipient }}</td>
-                <td>{{ invoice.amount|currency }}</td>
+                <td>{{ invoice.due|currency }}</td>
                 <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
                 <td><a href="{% url 'admin_invoice_delete' invoice.pk %}">{% bootstrap_icon 'trash' %}</a></td>
             </tr>

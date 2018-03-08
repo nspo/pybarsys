@@ -24,6 +24,7 @@
         <th>Amount</th>
         <th>Payment method</th>
         <th>Comment?</th>
+        <th>Invoiced?</th>
         <th>{% bicon 'info-sign' %}</th>
         <th>{% bicon 'pencil' %}</th>
         <th>{% bicon 'trash' %}</th>
@@ -40,11 +41,24 @@
             <td>{{ object.amount|currency }}</td>
             <td>{{ object.get_payment_method_display }}</td>
             <td>{% bool_to_icon object.comment %}</td>
+            <td>
+                {% if object.has_invoice %}
+                    <a href="{% url 'admin_invoice_detail' object.invoice.pk %}">{% bool_to_icon object.invoice %}</a>
+                {% else %}
+                    {% bool_to_icon object.invoice %}
+                {% endif %}
+            </td>
             <td><a href="{% url 'admin_payment_detail' object.pk %}">{% bicon 'info-sign' %}</a>
             </td>
-            <td><a href="{% url 'admin_payment_update' object.pk %}">{% bicon 'pencil' %}</a>
+            <td>
+                {% if not object.has_invoice %}
+                    <a href="{% url 'admin_payment_update' object.pk %}">{% bicon 'pencil' %}</a>
+                {% endif %}
             </td>
-            <td><a href="{% url 'admin_payment_delete' object.pk %}">{% bicon 'trash' %}</a>
+            <td>
+                {% if not object.has_invoice %}
+                    <a href="{% url 'admin_payment_delete' object.pk %}">{% bicon 'trash' %}</a>
+                {% endif %}
             </td>
         </tr>
     {% endfor %}

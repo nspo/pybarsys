@@ -14,7 +14,8 @@
     <tr>
         <th>Time</th>
         <th>Recipient</th>
-        <th>Amount</th>
+        <th>Purchases</th>
+        <th>Payments</th>
         <th>{% bicon 'info-sign' %}</th>
         <th>{% bicon 'trash' %}</th>
     </tr>
@@ -25,7 +26,8 @@
             <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|localtime|sdatetime }}</a>
             </td>
             <td>{{ invoice.recipient }}</td>
-            <td>{{ invoice.amount|currency }}</td>
+            <td>{{ invoice.amount_purchases|currency }}</td>
+            <td>{{ invoice.amount_payments|currency }}</td>
             <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bicon 'info-sign' %}</a></td>
             <td><a href="{% url 'admin_invoice_delete' invoice.pk %}">{% bicon 'trash' %}</a></td>
         </tr>

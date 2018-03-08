@@ -185,7 +185,7 @@ class User(AbstractBaseUser):
         return self.purchases_paid_by_other is None
 
     def account_balance(self):
-        return self.payments().sum_amount() - self.invoices().sum_amount()
+        return -self.invoices().sum_amount()
 
 
 class Category(models.Model):
@@ -254,7 +254,8 @@ class Product(models.Model):
 
 class InvoiceQuerySet(models.QuerySet):
     def sum_amount(self):
-        total_amount = self.aggregate(total_amount=models.Sum(F("amount"))).get("total_amount")
+        total_amount = self.aggregate(total_amount=models.Sum(F("amount_purchases") - F("amount_payments"))).get(
+            "total_amount")
         if total_amount is not None:
             return total_amount
         else:
@@ -269,22 +270,27 @@ class InvoiceManager(models.Manager):
         invoice = Invoice()
         invoice.recipient = user
 
-        invoice.amount = 0
+        invoice.amount_purchases = 0
+        invoice.amount_payments = 0
         invoice.save()  # Save so that an ID is created
 
         own_purchases = user.purchases().unbilled()
 
-        subtotal = own_purchases.sum_cost()
-        invoice.amount += subtotal
+        invoice.amount_purchases += own_purchases.sum_cost()
         # Call update only after summing up the costs, b/c otherwise they are not unbilled anymore
         own_purchases.update(invoice=invoice)
         # print("Subtotal for own purchases: {}".format(subtotal))
 
         other_purchases = Purchase.objects.to_pay_by(user).order_by('user')
 
-        subtotal = other_purchases.sum_cost()
-        invoice.amount += subtotal
+        invoice.amount_purchases += other_purchases.sum_cost()
         other_purchases.update(invoice=invoice)
+
+        # Check non-invoiced payments
+        own_payments = user.payments().unbilled()
+        invoice.amount_payments += own_payments.sum_amount()
+
+        own_payments.update(invoice=invoice)
 
         invoice.save()
 
@@ -293,8 +299,10 @@ class InvoiceManager(models.Manager):
 
 class Invoice(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.PROTECT)
-    amount = models.DecimalField(max_digits=7, decimal_places=2, blank=False, null=False,
-                                 validators=[MinValueValidator(Decimal('0.00'))])
+    amount_purchases = models.DecimalField(max_digits=7, decimal_places=2, blank=False, null=False,
+                                           validators=[MinValueValidator(Decimal('0.00'))])
+
+    amount_payments = models.DecimalField(max_digits=7, decimal_places=2, blank=False, null=False)
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
@@ -308,8 +316,15 @@ class Invoice(models.Model):
     def purchases(self):
         return Purchase.objects.filter(invoice=self)
 
+    def payments(self):
+        return Payment.objects.filter(invoice=self)
+
+    def due(self):
+        return self.amount_purchases - self.amount_payments
+
     def __str__(self):
-        return "Invoice to {} over {} on {}".format(self.recipient, currency(self.amount),
+        return "Invoice to {} over {} on {}".format(self.recipient,
+                                                    currency(self.amount_purchases - self.amount_payments),
                                                     formats.date_format(localtime(self.created_date),
                                                                         "SHORT_DATETIME_FORMAT"))
 
@@ -511,6 +526,9 @@ class PaymentQuerySet(models.QuerySet):
         else:
             return Decimal('0')
 
+    def unbilled(self):
+        return self.filter(invoice=None)
+
 
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -526,6 +544,8 @@ class Payment(models.Model):
                               (PAYMENT_METHOD_BANK, "Bank transfer"),
                               (PAYMENT_METHOD_OTHER, "Other"))
     payment_method = models.CharField(max_length=4, choices=PAYMENT_METHOD_CHOICES, default=PAYMENT_METHOD_BANK)
+
+    invoice = models.ForeignKey(Invoice, on_delete=models.SET_NULL, blank=True, null=True)
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
@@ -545,8 +565,15 @@ class Payment(models.Model):
     def __str__(self):
         return "Payment of {} by {}".format(currency(self.amount), self.user.display_name)
 
+    def has_invoice(self):
+        return self.invoice is not None
+
     def cannot_be_deleted(self):
-        return False
+        """ Returns False or an explanation why this payment cannot be deleted """
+        if self.has_invoice():
+            return "This payment already has an invoice"
+        else:
+            return False
 
 
 class StatsDisplay(models.Model):

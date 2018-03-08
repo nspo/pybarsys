@@ -361,6 +361,20 @@ class PaymentUpdateView(edit.UpdateView):
     form_class = PaymentForm
     template_name = "barsys/admin/payment_update.html"
 
+    def get(self, request, *args, **kwargs):
+        if self.get_object().has_invoice():
+            return self.handle_with_invoice(request)
+        return super(PaymentUpdateView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.get_object().has_invoice():
+            return self.handle_with_invoice(request)
+        return super(PaymentUpdateView, self).post(request, *args, **kwargs)
+
+    def handle_with_invoice(self, request):
+        messages.error(request, "Cannot update this purchase because it has an invoice")
+        return redirect('admin_payment_list')
+
 
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PaymentDeleteView(CheckedDeleteView):
@@ -476,7 +490,8 @@ class InvoiceCreateView(edit.FormView):
 
         if len(invoices) > 0:
             created_str = "Created {} invoice(s) for the following user(s): {}. ".format(len(invoices), ", ".join(
-                ["{} ({})".format(i.recipient.display_name, currency(i.amount)) for i in invoices]))
+                ["{} ({})".format(i.recipient.display_name, currency(i.amount_purchases - i.amount_payments)) for i in
+                 invoices]))
         else:
             created_str = "No invoices were created. "
 
