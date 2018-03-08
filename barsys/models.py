@@ -127,6 +127,9 @@ class User(AbstractBaseUser):
                 if self.account_balance() < 0:
                     raise ValidationError({'purchases_paid_by_other':
                                                "Cannot make user a dependant if they have a negative account balance."})
+                if self.payments().unbilled().count() > 0:
+                    raise ValidationError({'purchases_paid_by_other':
+                                               "Cannot make user a dependant if they have unbilled payments"})
 
     def save(self, *args, **kwargs):
         self.full_clean()

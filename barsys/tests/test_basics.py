@@ -240,3 +240,13 @@ class InvoiceTestCase(TransactionTestCase):
         with self.assertRaises(ValidationError):
             u4.purchases_paid_by_other = u4
             u4.save()
+
+    def test_switch_user_to_dependant2(self):
+        u1 = User.objects.get(display_name="user1")
+        u4 = User.objects.get(display_name="user4")
+
+        Payment.objects.create(user=u4, amount=Decimal('5'))
+
+        with self.assertRaises(ValidationError):
+            u4.purchases_paid_by_other = u1
+            u4.save()
