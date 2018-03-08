@@ -575,6 +575,19 @@ class Payment(models.Model):
         else:
             return False
 
+    def save(self, *args, **kw):
+        """ Check whether obj has invoice but was changed """
+        if self.pk is not None:
+            orig = Payment.objects.get(pk=self.pk)
+            if orig.has_invoice():
+                field_names = [field.name for field in Payment._meta.fields]
+                for field_name in field_names:
+                    if getattr(orig, field_name) != getattr(self, field_name):
+                        # some attribute has changed, although there was already an invoice
+                        raise IntegrityError("Invoiced payments may not be changed")
+        super(Payment, self).save(*args, **kw)
+
+
 
 class StatsDisplay(models.Model):
     """ Admin-defined filters that can be shown as stats in frontend """
