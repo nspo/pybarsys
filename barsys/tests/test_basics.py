@@ -12,9 +12,14 @@ class InvoiceTestCase(TransactionTestCase):
         u3.purchases_paid_by_other = u2
         u3.save()
 
+        u4 = User.objects.create_user("user4@example.com", "user4")
+
         cat1 = Category.objects.create(name="Softdrinks")
         prod1 = Product.objects.create(category=cat1, name="Cola", price='1.05', amount="0.5 l")
         prod2 = Product.objects.create(category=cat1, name="Club-Mate", price='0.95', amount="0.5 l")
+
+        self.prod_data = dict(product_category="cat", product_name="prod",
+                              product_price=Decimal('1'), product_amount="1 l")
 
     def test_basic_invoicing(self):
         u1 = User.objects.get(display_name="user1")
@@ -83,11 +88,22 @@ class InvoiceTestCase(TransactionTestCase):
 
         payment1 = Payment(user=u2, amount=Decimal('4.20'))
         payment1.save()
+
+        self.assertEqual(u2.account_balance(), Decimal('-34.20'))
+        # now make invoice that includes payment
+        invoice2 = Invoice.objects.create_for_user(u2)
         self.assertEqual(u2.account_balance(), Decimal('-30'))
 
         payment2 = Payment(user=u2, amount=Decimal('-3.33'))
         payment2.save()
+        self.assertEqual(u2.account_balance(), Decimal('-30'))
+
+        invoice2 = Invoice.objects.create_for_user(u2)
         self.assertEqual(u2.account_balance(), Decimal('-33.33'))
+
+        Purchase.objects.create_from_product(prod2, user=u2, quantity=3)
+        Invoice.objects.create_for_user(u2)
+        self.assertEqual(u2.account_balance(), Decimal('-36.18'))
 
         self.assertEqual(u3.account_balance(), Decimal('0'))
 
@@ -97,12 +113,9 @@ class InvoiceTestCase(TransactionTestCase):
 
         u3 = User.objects.get(display_name="user3")
 
-        prod_data = dict(product_category="cat", product_name="prod",
-                         product_price=Decimal('1'), product_amount="1 l")
-
         for i in range(1, 10):
             for u in u1, u2, u3:
-                Purchase(user=u, quantity=i, **prod_data).save()
+                Purchase(user=u, quantity=i, **self.prod_data).save()
 
         self.assertEqual(u1.account_balance(), Decimal('0'))
         self.assertEqual(u2.account_balance(), Decimal('0'))
@@ -119,18 +132,111 @@ class InvoiceTestCase(TransactionTestCase):
 
         with self.assertRaises(IntegrityError):
             # invoice for dependant not possible
-            i3 = Invoice.objects.create_for_user(u3)
-
-        u2_bal = 2 * bal
+            Invoice.objects.create_for_user(u3)
 
         self.assertEqual(u1.account_balance(), bal)
-        self.assertEqual(u2.account_balance(), u2_bal)
+        self.assertEqual(u2.account_balance(), 2 * bal)
         self.assertEqual(u3.account_balance(), Decimal('0'))
 
         Payment(user=u1, amount=Decimal('10')).save()
         Payment(user=u2, amount=Decimal('10')).save()
-        Payment(user=u3, amount=Decimal('10')).save()
+        with self.assertRaises(IntegrityError):
+            Payment.objects.create(user=u3, amount=Decimal('10'))
+
+        self.assertEqual(u1.account_balance(), bal)
+        self.assertEqual(u2.account_balance(), 2 * bal)
+        self.assertEqual(u3.account_balance(), Decimal('0'))
+
+        i1 = Invoice.objects.create_for_user(u1)
+        i2 = Invoice.objects.create_for_user(u2)
+
+        with self.assertRaises(IntegrityError):
+            Invoice.objects.create_for_user(u3)
 
         self.assertEqual(u1.account_balance(), bal + Decimal('10'))
-        self.assertEqual(u2.account_balance(), u2_bal + Decimal('10'))
-        self.assertEqual(u3.account_balance(), Decimal('0') + Decimal('10'))
+        self.assertEqual(u2.account_balance(), 2 * bal + Decimal('10'))
+        self.assertEqual(u3.account_balance(), Decimal('0'))
+
+    def test_switch_user_to_dependant(self):
+        u1 = User.objects.get(display_name="user1")
+        u4 = User.objects.get(display_name="user4")
+
+        for i in range(1, 10):
+            Purchase(user=u4, quantity=i, **self.prod_data).save()
+
+        self.assertEqual(u4.account_balance(), Decimal('0'))
+
+        Payment.objects.create(user=u4, amount=Decimal('5'))
+
+        Invoice.objects.create_for_user(u4)
+
+        self.assertEqual(u4.account_balance(), Decimal('-40'))
+
+        with self.assertRaises(ValidationError):
+            u4.purchases_paid_by_other = u1
+            u4.save()
+
+        u4 = User.objects.get(pk=u4.pk)
+
+        Payment.objects.create(user=u4, amount=Decimal('39.99'))
+        Invoice.objects.create_for_user(u4)
+
+        self.assertEqual(u4.account_balance(), Decimal('-0.01'))
+
+        with self.assertRaises(ValidationError):
+            u4.purchases_paid_by_other = u1
+            u4.save()
+
+        u4 = User.objects.get(pk=u4.pk)
+
+        Payment.objects.create(user=u4, amount=Decimal('1'))
+        Invoice.objects.create_for_user(u4)
+        self.assertEqual(u4.account_balance(), Decimal('0.99'))
+
+        try:
+            u4.purchases_paid_by_other = u1
+            u4.save()
+        except IntegrityError:
+            self.fail("Could not make user a dependant although account_balance > 0")
+
+        with self.assertRaises(IntegrityError):
+            Payment.objects.create(user=u4, amount=Decimal('5'))
+
+        with self.assertRaises(IntegrityError):
+            Invoice.objects.create_for_user(u4)
+
+        Purchase.objects.create(user=u4, quantity=2, **self.prod_data)
+
+        self.assertEqual(u4.account_balance(), Decimal('0.99'))
+        self.assertEqual(u4.purchases().sum_cost(), Decimal('47'))
+
+        Purchase.objects.create(user=u1, quantity=3, **self.prod_data)
+        self.assertEqual(u1.account_balance(), Decimal('0'))
+
+        i = Invoice.objects.create_for_user(u1)
+        self.assertEqual(u1.account_balance(), Decimal('-5'))
+        self.assertEqual(i.due(), Decimal('5'))
+
+        self.assertEqual(i.own_purchases().sum_cost(), Decimal('3'))
+        self.assertEqual(i.purchases().paid_as_self(u1).sum_cost(), Decimal('3'))
+        self.assertEqual(i.purchases().paid_as_other(u1).sum_cost(), Decimal('2'))
+
+        Payment.objects.create(user=u1, amount=5)
+
+        for i in range(1, 10):
+            Purchase(user=u1, quantity=i, **self.prod_data).save()
+            Purchase(user=u4, quantity=i, **self.prod_data).save()
+
+        Payment.objects.create(user=u1, amount=50)
+
+        i = Invoice.objects.create_for_user(u1)
+        self.assertEqual(i.amount_payments, Decimal('55'))
+        self.assertEqual(i.amount_purchases, Decimal('90'))
+
+        self.assertEqual(u1.account_balance(), Decimal('-40'))
+
+        self.assertEqual(u4.account_balance(), Decimal('0.99'))
+
+        with self.assertRaises(ValidationError):
+            u4.purchases_paid_by_other = u4
+            u4.save()

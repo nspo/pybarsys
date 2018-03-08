@@ -121,6 +121,17 @@ class User(AbstractBaseUser):
                                                     ", so they cannot be deactivated: {}".
                                       format(", ".join([d.display_name for d in dependents]))})
 
+            orig = User.objects.get(pk=self.pk)
+            if orig.purchases_paid_by_other is None and self.purchases_paid_by_other is not None:
+                # change from self-paying to dependant
+                if self.account_balance() < 0:
+                    raise ValidationError({'purchases_paid_by_other':
+                                               "Cannot make user a dependant if they have a negative account balance."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super(User, self).save(*args, **kwargs)
+
     def get_full_name(self):
         # The user is identified by their email address
         return self.email
@@ -442,7 +453,11 @@ class PurchaseQuerySet(models.QuerySet):
 
 
 class PurchaseManager(models.Manager):
-    pass
+    def create_from_product(self, product, **kwargs):
+        p = Purchase(product_amount=product.amount, product_category=product.category.name, product_name=product.name,
+                     product_price=product.price, **kwargs)
+        p.save()
+        return p
 
 
 class Purchase(models.Model):
@@ -576,6 +591,10 @@ class Payment(models.Model):
             return False
 
     def save(self, *args, **kw):
+        if not self.user.pays_themselves():
+            raise IntegrityError(
+                "Users who do not pay themselves may not have new or changed payments. Make user independent first to do that.")
+
         """ Check whether obj has invoice but was changed """
         if self.pk is not None:
             orig = Payment.objects.get(pk=self.pk)
@@ -586,7 +605,6 @@ class Payment(models.Model):
                         # some attribute has changed, although there was already an invoice
                         raise IntegrityError("Invoiced payments may not be changed")
         super(Payment, self).save(*args, **kw)
-
 
 
 class StatsDisplay(models.Model):
