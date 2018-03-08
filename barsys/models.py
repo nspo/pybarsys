@@ -523,15 +523,7 @@ class Purchase(models.Model):
         super(Purchase, self).clean(*args, **kw)
 
     def save(self, *args, **kw):
-        """ Check whether obj has invoice but was changed """
-        if self.pk is not None:
-            orig = Purchase.objects.get(pk=self.pk)
-            if orig.has_invoice():
-                field_names = [field.name for field in Purchase._meta.fields]
-                for field_name in field_names:
-                    if getattr(orig, field_name) != getattr(self, field_name):
-                        # some attribute has changed, although there was already an invoice
-                        raise IntegrityError("Invoiced purchases may not be changed")
+        self.full_clean()
         super(Purchase, self).save(*args, **kw)
 
 
