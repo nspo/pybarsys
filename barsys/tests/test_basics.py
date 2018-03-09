@@ -31,7 +31,7 @@ class InvoiceTestCase(TransactionTestCase):
         prod1 = Product.objects.get(name="Cola")
         prod2 = Product.objects.get(name="Club-Mate")
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             p1 = Purchase()
             p1.save()
 
@@ -66,12 +66,12 @@ class InvoiceTestCase(TransactionTestCase):
         invoice2 = Invoice.objects.create_for_user(u2)
         self.assertEqual(u2.account_balance(), Decimal('-42.75'))
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             purch = u1.purchases()[0]
             purch.product_name = "something else"
             purch.save()
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             purch = u2.purchases()[0]
             purch.product_price = Decimal('0')
             purch.save()
