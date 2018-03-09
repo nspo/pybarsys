@@ -94,7 +94,8 @@ def send_invoice_mails(request, invoices, send_dependant_notifications=False):
         context["own_purchases"] = invoice.own_purchases()
         context["other_purchases_grouped"] = invoice.other_purchases_grouped()
         context["last_invoices"] = invoice.recipient.invoices()[:5]
-        context["last_payments"] = invoice.recipient.payments()[:5]
+        context["payments"] = invoice.payments()
+
         content_plain = render_to_string(
             os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "normal_invoice.plaintext.html"
                          ), context)

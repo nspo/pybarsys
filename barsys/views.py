@@ -477,8 +477,7 @@ class InvoiceCreateView(edit.FormView):
         invoices = []
         users_to_remind = []
         for user in users:
-            purchases_to_pay = Purchase.objects.to_pay_by(user)
-            if purchases_to_pay.count() > 0:
+            if Purchase.objects.to_pay_by(user).count() > 0 or user.payments().unbilled().count() > 0:
                 # print("{} has {} purchases to pay for: ".format(user, purchases_to_pay.count()))
                 invoice = Invoice.objects.create_for_user(user)
                 invoices.append(invoice)
