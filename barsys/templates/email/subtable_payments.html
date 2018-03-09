@@ -4,18 +4,20 @@
     <thead class="left">
     <th>Created</th>
     <th>Value date</th>
-    <th>Amount</th>
     <th>Payment method</th>
     <th>Comment</th>
+    <th>Invoiced?</th>
+    <th>Amount</th>
     </thead>
     <tbody>
     {% for p in payments %}
         <tr>
             <td>{{ p.created_date|localtime|sdatetime }}</td>
             <td>{{ p.value_date|sdate }}</td>
-            <td>{{ p.amount|currency }}</td>
             <td>{{ p.get_payment_method_display }}</td>
             <td>{{ p.comment }}</td>
+            <td>{% if p.has_invoice %}✓{% else %}❌{% endif %}</td>
+            <td>{{ p.amount|currency }}</td>
         </tr>
     {% endfor %}
     {% if not payments %}

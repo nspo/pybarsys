@@ -437,7 +437,7 @@ class InvoiceMailDebugView(DetailView):
         context["own_purchases"] = invoice.own_purchases()
         context["other_purchases_grouped"] = invoice.other_purchases_grouped()
         context["last_invoices"] = invoice.recipient.invoices()[:5]
-        context["last_payments"] = invoice.recipient.payments()[:5]
+        context["payments"] = invoice.payments()
 
         return context
 
@@ -445,7 +445,7 @@ class InvoiceMailDebugView(DetailView):
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class PaymentReminderMailDebugView(DetailView):
     model = User
-    template_name = "email/payment_reminder.html.html"
+    template_name = os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "payment_reminder.html.html")
 
     def get_context_data(self, **kwargs):
         context = super(PaymentReminderMailDebugView, self).get_context_data(**kwargs)

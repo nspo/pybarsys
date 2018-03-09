@@ -24,7 +24,8 @@
     {% include "./bank_account_details.html.html" %}
     <p/>
 
-    <p>The total amount of this invoice is <b>{{ invoice.amount|currency }}</b>. It consists of the following purchases:
+    <p>The total amount of this invoice is <b>{{ invoice.due|currency }}</b>. It consists of the following purchases and
+        payments:
     </p>
     <hr/>
     <h2>Own purchases:</h2>
@@ -35,14 +36,12 @@
         {% include "./subtable_purchases.html" with purchases=u_purchases %}
         <hr/>
     {% endfor %}
+    <h2>Payments:</h2>
+    {% include "./subtable_payments.html" with payments=payments %}
+    <hr/>
 
     <h2>Your last invoices (including this):</h2>
     {% include "./subtable_invoices.html" with invoices=last_invoices %}
-
-    <hr/>
-
-    <h2>Your last payments:</h2>
-    {% include "./subtable_payments.html" with payments=last_payments %}
 
     <hr/>
 

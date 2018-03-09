@@ -11,8 +11,7 @@
 
     {% if invoice.recipient.account_balance <= pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY %}
         <p>Dein Kontostand beträgt weniger als {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }},
-            deshalb schicke
-            bitte eine Überweisung an folgendes Konto:
+            deshalb schicke bitte eine Überweisung an folgendes Konto:
         </p>
     {% else %}
         <p>
@@ -25,7 +24,8 @@
     {% include "./bank_account_details.html.html" %}
     <p/>
 
-    <p>Der Gesamtbetrag dieser Rechnung ist <b>{{ invoice.amount|currency }}</b>. Sie besteht aus folgenden Einkäufen:
+    <p>Der Gesamtbetrag dieser Rechnung ist <b>{{ invoice.due|currency }}</b>. Sie besteht aus folgenden Einkäufen und
+        Zahlungen:
     </p>
     <hr/>
     <h2>Eigene Einkäufe:</h2>
@@ -36,14 +36,13 @@
         {% include "./subtable_purchases.html" with purchases=u_purchases %}
         <hr/>
     {% endfor %}
+    <h2>Zahlungen:</h2>
+    {% include "./subtable_payments.html" with payments=payments %}
+    <hr/>
+
 
     <h2>Deine letzten Rechnungen (einschließlich dieser):</h2>
     {% include "./subtable_invoices.html" with invoices=last_invoices %}
-
-    <hr/>
-
-    <h2>Deine letzten Zahlungen:</h2>
-    {% include "./subtable_payments.html" with payments=last_payments %}
 
     <hr/>
 

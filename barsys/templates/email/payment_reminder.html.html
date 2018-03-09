@@ -8,7 +8,8 @@
     <p>This is a payment reminder from <i>{{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}</i>. <br/>
         Your current account balance is: <b>{{ recipient.account_balance|currency }}</b></p>
 
-    <p>As your account balance is below {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, please transfer
+    <p>If your account balance is below {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, please
+        transfer
         money to the following bank account:</p>
     {% include "./bank_account_details.html.html" %}
     <p/>
@@ -16,12 +17,12 @@
     <hr/>
 
     <h2>Your last invoices:</h2>
-    {% include "email/subtable_invoices.html" with invoices=last_invoices %}
+    {% include "./subtable_invoices.html" with invoices=last_invoices %}
 
     <hr/>
 
     <h2>Your last payments:</h2>
-    {% include "email/subtable_payments.html" with payments=last_payments %}
+    {% include "./subtable_payments.html" with payments=last_payments %}
 
     <hr/>
 

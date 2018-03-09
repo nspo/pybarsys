@@ -8,7 +8,7 @@
     <p>Dies ist eine Zahlungserinnerung von <i>{{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}</i>. <br/>
         Dein aktueller Kontostand beträgt: <b>{{ recipient.account_balance|currency }}</b></p>
 
-    <p>Dein Kontostand beträgt weniger als {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, deshalb
+    <p>Falls dein Kontostand weniger als {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }} beträgt,
         überweise bitte Geld an das folgende Bankkonto:</p>
     {% include "./bank_account_details.html.html" %}
     <p/>
@@ -16,12 +16,12 @@
     <hr/>
 
     <h2>Deine letzten Rechnungen:</h2>
-    {% include "email/subtable_invoices.html" with invoices=last_invoices %}
+    {% include "./subtable_invoices.html" with invoices=last_invoices %}
 
     <hr/>
 
     <h2>Deine letzten Zahlungen:</h2>
-    {% include "email/subtable_payments.html" with payments=last_payments %}
+    {% include "./subtable_payments.html" with payments=last_payments %}
 
     <hr/>
 

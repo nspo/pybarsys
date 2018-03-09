@@ -6,7 +6,7 @@ Your current account balance is {{ invoice.recipient.account_balance|currency }}
 If your account balance is below {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, please transfer money to the following bank account:
 {% include "./bank_account_details.plaintext.html" %}
 
-The total amount of this invoice is {{ invoice.amount|currency }}. To see all the purchases it consists of, please look at the HTML version of this mail.
+The total amount of this invoice is {{ invoice.due|currency }}. To see all the purchases it consists of, please look at the HTML version of this mail.
 
 Have a nice day!
 ----------------

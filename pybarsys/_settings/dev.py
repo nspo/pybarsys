@@ -11,6 +11,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["127.0.0.1", "192.168.0.133", "localhost", ]
 
+TEMPLATES[0]["OPTIONS"]["string_if_invalid"] = "!INVALID!"
+
 INSTALLED_APPS.append('debug_toolbar')
 
 DEBUG_TOOLBAR_CONFIG = {
