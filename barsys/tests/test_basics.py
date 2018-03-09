@@ -17,6 +17,7 @@ class InvoiceTestCase(TransactionTestCase):
         cat1 = Category.objects.create(name="Softdrinks")
         prod1 = Product.objects.create(category=cat1, name="Cola", price='1.05', amount="0.5 l")
         prod2 = Product.objects.create(category=cat1, name="Club-Mate", price='0.95', amount="0.5 l")
+        prod3 = Product.objects.create(category=cat1, name="OJ", price='0.90', amount="0.3 l")
 
         self.prod_data = dict(product_category="cat", product_name="prod",
                               product_price=Decimal('1'), product_amount="1 l")
@@ -250,3 +251,95 @@ class InvoiceTestCase(TransactionTestCase):
         with self.assertRaises(ValidationError):
             u4.purchases_paid_by_other = u1
             u4.save()
+
+
+class ProductAutochangeSetTestCase(TransactionTestCase):
+    def setUp(self):
+        cat1 = Category.objects.create(name="Softdrinks")
+        Product.objects.create(category=cat1, name="Prod1", price='1', amount="0.5 l")
+        Product.objects.create(category=cat1, name="Prod2", price='1', amount="0.5 l")
+        Product.objects.create(category=cat1, name="Prod3", price='1', amount="0.5 l")
+        Product.objects.create(category=cat1, name="Prod4", price='1', amount="0.5 l")
+
+    def test_pac(self):
+        prod1, prod2, prod3, prod4 = Product.objects.all()
+
+        for p in [prod1, prod2, prod3, prod4]:
+            self.assertTrue(p.is_active)
+            self.assertFalse(p.is_bold)
+
+        pac1 = ProductAutochange(product=prod1, change_active=ProductAutochange.CHANGE_TO_NO,
+                                 change_bold=ProductAutochange.CHANGE_TO_YES)
+        pac1.execute()
+
+        self.assertFalse(prod1.is_active)
+        self.assertTrue(prod1.is_bold)
+
+        for p in [prod2, prod3, prod4]:
+            self.assertTrue(p.is_active)
+            self.assertFalse(p.is_bold)
+
+        pac2 = ProductAutochange(product=prod2, change_active=ProductAutochange.CHANGE_TO_NO)
+        pac2.execute()
+
+        self.assertFalse(prod2.is_active)
+        self.assertFalse(prod2.is_bold)
+
+    def test_pacs1(self):
+        prod1, prod2, prod3, prod4 = Product.objects.all()
+
+        for p in [prod1, prod2, prod3, prod4]:
+            self.assertTrue(p.is_active)
+            self.assertFalse(p.is_bold)
+
+        pacs1 = ProductAutochangeSet.objects.create(title="pacs1")
+
+        pac1 = ProductAutochange.objects.create(pc_set=pacs1, product=prod1,
+                                                change_active=ProductAutochange.CHANGE_TO_NO,
+                                                change_bold=ProductAutochange.CHANGE_TO_YES)
+        pac2 = ProductAutochange.objects.create(pc_set=pacs1, product=prod2,
+                                                change_active=ProductAutochange.CHANGE_TO_NO)
+
+        pacs1.execute()
+
+        for p in [prod1, prod2, prod3, prod4]:
+            p.refresh_from_db()
+
+        self.assertFalse(prod1.is_active)
+        self.assertTrue(prod1.is_bold)
+        self.assertFalse(prod2.is_active)
+        self.assertFalse(prod2.is_bold)
+        for p in [prod3, prod4]:
+            self.assertTrue(p.is_active)
+            self.assertFalse(p.is_bold)
+
+    def test_pacs2(self):
+        prod1, prod2, prod3, prod4 = Product.objects.all()
+
+        for p in [prod1, prod2, prod3, prod4]:
+            self.assertTrue(p.is_active)
+            self.assertFalse(p.is_bold)
+
+        pacs1 = ProductAutochangeSet.objects.create(title="pacs1", change_others_active=ProductAutochange.CHANGE_TO_NO,
+                                                    change_others_bold=ProductAutochange.CHANGE_TO_YES)
+
+        pac1 = ProductAutochange.objects.create(pc_set=pacs1, product=prod1,
+                                                change_active=ProductAutochange.CHANGE_TO_YES,
+                                                change_bold=ProductAutochange.NO_CHANGE)
+        pac3 = ProductAutochange.objects.create(pc_set=pacs1, product=prod3,
+                                                change_active=ProductAutochange.CHANGE_TO_YES)
+
+        pacs1.execute()
+
+        for p in [prod1, prod2, prod3, prod4]:
+            p.refresh_from_db()
+
+        self.assertEqual(prod1.is_active, True)
+        self.assertEqual(prod2.is_active, False)
+        self.assertEqual(prod3.is_active, True)
+        self.assertEqual(prod4.is_active, False)
+
+        self.assertEqual(prod1.is_bold, False)
+        self.assertEqual(prod2.is_bold, True)
+        self.assertEqual(prod3.is_bold, False)
+        self.assertEqual(prod4.is_bold, True)

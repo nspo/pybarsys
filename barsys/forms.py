@@ -80,7 +80,7 @@ class ProductAutochangeInlineFormSet(
 class ProductAutochangeSetForm(forms.ModelForm):
     class Meta:
         model = ProductAutochangeSet
-        fields = ('title', 'description')
+        fields = ('title', 'description', 'change_others_active', 'change_others_bold')
 
     def __init__(self, *args, **kwargs):
         super(ProductAutochangeSetForm, self).__init__(*args, **kwargs)

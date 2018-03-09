@@ -763,6 +763,16 @@ class ProductAutochangeSet(models.Model):
     description = models.CharField(max_length=255, blank=True)
     products = models.ManyToManyField(Product, through=ProductAutochange, help_text="These products will be changed.")
 
+    change_others_active = models.CharField(max_length=3,
+                                            choices=ProductAutochange.BOOLEAN_CHANGE_CHOICES,
+                                            default=ProductAutochange.NO_CHANGE,
+                                            help_text="Change active state of other products")
+
+    change_others_bold = models.CharField(max_length=3,
+                                          choices=ProductAutochange.BOOLEAN_CHANGE_CHOICES,
+                                          default=ProductAutochange.NO_CHANGE,
+                                          help_text="Change bold state of other products")
+
     def get_absolute_url(self):
         return reverse("admin_productautochangeset_list")
 
@@ -770,13 +780,23 @@ class ProductAutochangeSet(models.Model):
         return False
 
     def __str__(self):
-        if self.products.all().count() > 0:
-            affects_str = "affects " + ", ".join([p.name for p in self.products.all()])
-        else:
-            affects_str = "affects none"
-        return "{} ({})".format(self.title, affects_str)
+        return "{} ({} product(s) specified)".format(self.title, self.products.count())
 
     def execute(self):
+        unspecified_products = Product.objects.exclude(pk__in=self.products.all())
+        for product in unspecified_products:
+            if self.change_others_active == ProductAutochange.CHANGE_TO_YES:
+                product.is_active = True
+            elif self.change_others_active == ProductAutochange.CHANGE_TO_NO:
+                product.is_active = False
+
+            if self.change_others_bold == ProductAutochange.CHANGE_TO_YES:
+                product.is_bold = True
+            elif self.change_others_bold == ProductAutochange.CHANGE_TO_NO:
+                product.is_bold = False
+
+            product.save()
+
         for pac in self.productautochange_set.all():
             pac.execute()
 
