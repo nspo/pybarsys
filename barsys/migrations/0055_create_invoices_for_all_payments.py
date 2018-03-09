@@ -33,7 +33,8 @@ def create_invoice_for_unbilled_payments(apps, schema_editor):
             print("-- Generated invoice for {} with {} in payments".format(invoice.recipient.display_name,
                                                                            invoice.amount_payments))
 
-    print("-- Generated {} invoices".format(num_invoices))
+    if (num_invoices > 0):
+        print("-- Generated {} invoice(s)".format(num_invoices))
 
 
 class Migration(migrations.Migration):
