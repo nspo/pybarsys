@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('barsys', '0055_create_invoices_for_all_payments'),
+        ('barsys', '0055_add_payments_to_old_invoices'),
     ]
 
     operations = [
