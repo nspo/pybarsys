@@ -1,29 +1,65 @@
 {% load barsys_helpers %}
+{% load bootstrap3 %}
 {% load tz %}
 <table class="table table-striped">
     <thead>
     <th>Created</th>
     <th>Value date</th>
+    {% if show_user %}
+        <th>User</th>
+    {% endif %}
     <th>Payment method</th>
-    <th>Comment</th>
+    <th>Comment?</th>
+    <th>Invoiced?</th>
     <th>Amount</th>
+
+    <th>{% bootstrap_icon 'info-sign' %}</th>
+    <th>{% bootstrap_icon 'pencil' %}</th>
+    <th>{% bootstrap_icon 'trash' %}</th>
     </thead>
     <tbody>
-    {% for p in payments %}
+    {% for payment in payments %}
         <tr>
-            <td><a href="{% url 'admin_payment_detail' p.pk %}">{{ p.created_date|localtime|sdatetime }}</a></td>
-            <td>{{ p.value_date|sdate }}</td>
-            <td>{{ p.get_payment_method_display }}</td>
-            <td>{{ p.comment }}</td>
-            <td>{{ p.amount|currency }}</td>
+            <td><a href="{% url 'admin_payment_detail' payment.pk %}">{{ payment.created_date|localtime|sdatetime }}</a>
+            </td>
+            <td>{{ payment.value_date|sdate }}</td>
+            {% if show_user %}
+                <td><a href="{% url 'admin_user_detail' payment.user.pk %}">{{ payment.user.display_name }}</a></td>
+            {% endif %}
+            <td>{{ payment.get_payment_method_display }}</td>
+            <td>{% bool_to_icon payment.comment %}</td>
+            {% if payment.has_invoice %}
+                <td><a href="{% url 'admin_invoice_detail' payment.invoice.pk %}">{% bool_to_icon payment.invoice %}</a>
+                </td>
+            {% else %}
+                <td>{% bool_to_icon payment.invoice %}</td>
+            {% endif %}
+            <td>{{ payment.amount|currency }}</td>
+
+            <td><a href="{% url 'admin_payment_detail' payment.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+            {% if payment.has_invoice %}
+                <td></td>
+                <td></td>
+            {% else %}
+                <td><a href="{% url 'admin_payment_update' payment.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                <td><a href="{% url 'admin_payment_delete' payment.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+            {% endif %}
         </tr>
     {% endfor %}
-    <tr class="table-total-row">
-        <td>Total</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td>{{ payments.sum_amount|currency }}</td>
-    </tr>
+    {% if show_summary %}
+        <tr class="table-total-row">
+            <td>Total</td>
+            <td></td>
+            {% if show_user %}
+                <td></td>{% endif %}
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>{{ payments.sum_amount|currency }}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    {% endif %}
     </tbody>
 </table>

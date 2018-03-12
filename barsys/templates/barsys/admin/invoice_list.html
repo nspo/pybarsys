@@ -10,28 +10,8 @@
         <button class="btn btn-primary pull-right">{% bootstrap_icon 'plus' %} Create new invoices</button>
     </a>
 {% endblock %}
-{% block tablehead %}
-    <tr>
-        <th>Time</th>
-        <th>Recipient</th>
-        <th>Purchases</th>
-        <th>Payments</th>
-        <th>{% bicon 'info-sign' %}</th>
-        <th>{% bicon 'trash' %}</th>
-    </tr>
-{% endblock %}
-{% block tablebody %}
-    {% for invoice in object_list %}
-        <tr>
-            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|localtime|sdatetime }}</a>
-            </td>
-            <td>{{ invoice.recipient }}</td>
-            <td>{{ invoice.amount_purchases|currency }}</td>
-            <td>{{ invoice.amount_payments|currency }}</td>
-            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bicon 'info-sign' %}</a></td>
-            <td><a href="{% url 'admin_invoice_delete' invoice.pk %}">{% bicon 'trash' %}</a></td>
-        </tr>
-    {% endfor %}
+{% block around_table %}
+    {% include "./invoices_subtable.html" with invoices=object_list show_user=True %}
 {% endblock %}
 {% block below_table %}
     <p>{{ paginator.count }} results</p>

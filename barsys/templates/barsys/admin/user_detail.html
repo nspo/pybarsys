@@ -100,129 +100,24 @@
     <div>
         <h1 class="pull-left" style="margin-top: 0;">Purchases</h1>
     </div>
-    <table class="table table-striped">
-        <thead>
-        <tr>
-            <th>Time</th>
-            <th>Quantity</th>
-            <th>Product name</th>
-            <th>Comment</th>
-            <th>Product price</th>
-            <th>Cost</th>
-            <th>Invoiced?</th>
-            <th>{% bootstrap_icon 'info-sign' %}</th>
-            <th>{% bootstrap_icon 'pencil' %}</th>
-            <th>{% bootstrap_icon 'trash' %}</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for p in purchases_page_obj.object_list %}
-            <tr>
-                <td><a href="{% url 'admin_purchase_detail' p.pk %}">{{ p.created_date }}</a></td>
-                <td>{{ p.quantity }}</td>
-                <td>{{ p.product_name }}</td>
-                <td>{{ p.comment }}</td>
-                <td>{{ p.product_price|currency }}</td>
-                <td>{{ p.cost|currency }}</td>
-                {% if p.has_invoice %}
-                    <td><a href="{% url 'admin_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a>
-                    </td>
-                {% else %}
-                    <td>{% bool_to_icon p.invoice %}</td>
-                {% endif %}
-                <td>
-                    <a href="{% url 'admin_purchase_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a>
-                </td>
-                {% if p.has_invoice %}
-                    <td></td>
-                    <td></td>
-                {% else %}
-                    <td><a href="{% url 'admin_purchase_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
-                    <td><a href="{% url 'admin_purchase_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
-                {% endif %}
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    {% include 'barsys/admin/purchases_subtable.html' with purchases=purchases_page_obj.object_list %}
+
     <p>{{ purchases_page_obj.paginator.count }} result(s)</p>
     {% bootstrap_pagination purchases_page_obj extra=request.GET.urlencode parameter_name="purchases_page" %}
 
     <div>
         <h1 class="pull-left" style="margin-top: 0;">Payments</h1>
     </div>
-    <table class="table table-striped">
-        <thead>
-        <tr>
-            <th>Created</th>
-            <th>Value date</th>
-            <th>Payment method</th>
-            <th>Comment</th>
-            <th>Invoiced?</th>
-            <th>Amount</th>
+    {% include 'barsys/admin/payments_subtable.html' with payments=payments_page_obj.object_list %}
 
-            <th>{% bootstrap_icon 'info-sign' %}</th>
-            <th>{% bootstrap_icon 'pencil' %}</th>
-            <th>{% bootstrap_icon 'trash' %}</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for p in payments_page_obj.object_list %}
-            <tr>
-                <td><a href="{% url 'admin_payment_detail' p.pk %}">{{ p.created_date }}</a></td>
-                <td>{{ p.value_date|sdate }}</td>
-                <td>{{ p.get_payment_method_display }}</td>
-                <td>{% bool_to_icon p.comment %}</td>
-                {% if p.has_invoice %}
-                    <td><a href="{% url 'admin_invoice_detail' p.invoice.pk %}">{% bool_to_icon p.invoice %}</a>
-                    </td>
-                {% else %}
-                    <td>{% bool_to_icon p.invoice %}</td>
-                {% endif %}
-                <td>{{ p.amount|currency }}</td>
-
-                <td><a href="{% url 'admin_payment_detail' p.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
-                {% if p.has_invoice %}
-                    <td></td>
-                    <td></td>
-                {% else %}
-                    <td><a href="{% url 'admin_payment_update' p.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
-                    <td><a href="{% url 'admin_payment_delete' p.pk %}">{% bootstrap_icon 'trash' %}</a></td>
-                {% endif %}
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
     <p>{{ payments_page_obj.paginator.count }} result(s)</p>
     {% bootstrap_pagination payments_page_obj extra=request.GET.urlencode parameter_name="payments_page" %}
 
     <div>
         <h1 class="pull-left" style="margin-top: 0;">Invoices</h1>
     </div>
-    <table class="table table-striped">
-        <thead>
-        <tr>
-            <th>Created</th>
-            <th>Purchases</th>
-            <th>Payments</th>
-            <th>(Due)</th>
-            <th>{% bootstrap_icon 'info-sign' %}</th>
-            <th>{% bootstrap_icon 'trash' %}</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for invoice in invoices_page_obj.object_list %}
-            <tr>
-                <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|sdatetime }}</a>
-                </td>
-                <td>{{ invoice.amount_purchases|currency }}</td>
-                <td>{{ invoice.amount_payments|currency }}</td>
-                <td>({{ invoice.due|currency }})</td>
-                <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
-                <td><a href="{% url 'admin_invoice_delete' invoice.pk %}">{% bootstrap_icon 'trash' %}</a></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    {% include 'barsys/admin/invoices_subtable.html' with invoices=invoices_page_obj.object_list %}
+
     <p>{{ invoices_page_obj.paginator.count }} result(s)</p>
     {% bootstrap_pagination invoices_page_obj extra=request.GET.urlencode parameter_name="invoices_page" %}
 {% endblock %}

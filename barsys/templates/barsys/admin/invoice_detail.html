@@ -43,7 +43,7 @@
             </tr>
             <tr>
                 <td colspan="2" style="padding-left: 25px; padding-right: 0;">
-                    {% include 'barsys/admin/purchases_subtable.html' with purchases=own_purchases %}
+                    {% include './purchases_subtable.html' with purchases=own_purchases show_summary=True show_comment=True %}
                 </td>
             </tr>
             {% for p_user, purchases in other_purchases_grouped %}
@@ -53,7 +53,7 @@
                 </tr>
                 <tr>
                     <td colspan="2" style="padding-left: 25px; padding-right: 0;">
-                        {% include 'barsys/admin/purchases_subtable.html' with purchases=purchases %}
+                        {% include './purchases_subtable.html' with purchases=purchases show_summary=True show_comment=True %}
                     </td>
                 </tr>
             {% endfor %}
@@ -62,7 +62,7 @@
             </tr>
             <tr>
                 <td colspan="2" style="padding-left: 25px; padding-right: 0;">
-                    {% include 'barsys/admin/payments_subtable.html' with payments=invoice.payments %}
+                    {% include 'barsys/admin/payments_subtable.html' with payments=invoice.payments show_summary=True %}
                 </td>
             </tr>
             </tbody>

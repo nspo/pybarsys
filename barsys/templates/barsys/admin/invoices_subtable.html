@@ -1,0 +1,36 @@
+{% load barsys_helpers %}
+{% load bootstrap3 %}
+{% load tz %}
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Created</th>
+        {% if show_user %}
+            <th>Recipient</th>
+        {% endif %}
+        <th>Purchases</th>
+        <th>Payments</th>
+        <th>(Due)</th>
+        <th>{% bootstrap_icon 'info-sign' %}</th>
+        <th>{% bootstrap_icon 'trash' %}</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for invoice in invoices %}
+        <tr>
+            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|localtime|sdatetime }}</a>
+            </td>
+            {% if show_user %}
+                <td>
+                    <a href="{% url 'admin_user_detail' invoice.recipient.pk %}">{{ invoice.recipient.display_name }}</a>
+                </td>
+            {% endif %}
+            <td>{{ invoice.amount_purchases|currency }}</td>
+            <td>{{ invoice.amount_payments|currency }}</td>
+            <td>({{ invoice.due|currency }})</td>
+            <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
+            <td><a href="{% url 'admin_invoice_delete' invoice.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

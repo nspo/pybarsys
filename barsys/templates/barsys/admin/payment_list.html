@@ -16,53 +16,10 @@
         </a>
     </div>
 {% endblock %}
-{% block tablehead %}
-    <tr>
-        <th>Created</th>
-        <th>Value date</th>
-        <th>User</th>
-        <th>Amount</th>
-        <th>Payment method</th>
-        <th>Comment?</th>
-        <th>Invoiced?</th>
-        <th>{% bicon 'info-sign' %}</th>
-        <th>{% bicon 'pencil' %}</th>
-        <th>{% bicon 'trash' %}</th>
-    </tr>
+{% block around_table %}
+    {% include "./payments_subtable.html" with payments=object_list show_user=True %}
 {% endblock %}
-{% block tablebody %}
-    {% for object in object_list %}
-        <tr>
-            <td>
-                <a href="{% url 'admin_payment_detail' object.pk %}">{{ object.created_date|localtime|sdatetime }}</a>
-            </td>
-            <td>{{ object.value_date|sdate }}</td>
-            <td><a href="{% url 'admin_user_detail' object.user.pk %}">{{ object.user }}</a></td>
-            <td>{{ object.amount|currency }}</td>
-            <td>{{ object.get_payment_method_display }}</td>
-            <td>{% bool_to_icon object.comment %}</td>
-            <td>
-                {% if object.has_invoice %}
-                    <a href="{% url 'admin_invoice_detail' object.invoice.pk %}">{% bool_to_icon object.invoice %}</a>
-                {% else %}
-                    {% bool_to_icon object.invoice %}
-                {% endif %}
-            </td>
-            <td><a href="{% url 'admin_payment_detail' object.pk %}">{% bicon 'info-sign' %}</a>
-            </td>
-            <td>
-                {% if not object.has_invoice %}
-                    <a href="{% url 'admin_payment_update' object.pk %}">{% bicon 'pencil' %}</a>
-                {% endif %}
-            </td>
-            <td>
-                {% if not object.has_invoice %}
-                    <a href="{% url 'admin_payment_delete' object.pk %}">{% bicon 'trash' %}</a>
-                {% endif %}
-            </td>
-        </tr>
-    {% endfor %}
-{% endblock %}
+
 {% block below_table %}
     <p>{{ paginator.count }} results</p>
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}

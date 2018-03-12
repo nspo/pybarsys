@@ -1,32 +1,89 @@
 {% load barsys_helpers %}
+{% load bootstrap3 %}
 {% load tz %}
 <table class="table table-striped">
     <thead>
-    <th>Time</th>
+    <th>Created</th>
+    {% if show_user %}
+        <th>User</th>
+    {% endif %}
     <th>Quantity</th>
     <th>Product name</th>
     <th>Amount</th>
-    <th>Comment</th>
+    {% if show_comment %}
+        <th>Comment{% if show_comment_only_as_bool %}?{% endif %}</th>
+    {% endif %}
+    {% if show_free_item %}
+        <th>Free item?</th>
+    {% endif %}
+    <th>Invoiced?</th>
+    <th>Price</th>
     <th>Cost</th>
+    <th>{% bootstrap_icon 'info-sign' %}</th>
+    <th>{% bootstrap_icon 'pencil' %}</th>
+    <th>{% bootstrap_icon 'trash' %}</th>
     </thead>
     <tbody>
-    {% for p in purchases %}
+    {% for purchase in purchases %}
         <tr>
-            <td><a href="{% url 'admin_purchase_detail' p.pk %}">{{ p.created_date|localtime|sdatetime }}</a></td>
-            <td>{{ p.quantity }}</td>
-            <td>{{ p.product_name }}</td>
-            <td>{{ p.product_amount }}</td>
-            <td>{{ p.comment }}</td>
-            <td>{{ p.cost|currency }}</td>
+            <td>
+                <a href="{% url 'admin_purchase_detail' purchase.pk %}">{{ purchase.created_date|localtime|sdatetime }}</a>
+            </td>
+            {% if show_user %}
+                <td><a href="{% url 'admin_user_detail' purchase.user.pk %}">{{ purchase.user.display_name }}</a></td>
+            {% endif %}
+            <td>{{ purchase.quantity }}</td>
+            <td>{{ purchase.product_name }}</td>
+            <td>{{ purchase.product_amount }}</td>
+            {% if show_comment %}
+                <td>{% if show_comment_only_as_bool %}{% bool_to_icon purchase.comment %}{% else %}
+                    {{ purchase.comment }}{% endif %}</td>
+            {% endif %}
+            {% if show_free_item %}
+                <td>{% bool_to_icon purchase.is_free_item_purchase %}</td>
+            {% endif %}
+            {% if purchase.has_invoice %}
+                <td>
+                    <a href="{% url 'admin_invoice_detail' purchase.invoice.pk %}">{% bool_to_icon purchase.invoice %}</a>
+                </td>
+            {% else %}
+                <td>{% bool_to_icon purchase.invoice %}</td>
+            {% endif %}
+            <td>{{ purchase.product_price|currency }}</td>
+            <td>{{ purchase.cost|currency }}</td>
+
+            <td>
+                <a href="{% url 'admin_purchase_detail' purchase.pk %}">{% bootstrap_icon 'info-sign' %}</a>
+            </td>
+            {% if purchase.has_invoice %}
+                <td></td>
+                <td></td>
+            {% else %}
+                <td><a href="{% url 'admin_purchase_update' purchase.pk %}">{% bootstrap_icon 'pencil' %}</a></td>
+                <td><a href="{% url 'admin_purchase_delete' purchase.pk %}">{% bootstrap_icon 'trash' %}</a></td>
+            {% endif %}
         </tr>
     {% endfor %}
-    <tr class="table-total-row">
-        <td>Total</td>
-        <td>{{ purchases.sum_quantity }}</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td>{{ purchases.sum_cost|currency }}</td>
-    </tr>
+    {% if show_summary %}
+        <tr class="table-total-row">
+            <td>Total</td>
+            {% if show_user %}
+                <td></td>{% endif %}
+            <td>{{ purchases.sum_quantity }}</td>
+            <td></td>
+            <td></td>
+            {% if show_comment %}
+                <td></td>
+            {% endif %}
+            {% if show_free_item %}
+                <td></td>{% endif %}
+            <td></td>
+            <td></td>
+            <td>{{ purchases.sum_cost|currency }}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    {% endif %}
     </tbody>
 </table>
