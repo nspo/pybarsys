@@ -5,10 +5,10 @@
 {% load humanize %}
 
 {% block above_table %}
-    <h1 class="pull-left" style="margin-top: 0;">Product autochange sets</h1>
+    <h1 class="pull-left" style="margin-top: 0;">Product Autochange Sets</h1>
     <div class="btn-group pull-right" role="group">
         <a href="{% url 'admin_productautochangeset_new' %}" class="btn btn-primary">
-            {% bootstrap_icon 'plus' %} Add new PAcS
+            {% bootstrap_icon 'plus' %} Add new PACS
         </a>
     </div>
 {% endblock %}
@@ -47,8 +47,10 @@
 
     <div class="col-md-6">
         <h2>Explanation</h2>
-        <p class="text-justify">A product autochange set (PAcS) is a set of changes that can be applied to several products at once.
-        For example, a price can be set for each product and when the PAcS is executed, all product prices are automatically changed (Happy Hour!).
+        <p class="text-justify">A <b>P</b>roduct <b>A</b>uto<b>c</b>hange <b>S</b>et (PACS) is a set of changes that can
+            be applied to several products at once.
+            For example, a price can be set for each product and when the PACS is executed, all product prices are
+            automatically changed (Happy Hour!).
         </p>
     </div>
 {% endblock %}
