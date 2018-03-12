@@ -679,8 +679,8 @@ class ProductAutochangeSetListView(FilterView):
 
 class ProductAutochangeSetManageView(View):
     template_name = "barsys/admin/productautochangeset_form.html"
-    new_title = "New product autochange set"
-    update_title = "Update product autochange set"
+    new_title = "New Product Autochange Set"
+    update_title = "Update Product Autochange Set"
 
     def post(self, request, pk=None):
         if pk is None:
