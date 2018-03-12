@@ -9,7 +9,7 @@ SECRET_KEY = '&_cx6qdzz^1w%per*z6emn$*&937j-^0@q93g+t9fk7hy%8p(%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "192.168.0.133", "localhost", ]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", ]
 
 TEMPLATES[0]["OPTIONS"]["string_if_invalid"] = "!INVALID!"
 
@@ -17,6 +17,10 @@ INSTALLED_APPS.append('debug_toolbar')
 
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda e: False,
+    'DISABLE_PANELS': {
+        'debug_toolbar.panels.redirects.RedirectsPanel',
+        'debug_toolbar.panels.templates.TemplatesPanel'
+    },
 }
 
 DEBUG_TOOLBAR_PANELS = [

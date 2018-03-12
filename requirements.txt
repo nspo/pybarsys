@@ -1,5 +1,5 @@
 Django==2.0.1
 django-bootstrap3==9.1.0
 django-crispy-forms==1.7.0
-django-debug-toolbar==1.7
+django-debug-toolbar==1.9.1
 django-filter==1.1
