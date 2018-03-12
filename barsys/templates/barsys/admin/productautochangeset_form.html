@@ -10,6 +10,10 @@
         {% crispy formset formset.form.helper %}
 
         <input class="submit btn btn-primary" type="submit" value="Save & add more">
+        {% if form.instance.pk %}
+            <a class="btn btn-warning" href="{% url 'admin_productautochangeset_import' form.instance.pk %}">Import all
+                current products & save</a>
+        {% endif %}
         <a class="btn btn-success" href="{% url 'admin_productautochangeset_list' %}">Return to list</a>
 
     </form>

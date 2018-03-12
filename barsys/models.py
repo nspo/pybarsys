@@ -803,6 +803,32 @@ class ProductAutochangeSet(models.Model):
     class Meta:
         ordering = ["title"]
 
+    def import_current_state(self):
+        if not self.pk:
+            raise IntegrityError("Only saved PACS may be used to import the current state")
+
+        for pac in self.productautochange_set.all():
+            # delete every existing pac
+            pac.delete()
+
+        self.change_others_active = ProductAutochange.CHANGE_TO_NO
+        self.change_others_bold = ProductAutochange.NO_CHANGE
+        self.save()
+
+        for product in Product.objects.active():
+            pac = ProductAutochange(product=product, pc_set=self)
+
+            pac.set_price = product.price
+            pac.change_active = ProductAutochange.CHANGE_TO_YES
+            if product.is_bold:
+                pac.change_bold = ProductAutochange.CHANGE_TO_YES
+            else:
+                pac.change_bold = ProductAutochange.CHANGE_TO_NO
+
+            pac.save()
+
+
+
 
 class FreeItem(models.Model):
     """ Model to describe products which are free, but only for a limited number of purchases """

@@ -736,6 +736,17 @@ class ProductAutochangeSetExecuteView(View):
         return redirect("admin_productautochangeset_list")
 
 
+@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
+class ProductAutochangeSetImportView(View):
+    def get(self, request, pk):
+        pacs = get_object_or_404(ProductAutochangeSet, pk=pk)
+
+        pacs.import_current_state()
+
+        messages.info(request, "Successfully imported current state into {}".format(pacs))
+        return redirect("admin_productautochangeset_update", pacs.pk)
+
+
 # ProductAutochangeSet END
 
 

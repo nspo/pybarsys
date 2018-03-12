@@ -102,6 +102,8 @@ urlpatterns = [
         name='admin_productautochangeset_execute'),
     url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/delete/$', views.ProductAutochangeSetDeleteView.as_view(),
         name='admin_productautochangeset_delete'),
+    url(r'^admin/productautochangeset/(?P<pk>[0-9]+)/import/$', views.ProductAutochangeSetImportView.as_view(),
+        name='admin_productautochangeset_import'),
 
     # FreeItem
     url(r'^admin/freeitem/list/$', views.FreeItemListView.as_view(), name='admin_freeitem_list'),
