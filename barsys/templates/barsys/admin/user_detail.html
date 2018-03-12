@@ -201,9 +201,10 @@
     <table class="table table-striped">
         <thead>
         <tr>
-            <th>Time</th>
-            <th>Recipient</th>
-            <th>Due</th>
+            <th>Created</th>
+            <th>Purchases</th>
+            <th>Payments</th>
+            <th>(Due)</th>
             <th>{% bootstrap_icon 'info-sign' %}</th>
             <th>{% bootstrap_icon 'trash' %}</th>
         </tr>
@@ -213,8 +214,9 @@
             <tr>
                 <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{{ invoice.created_date|sdatetime }}</a>
                 </td>
-                <td>{{ invoice.recipient }}</td>
-                <td>{{ invoice.due|currency }}</td>
+                <td>{{ invoice.amount_purchases|currency }}</td>
+                <td>{{ invoice.amount_payments|currency }}</td>
+                <td>({{ invoice.due|currency }})</td>
                 <td><a href="{% url 'admin_invoice_detail' invoice.pk %}">{% bootstrap_icon 'info-sign' %}</a></td>
                 <td><a href="{% url 'admin_invoice_delete' invoice.pk %}">{% bootstrap_icon 'trash' %}</a></td>
             </tr>
