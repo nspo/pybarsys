@@ -20,7 +20,7 @@
         </tr>
         <tr>
             <th>User</th>
-            <td><a href="{% url 'admin_user_detail' object.user.pk %}">{{ object.user.display_name }}</a></td>
+            <td><a href="{% url 'admin_user_detail' object.user_id %}">{{ object.user.display_name }}</a></td>
         </tr>
         <tr>
             <th>Quantity</th>
@@ -57,7 +57,7 @@
         <tr>
             <th>Invoice</th>
             <td>{% if object.has_invoice %}
-                <a href="{% url 'admin_invoice_detail' object.invoice.pk %}">{{ object.invoice }}</a>
+                <a href="{% url 'admin_invoice_detail' object.invoice_id %}">{{ object.invoice }}</a>
             {% else %}
                 {% bool_to_icon object.has_invoice %}
             {% endif %}

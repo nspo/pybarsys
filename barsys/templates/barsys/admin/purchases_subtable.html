@@ -30,7 +30,7 @@
                 <a href="{% url 'admin_purchase_detail' purchase.pk %}">{{ purchase.created_date|localtime|sdatetime }}</a>
             </td>
             {% if show_user %}
-                <td><a href="{% url 'admin_user_detail' purchase.user.pk %}">{{ purchase.user.display_name }}</a></td>
+                <td><a href="{% url 'admin_user_detail' purchase.user_id %}">{{ purchase.user.display_name }}</a></td>
             {% endif %}
             <td>{{ purchase.quantity }}</td>
             <td>{{ purchase.product_name }}</td>
@@ -44,7 +44,7 @@
             {% endif %}
             {% if purchase.has_invoice %}
                 <td>
-                    <a href="{% url 'admin_invoice_detail' purchase.invoice.pk %}">{% bool_to_icon purchase.invoice %}</a>
+                    <a href="{% url 'admin_invoice_detail' purchase.invoice_id %}">{% bool_to_icon purchase.invoice %}</a>
                 </td>
             {% else %}
                 <td>{% bool_to_icon purchase.invoice %}</td>

@@ -24,12 +24,12 @@
             </td>
             <td>{{ payment.value_date|sdate }}</td>
             {% if show_user %}
-                <td><a href="{% url 'admin_user_detail' payment.user.pk %}">{{ payment.user.display_name }}</a></td>
+                <td><a href="{% url 'admin_user_detail' payment.user_id %}">{{ payment.user.display_name }}</a></td>
             {% endif %}
             <td>{{ payment.get_payment_method_display }}</td>
             <td>{% bool_to_icon payment.comment %}</td>
             {% if payment.has_invoice %}
-                <td><a href="{% url 'admin_invoice_detail' payment.invoice.pk %}">{% bool_to_icon payment.invoice %}</a>
+                <td><a href="{% url 'admin_invoice_detail' payment.invoice_id %}">{% bool_to_icon payment.invoice %}</a>
                 </td>
             {% else %}
                 <td>{% bool_to_icon payment.invoice %}</td>

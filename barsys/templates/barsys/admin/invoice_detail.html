@@ -24,7 +24,7 @@
             </tr>
             <tr>
                 <th>Recipient</th>
-                <td><a href="{% url 'admin_user_detail' invoice.recipient.pk %}">{{ invoice.recipient }}</a></td>
+                <td><a href="{% url 'admin_user_detail' invoice.recipient_id %}">{{ invoice.recipient }}</a></td>
             </tr>
             <tr>
                 <th>{% bootstrap_icon "plus" %} Purchases</th>

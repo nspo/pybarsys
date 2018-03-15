@@ -40,7 +40,7 @@
         <tr>
             <th>Invoice</th>
             <td>{% if object.has_invoice %}
-                <a href="{% url 'admin_invoice_detail' object.invoice.pk %}">{{ object.invoice }}</a>
+                <a href="{% url 'admin_invoice_detail' object.invoice_id %}">{{ object.invoice }}</a>
             {% else %}
                 {% bool_to_icon object.has_invoice %}
             {% endif %}

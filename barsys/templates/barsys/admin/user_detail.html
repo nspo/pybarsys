@@ -47,7 +47,7 @@
         <tr>
             <th>Purchases paid by other</th>
             <td>{% if object.purchases_paid_by_other != None %}
-                <a href="{% url 'admin_user_detail' object.purchases_paid_by_other.pk %}">{{ object.purchases_paid_by_other }}</a>
+                <a href="{% url 'admin_user_detail' object.purchases_paid_by_other_id %}">{{ object.purchases_paid_by_other }}</a>
             {% else %}
                 No
             {% endif %}</td>
