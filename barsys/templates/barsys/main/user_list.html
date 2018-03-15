@@ -17,7 +17,7 @@
                 <tr>
                     <td class="td-small">{{ purchase.quantity }}x</td>
                     <td class="td-big">{{ purchase.product_name }} (<a
-                            href="{% url 'main_user_purchase' purchase.user.id %}">{{ purchase.user.display_name }}</a>)
+                            href="{% url 'main_user_purchase' purchase.user_id %}">{{ purchase.user.display_name }}</a>)
                     </td>
                 </tr>
             {% endfor %}
