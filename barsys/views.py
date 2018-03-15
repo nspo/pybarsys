@@ -420,6 +420,7 @@ class PaymentReminderSendView(View):
         view_helpers.send_reminder_mails(request, [user])
         return redirect("admin_user_detail", pk=pk)
 
+
 # for debugging mail
 @method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class InvoiceMailDebugView(DetailView):
@@ -657,16 +658,13 @@ class UserStatisticsByAccountBalance(FilterView):
     def get_context_data(self, **kwargs):
         context = super(UserStatisticsByAccountBalance, self).get_context_data(**kwargs)
 
-        users_with_balance = []
-        for u in context["filter"].qs:
-            # probably sloooow
-            users_with_balance.append((u, u.account_balance()))
+        invoices = Invoice.objects.filter(recipient_id__in=context["filter"].qs)
+        balances = invoices.values("recipient_id", "recipient__display_name").order_by("recipient_id").annotate(
+            account_balance=models.Sum(F("amount_payments") - F("amount_purchases"))).order_by("account_balance")
 
-        users_sorted = sorted(users_with_balance, key=lambda tup: tup[1])
-
-        context["users"] = users_sorted
-
+        context["balances"] = balances
         return context
+
 
 # Statistics END
 # ProductAutochangeSet BEGIN
@@ -750,17 +748,7 @@ class ProductAutochangeSetImportView(View):
 # ProductAutochangeSet END
 
 
-
-
-
-
-
-
-
-
-
 # user area end
-
 
 
 class MainUserPurchaseView(View):

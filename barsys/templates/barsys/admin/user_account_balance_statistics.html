@@ -12,18 +12,13 @@
     <tr>
         <th>User</th>
         <th>Account balance</th>
-        <th>Last payment</th>
     </tr>
 {% endblock %}
 {% block tablebody %}
-    {% for u, account_balance in users %}
+    {% for u in balances %}
         <tr>
-            <td><a href="{% url 'admin_user_detail' u.pk %}">{{ u.display_name }}</a></td>
-            <td>{{ account_balance|currency }}</td>
-            {% with payment=u.payments|first %}
-                <td>{% if payment %}{{ payment.amount|currency }}, {{ payment.value_date|sdate }}{% else %}
-                    None{% endif %}</td>
-            {% endwith %}
+            <td><a href="{% url 'admin_user_detail' u.recipient_id %}">{{ u.recipient__display_name }}</a></td>
+            <td>{{ u.account_balance|currency }}</td>
         </tr>
     {% endfor %}
 {% endblock %}
