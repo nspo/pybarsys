@@ -28,7 +28,7 @@ def add_payments_to_old_invoices(apps, schema_editor):
 
 
         unbilled_payments = Payment.objects.filter(user=user, invoice=None)
-        if unbilled_payments.count() > 0:
+        if unbilled_payments.exists():
             # user still has unbilled payments
             # create an invoice with all unbilled payments and a created_date of the newest payments
 

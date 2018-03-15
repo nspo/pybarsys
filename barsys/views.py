@@ -477,7 +477,7 @@ class InvoiceCreateView(edit.FormView):
         invoices = []
         users_to_remind = []
         for user in users:
-            if Purchase.objects.to_pay_by(user).count() > 0 or user.payments().unbilled().count() > 0:
+            if Purchase.objects.to_pay_by(user).exists() or user.payments().unbilled().exists():
                 # print("{} has {} purchases to pay for: ".format(user, purchases_to_pay.count()))
                 invoice = Invoice.objects.create_for_user(user)
                 invoices.append(invoice)
@@ -1006,7 +1006,7 @@ class MainUserHistoryView(View):
         last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[
                          :PybarsysPreferences.Misc.NUM_USER_PURCHASE_HISTORY]
 
-        if user.invoices().count() > 0:
+        if user.invoices().exists():
             last_invoice = user.invoices()[0]
         else:
             last_invoice = None

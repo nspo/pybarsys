@@ -36,11 +36,11 @@ def get_renderable_stats_elements():
 
         # construct query filters step by step
         filters = {}
-        if stat.filter_by_category.all().count() > 0:
-            filters["product_category__in"] = [c.name for c in stat.filter_by_category.all()]
+        if stat.filter_by_category.all().exists():
+            filters["product_category__in"] = [c["name"] for c in stat.filter_by_category.values("name")]
 
-        if stat.filter_by_product.all().count() > 0:
-            filters["product_name__in"] = [p.name for p in stat.filter_by_product.all()]
+        if stat.filter_by_product.all().exists():
+            filters["product_name__in"] = [p["name"] for p in stat.filter_by_product.values("name")]
 
         # filter by time
         filters["created_date__gte"] = stat.time_period_begin()
@@ -242,7 +242,7 @@ def get_most_bought_product_in_queryset(purchase_query_set):
     most_bought_products = purchase_query_set.values("product_name", "product_amount").order_by().annotate(
         models.Count("product_name"), num_purchases=models.Count("product_amount")).order_by("-num_purchases")
     for prod in most_bought_products:
-        if Product.objects.active().filter(name=prod["product_name"], amount=prod["product_amount"]).count() > 0:
+        if Product.objects.active().filter(name=prod["product_name"], amount=prod["product_amount"]).exists():
             return prod
             # else continue
     return None  # None found or None still available
@@ -255,11 +255,11 @@ def get_most_bought_product_in_time(hours):
 
 def get_most_bought_product_for_user(user):
     most_bought_product = None
-    if user.purchases().unbilled().count() > 0:
+    if user.purchases().unbilled().exists():
         # most bought product of unbilled purchases
         most_bought_product = get_most_bought_product_in_queryset(user.purchases().unbilled())
 
-    if most_bought_product is None and Invoice.objects.filter(purchase__user=user).distinct().count() > 0:
+    if most_bought_product is None and Invoice.objects.filter(purchase__user=user).distinct().exists():
         # most bought product by this user on last invoice that had a purchase of him/her
         # works both when user pays themselves and when not
         most_bought_product = get_most_bought_product_in_queryset(
@@ -282,7 +282,7 @@ def get_most_bought_product_for_user(user):
 
 def get_most_bought_product_for_users(users):
     most_bought_product = None
-    if users.purchases().unbilled().count() > 0:
+    if users.purchases().unbilled().exists():
         # most bought product of unbilled purchases
         most_bought_product = get_most_bought_product_in_queryset(users.purchases().unbilled())
 

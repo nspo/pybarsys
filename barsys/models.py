@@ -108,7 +108,7 @@ class User(AbstractBaseUser):
                 raise ValidationError({'purchases_paid_by_other': "Purchases cannot be paid by someone who does not "
                                                                   "pay for their own purchases."})
             dependents = self.dependents()
-            if dependents.count() > 0:
+            if dependents.exists():
                 other_names = [u.display_name for u in dependents]
                 raise ValidationError({'purchases_paid_by_other': "This user pays for the following users, so "
                                                                   "their purchases cannot be paid by someone else: {}"
@@ -116,7 +116,7 @@ class User(AbstractBaseUser):
         if self.pk is not None:
             # Check whether this user should pay for other active users' purchases but is not active
             dependents = self.dependents().active()
-            if not self.is_active and dependents.count() > 0:
+            if not self.is_active and dependents.exists():
                 raise ValidationError({'is_active': "This user has to pay for purchases of the following active users"
                                                     ", so they cannot be deactivated: {}".
                                       format(", ".join([d.display_name for d in dependents]))})
@@ -127,7 +127,7 @@ class User(AbstractBaseUser):
                 if self.account_balance() < 0:
                     raise ValidationError({'purchases_paid_by_other':
                                                "Cannot make user a dependant if they have a negative account balance."})
-                if self.payments().unbilled().count() > 0:
+                if self.payments().unbilled().exists():
                     raise ValidationError({'purchases_paid_by_other':
                                                "Cannot make user a dependant if they have unbilled payments"})
 
@@ -660,7 +660,7 @@ class StatsDisplay(models.Model):
             if self.pk:
                 # already exists
                 queryset = queryset.exclude(pk=self.pk)
-            if queryset.count() != 0:
+            if queryset.exists():
                 queryset.update(show_by_default=False)
         super(StatsDisplay, self).save(*args, **kwargs)
 
