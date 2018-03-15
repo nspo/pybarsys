@@ -17,7 +17,8 @@ def get_renderable_stats_elements():
     """Create a list of dicts for all StatsDisplays that can be rendered by view more easily"""
     stats_elements = []
 
-    all_displays = StatsDisplay.objects.order_by("-show_by_default")
+    all_displays = StatsDisplay.objects.prefetch_related("filter_by_category", "filter_by_product").order_by(
+        "-show_by_default")
     if PybarsysPreferences.Misc.SHUFFLE_STATSDISPLAY_ORDER:
         all_displays = all_displays.order_by("?")
 

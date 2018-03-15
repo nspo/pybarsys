@@ -168,7 +168,7 @@ class User(AbstractBaseUser):
         return self.is_admin
 
     def num_purchases(self):
-        return Purchase.objects.filter(user__pk=self.pk).count()
+        return Purchase.objects.filter(user_id=self.pk).count()
 
     class Meta:
         ordering = ["display_name"]
@@ -214,7 +214,7 @@ class Category(models.Model):
     get_number_products.short_description = "Number of products"
 
     def get_products(self):
-        return Product.objects.filter(category__pk=self.pk)
+        return Product.objects.filter(category_id=self.pk)
 
     class Meta:
         verbose_name_plural = "Categories"

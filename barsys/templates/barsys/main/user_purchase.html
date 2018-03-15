@@ -105,20 +105,22 @@
             {% endfor %}
         {% endif %}
         {% for category in categories %}
-            {% if category.get_products.active %}
-                <h4>{{ category.name }}</h4>
-                <hr/>
-                {% for prod in category.get_products.active %}
-                    <label class="btn btn-default btn-product btn-select{% if prod.name == most_bought_product.product_name and prod.amount == most_bought_product.product_amount %} active{% endif %}">
-                        <input type="radio" form="purchase_form" name="product_id"
-                               value="{{ prod.pk }}" required
-                                {% if prod.name == most_bought_product.product_name and prod.amount == most_bought_product.product_amount %}
-                               checked{% endif %}>
-                        {% if prod.is_bold %}<strong>{% endif %} {{ prod.name }}<br/>
-                        ({{ prod.amount }}, {{ prod.price|currency }}){% if prod.is_bold %}</strong>{% endif %}
-                    </label>
-                {% endfor %}
-            {% endif %}
+            {% with products=category.get_products.active %}
+                {% if products %}
+                    <h4>{{ category.name }}</h4>
+                    <hr/>
+                    {% for prod in products %}
+                        <label class="btn btn-default btn-product btn-select{% if prod.name == most_bought_product.product_name and prod.amount == most_bought_product.product_amount %} active{% endif %}">
+                            <input type="radio" form="purchase_form" name="product_id"
+                                   value="{{ prod.pk }}" required
+                                    {% if prod.name == most_bought_product.product_name and prod.amount == most_bought_product.product_amount %}
+                                   checked{% endif %}>
+                            {% if prod.is_bold %}<strong>{% endif %} {{ prod.name }}<br/>
+                            ({{ prod.amount }}, {{ prod.price|currency }}){% if prod.is_bold %}</strong>{% endif %}
+                        </label>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
         {% endfor %}
     </div>
 {% endblock %}

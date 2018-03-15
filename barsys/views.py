@@ -1001,9 +1001,9 @@ class MainUserHistoryView(View):
         user = get_object_or_404(User.objects.active().buyers(), pk=user_id)
 
         # Sum not yet billed product purchases grouped by product_category
-        categories = Purchase.objects.filter(user__pk=user_id, invoice=None).stats_purchases_by_category_and_product()
+        categories = Purchase.objects.filter(user_id=user_id, invoice=None).stats_purchases_by_category_and_product()
 
-        last_purchases = Purchase.objects.filter(user__pk=user.pk).order_by("-created_date")[
+        last_purchases = Purchase.objects.filter(user_id=user_id).order_by("-created_date")[
                          :PybarsysPreferences.Misc.NUM_USER_PURCHASE_HISTORY]
 
         if user.invoices().exists():
