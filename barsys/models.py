@@ -121,8 +121,8 @@ class User(AbstractBaseUser):
     def clean(self):
         if self.purchases_paid_by_other == self:
             raise ValidationError({'purchases_paid_by_other': "This field cannot be set to the same user"})
-        if self.purchases_paid_by_other is not None:
-            if self.purchases_paid_by_other.purchases_paid_by_other is not None:
+        if self.purchases_paid_by_other_id is not None:
+            if self.purchases_paid_by_other.purchases_paid_by_other_id is not None:
                 raise ValidationError({'purchases_paid_by_other': "Purchases cannot be paid by someone who does not "
                                                                   "pay for their own purchases."})
             dependents = self.dependents()
@@ -140,7 +140,7 @@ class User(AbstractBaseUser):
                                       format(", ".join([d.display_name for d in dependents]))})
 
             orig = User.objects.get(pk=self.pk)
-            if orig.purchases_paid_by_other is None and self.purchases_paid_by_other is not None:
+            if orig.purchases_paid_by_other_id is None and self.purchases_paid_by_other_id is not None:
                 # change from self-paying to dependant
                 if self.account_balance() < 0:
                     raise ValidationError({'purchases_paid_by_other':
@@ -150,7 +150,7 @@ class User(AbstractBaseUser):
                                                "Cannot make user a dependant if they have unbilled payments"})
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        self.clean()  # do not call full_clean b/c password may be empty
         super(User, self).save(*args, **kwargs)
 
     def get_full_name(self):
@@ -214,7 +214,7 @@ class User(AbstractBaseUser):
         return User.objects.filter(purchases_paid_by_other=self)
 
     def pays_themselves(self):
-        return self.purchases_paid_by_other is None
+        return self.purchases_paid_by_other_id is None
 
     def account_balance(self):
         return -self.invoices().sum_amount()
@@ -598,7 +598,7 @@ class Payment(models.Model):
         return "Payment of {} by {}".format(currency(self.amount), self.user.display_name)
 
     def has_invoice(self):
-        return self.invoice is not None
+        return self.invoice_id is not None
 
     def cannot_be_deleted(self):
         """ Returns False or an explanation why this payment cannot be deleted """
