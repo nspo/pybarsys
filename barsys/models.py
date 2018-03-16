@@ -448,20 +448,20 @@ class PurchaseQuerySet(models.QuerySet):
         """ Like stats_purchases_by_category_and_product, but groups by user """
 
         # Purchase quantity as list of dicts
-        purchases_per_user = self.values("user") \
+        purchases_per_user = self.values("user", "user__display_name") \
                                  .annotate(total_quantity=models.Sum("quantity")).order_by(
             "-total_quantity").distinct()[:limit]
 
         # Create list of tuples in the format (user, total_quantity)
         users = []
         for p in purchases_per_user:
-            users.append((User.objects.get(pk=p["user"]), p["total_quantity"]))
+            users.append((p["user"], p["user__display_name"], p["total_quantity"]))
 
         return users
 
     def stats_cost_by_user(self, limit=5):
         """ Calculate total cost of purchases and group by user """
-        cost_per_user = self.values("user"). \
+        cost_per_user = self.values("user", "user__display_name"). \
                             annotate(total_cost=models.Sum(F("quantity") * F("product_price"),
                                                            output_field=DecimalField(decimal_places=2))). \
                             filter(total_cost__gt=0).order_by("-total_cost")[:limit]
@@ -469,7 +469,7 @@ class PurchaseQuerySet(models.QuerySet):
         # Create list of tuples [(user, total_cost), ...]
         users = []
         for u in cost_per_user:
-            users.append((User.objects.get(pk=u["user"]), u["total_cost"]))
+            users.append((u["user"], u["user__display_name"], u["total_cost"]))
 
         return users
 

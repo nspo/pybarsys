@@ -50,19 +50,19 @@ def get_renderable_stats_elements():
         if stat.sort_by_and_show == StatsDisplay.SORT_BY_NUM_PURCHASES:
             top_users = Purchase.objects.filter(**filters).stats_purchases_by_user(
                 limit=PybarsysPreferences.Misc.NUM_MAIN_USERS_IN_STATSDISPLAY)
-            for user, total_quantity in top_users:
+            for user_id, user_name, total_quantity in top_users:
                 stats_element["rows"].append({"left": "{}x".format(total_quantity),
                                               "row_string": stat.row_string,
-                                              "user_name": user.display_name,
-                                              "user_id": user.id})
+                                              "user_name": user_name,
+                                              "user_id": user_id})
         else:
             top_users = Purchase.objects.filter(**filters).stats_cost_by_user(
                 limit=PybarsysPreferences.Misc.NUM_MAIN_USERS_IN_STATSDISPLAY)
-            for u_index, (user, total_cost) in enumerate(top_users):
+            for u_index, (user_id, user_name, total_cost) in enumerate(top_users):
                 stats_element["rows"].append({"left": "{}.".format(u_index + 1),
                                               "row_string": stat.row_string,
-                                              "user_name": user.display_name,
-                                              "user_id": user.id})
+                                              "user_name": user_name,
+                                              "user_id": user_id})
 
         if index + 1 < len(all_displays):
             # toggle next one on
