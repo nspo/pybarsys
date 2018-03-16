@@ -44,10 +44,10 @@
             {% endif %}
             {% if purchase.has_invoice %}
                 <td>
-                    <a href="{% url 'admin_invoice_detail' purchase.invoice_id %}">{% bool_to_icon purchase.invoice %}</a>
+                    <a href="{% url 'admin_invoice_detail' purchase.invoice_id %}">{% bool_to_icon purchase.invoice_id %}</a>
                 </td>
             {% else %}
-                <td>{% bool_to_icon purchase.invoice %}</td>
+                <td>{% bool_to_icon purchase.invoice_id %}</td>
             {% endif %}
             <td>{{ purchase.product_price|currency }}</td>
             <td>{{ purchase.cost|currency }}</td>

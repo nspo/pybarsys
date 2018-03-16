@@ -1,7 +1,6 @@
 import datetime
 from collections import defaultdict
 from decimal import Decimal
-from itertools import groupby
 
 from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
@@ -378,12 +377,16 @@ class Invoice(models.Model):
             that the recipient paid for other users
         """
         other_purchases = self.purchases() \
-            .paid_as_other(self.recipient) \
-            .order_by('user')
+            .paid_as_other(self.recipient)
+
+        other_users = other_purchases.values("user").order_by("user").distinct()
 
         other_purchases_grouped = []
-        for u, ps in groupby(other_purchases, key=lambda p: p.user):
-            other_purchases_grouped.append((u, other_purchases.filter(user=u).order_by('-created_date')))
+
+        for u in other_users:
+            user_id = u["user"]
+            other_purchases_grouped.append(
+                (User.objects.get(pk=user_id), other_purchases.filter(user=user_id).order_by("-created_date")))
 
         return other_purchases_grouped
 
@@ -528,7 +531,7 @@ class Purchase(models.Model):
             return False
 
     def has_invoice(self):
-        return self.invoice is not None
+        return self.invoice_id is not None
 
     def clean(self, *args, **kw):
         if self.pk is not None:
@@ -858,6 +861,7 @@ class ProductAutochangeSet(models.Model):
             new_pacs.append(pac)
 
         ProductAutochange.objects.bulk_create(new_pacs)
+
 
 class FreeItem(models.Model):
     """ Model to describe products which are free, but only for a limited number of purchases """
