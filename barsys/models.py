@@ -741,6 +741,8 @@ class ProductAutochange(models.Model):
     def execute(self):
         """ Execute product change """
         product = self.product
+        initial_data = product.__dict__.copy()
+
         if self.set_price is not None:
             product.price = self.set_price
 
@@ -754,7 +756,10 @@ class ProductAutochange(models.Model):
         elif self.change_bold == self.CHANGE_TO_NO:
             product.is_bold = False
 
-        product.save()
+        if product.price != initial_data["price"] or product.is_active != initial_data["is_active"] or \
+                product.is_bold != initial_data["is_bold"]:
+            # only save if changed
+            product.save()
 
 
 class ProductAutochangeSet(models.Model):
@@ -785,6 +790,8 @@ class ProductAutochangeSet(models.Model):
     def execute(self):
         unspecified_products = Product.objects.exclude(pk__in=self.products.all())
         for product in unspecified_products:
+            initial_data = product.__dict__.copy()
+
             if self.change_others_active == ProductAutochange.CHANGE_TO_YES:
                 product.is_active = True
             elif self.change_others_active == ProductAutochange.CHANGE_TO_NO:
@@ -795,9 +802,12 @@ class ProductAutochangeSet(models.Model):
             elif self.change_others_bold == ProductAutochange.CHANGE_TO_NO:
                 product.is_bold = False
 
-            product.save()
+            if product.price != initial_data["price"] or product.is_active != initial_data["is_active"] or \
+                    product.is_bold != initial_data["is_bold"]:
+                # only save if changed
+                product.save()
 
-        for pac in self.productautochange_set.all():
+        for pac in self.productautochange_set.all().select_related("product"):
             pac.execute()
 
     class Meta:
@@ -826,8 +836,6 @@ class ProductAutochangeSet(models.Model):
                 pac.change_bold = ProductAutochange.CHANGE_TO_NO
 
             pac.save()
-
-
 
 
 class FreeItem(models.Model):
