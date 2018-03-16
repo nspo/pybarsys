@@ -20,6 +20,25 @@ from django.utils.timezone import localtime
 from barsys.templatetags.barsys_helpers import currency
 
 
+class DefaultSelectOrPrefetchManager(models.Manager):
+    # https://stackoverflow.com/a/21291161/997151
+    def __init__(self, *args, **kwargs):
+        self._select_related = kwargs.pop('select_related', None)
+        self._prefetch_related = kwargs.pop('prefetch_related', None)
+
+        super(DefaultSelectOrPrefetchManager, self).__init__(*args, **kwargs)
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super(DefaultSelectOrPrefetchManager, self).get_queryset(*args, **kwargs)
+
+        if self._select_related:
+            qs = qs.select_related(*self._select_related)
+        if self._prefetch_related:
+            qs = qs.prefetch_related(*self._prefetch_related)
+
+        return qs
+
+
 class UserQuerySet(models.QuerySet):
     def active(self):
         return self.filter(is_active=True)
@@ -778,6 +797,8 @@ class ProductAutochangeSet(models.Model):
                                           default=ProductAutochange.NO_CHANGE,
                                           help_text="Change bold state of other products")
 
+    objects = DefaultSelectOrPrefetchManager(prefetch_related=("products",))
+
     def get_absolute_url(self):
         return reverse("admin_productautochangeset_list")
 
@@ -817,14 +838,13 @@ class ProductAutochangeSet(models.Model):
         if not self.pk:
             raise IntegrityError("Only saved PACS may be used to import the current state")
 
-        for pac in self.productautochange_set.all():
-            # delete every existing pac
-            pac.delete()
+        self.productautochange_set.all().delete()
 
         self.change_others_active = ProductAutochange.CHANGE_TO_NO
         self.change_others_bold = ProductAutochange.NO_CHANGE
         self.save()
 
+        new_pacs = []
         for product in Product.objects.active():
             pac = ProductAutochange(product=product, pc_set=self)
 
@@ -835,8 +855,9 @@ class ProductAutochangeSet(models.Model):
             else:
                 pac.change_bold = ProductAutochange.CHANGE_TO_NO
 
-            pac.save()
+            new_pacs.append(pac)
 
+        ProductAutochange.objects.bulk_create(new_pacs)
 
 class FreeItem(models.Model):
     """ Model to describe products which are free, but only for a limited number of purchases """
