@@ -366,6 +366,9 @@ class Invoice(models.Model):
     def own_purchases(self):
         return self.purchases().paid_as_self(self.recipient)
 
+    def other_purchases(self):
+        return self.purchases().paid_as_other(self.recipient)
+
     def has_dependant_purchases(self):
         if self.own_purchases().count() == self.purchases().count():
             return False
@@ -376,8 +379,7 @@ class Invoice(models.Model):
         """ Create a list of tuples in the format (User, PurchaseQuerySet) of purchases
             that the recipient paid for other users
         """
-        other_purchases = self.purchases() \
-            .paid_as_other(self.recipient)
+        other_purchases = self.other_purchases()
 
         other_users = other_purchases.values("user").order_by("user").distinct()
 
