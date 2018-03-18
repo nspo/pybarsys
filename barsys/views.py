@@ -709,7 +709,7 @@ class ProductAutochangeSetManageView(View):
             context = {'title': self.update_title}
             pcs = get_object_or_404(ProductAutochangeSet, pk=pk)
 
-        formset = ProductAutochangeInlineFormSet(instance=pcs, prefix="nested", )
+        formset = ProductAutochangeInlineFormSet(instance=pcs, prefix="nested")
         form = ProductAutochangeSetForm(instance=pcs, prefix="main")
 
         context["form"] = form

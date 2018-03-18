@@ -39,15 +39,9 @@ class ProductAutochangeForm(forms.ModelForm):
             # already have been selected in the parent PASet
             self.fields["product"].queryset = Product.objects.exclude(pk__in=parent.products.all())
 
-        self.helper = FormHelper(form=self)
+        self.helper = FormHelper()
         self.helper.template = 'bootstrap/table_inline_formset.html'
         self.helper.form_tag = False
-
-        i = self.helper.layout.fields.index('set_price')
-        self.helper.layout.insert(i + 1, layout.Field("DELETE"))
-        self.helper.layout.insert(
-            i + 2,
-            layout.HTML('<hr />'))
 
 
 class ProductAutochangeInlineFormSet(
@@ -85,13 +79,8 @@ class ProductAutochangeSetForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(ProductAutochangeSetForm, self).__init__(*args, **kwargs)
 
-        self.helper = FormHelper(form=self)
+        self.helper = FormHelper()
         self.helper.form_tag = False
-
-        i = self.helper.layout.fields.index('description')
-        self.helper.layout.insert(
-            i + 1,
-            layout.HTML('<hr />'))
 
 
 class InvoicesCreateForm(forms.Form):
