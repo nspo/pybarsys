@@ -34,10 +34,13 @@ class ProductAutochangeForm(forms.ModelForm):
 
         super(ProductAutochangeForm, self).__init__(*args, **kwargs)
 
-        if parent and parent.pk and not self.instance.pk:
-            # if this is a new ProductAutochange, then exclude all products that
-            # already have been selected in the parent PASet
-            self.fields["product"].queryset = Product.objects.exclude(pk__in=parent.products.all())
+        if self.instance.pk:
+            pass
+        else:
+            if parent and parent.pk:
+                # if this is a new ProductAutochange, then exclude all products that
+                # already have been selected in the parent PASet
+                self.fields["product"].queryset = Product.objects.exclude(pk__in=parent.products.all())
 
         self.helper = FormHelper()
         self.helper.template = 'bootstrap/table_inline_formset.html'
