@@ -109,7 +109,7 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    </Directory>
    ```
 8. Reload apache2
-   ```sudo service apache2 reload```
+   ```sudo systemctl restart apache2```
    
 9. Change pybarsys/settings.py: switch to production_yourbar settings file
 10. Copy pybarsys/_settings/production.py to pybarsys/_settings/production_yourbar.py:
@@ -118,6 +118,7 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
      * You can also switch to the German mail templates (with PybarsysPreferences)
    * Change mail settings (`EMAIL_HOST` etc.) to be able to send invoices
    * Set PybarsysPreferences (have a look at `common.py` to see all options)
+   * Set own STATIC_URL if needed
    * ...
    
 11. Create superuser
