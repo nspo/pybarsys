@@ -84,29 +84,21 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    
    File contents (example):
    ```html
-   Alias /static/admin/ /var/www/pybarsys/lib/python3.5/site-packages/django/contrib/admin/static/admin/
+WSGIDaemonProcess pybarsys python-home=/var/www/pybarsys python-path=/var/www/pybarsys
+WSGIProcessGroup pybarsys
 
-   <Directory /static/admin>
-   Require all granted
-   </Directory>
-
-
-   Alias /static/ /var/www/pybarsys/barsys/static/
-
-   <Directory /static>
-   Require all granted
-   </Directory>
-
-
-   WSGIScriptAlias / /var/www/pybarsys/pybarsys/wsgi.py
-   WSGIPythonHome /var/www/pybarsys
-   WSGIPythonPath /var/www/pybarsys
-
-   <Directory /var/www/pybarsys/pybarsys>
-   <Files wsgi.py>
-   Require all granted
-   </Files>
-   </Directory>
+<VirtualHost *:80>
+    Alias /static/ /var/www/pybarsys/barsys/static/
+    <Directory /static>
+        Require all granted
+    </Directory>
+    WSGIScriptAlias / /var/www/pybarsys/pybarsys/wsgi.py process-group=pybarsys
+    <Directory /var/www/pybarsys/pybarsys>
+        <Files wsgi.py>
+            Require all granted
+        </Files>
+    </Directory>
+</VirtualHost>
    ```
 8. Reload apache2
    ```sudo systemctl restart apache2```
