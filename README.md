@@ -84,21 +84,21 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    
    File contents (example):
    ```html
-WSGIDaemonProcess pybarsys python-home=/var/www/pybarsys python-path=/var/www/pybarsys
-WSGIProcessGroup pybarsys
+    WSGIDaemonProcess pybarsys python-home=/var/www/pybarsys python-path=/var/www/pybarsys
+    WSGIProcessGroup pybarsys
 
-<VirtualHost *:80>
-    Alias /static/ /var/www/pybarsys/barsys/static/
-    <Directory /static>
-        Require all granted
-    </Directory>
-    WSGIScriptAlias / /var/www/pybarsys/pybarsys/wsgi.py process-group=pybarsys
-    <Directory /var/www/pybarsys/pybarsys>
-        <Files wsgi.py>
+    <VirtualHost *:80>
+        Alias /static/ /var/www/pybarsys/barsys/static/
+        <Directory /static>
             Require all granted
-        </Files>
-    </Directory>
-</VirtualHost>
+        </Directory>
+        WSGIScriptAlias / /var/www/pybarsys/pybarsys/wsgi.py process-group=pybarsys
+        <Directory /var/www/pybarsys/pybarsys>
+            <Files wsgi.py>
+                Require all granted
+            </Files>
+        </Directory>
+    </VirtualHost>
    ```
 8. Reload apache2
    ```sudo systemctl restart apache2```
