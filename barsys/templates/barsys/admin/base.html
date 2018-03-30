@@ -3,78 +3,81 @@
 {% load bootstrap3 %}
 {% load staticfiles %}
 {% block bootstrap3_title %}Barsys management{% endblock %}
-{% block bootstrap3_extra_head %}<meta name="viewport" content="width=device-width, initial-scale=1.0">{% endblock %}
+{% block bootstrap3_extra_head %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">{% endblock %}
 
 {% block bootstrap3_content %}
-<nav class="navbar navbar-default">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-                    data-target="#bs-example-navbar-collapse-1">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="{% url 'user_home' %}">Barsys management</a>
-        </div>
-        {% if user.is_authenticated %}
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a href="{% url 'admin_purchase_list' %}">Purchases</a>
-                </li>
-                <li>
-                    <a href="{% url 'admin_user_list' %}">Users</a>
-                </li>
-                <li>
-                    <a href="{% url 'admin_product_list' %}">Products</a>
-                </li>
-                <li>
-                    <a href="{% url 'admin_category_list' %}">Categories</a>
-                </li>
-                <li>
-                    <a href="{% url 'admin_payment_list' %}">Payments</a>
-                </li>
-                <li>
-                    <a href="{% url 'admin_invoice_list' %}">Invoices</a>
-                </li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Misc
-                        <span class="caret"></span>
-                    </a>
-                    <ul class="dropdown-menu" role="menu">
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                        data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{% url 'user_home' %}">Barsys management</a>
+            </div>
+            {% if user.is_authenticated %}
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav navbar-right">
                         <li>
-                            <a href="{% url 'admin_statsdisplay_list' %}">Stats Displays</a>
+                            <a href="{% url 'admin_purchase_list' %}">Purchases</a>
                         </li>
                         <li>
-                            <a href="{% url 'admin_productautochangeset_list' %}">Product Autochange Sets</a>
+                            <a href="{% url 'admin_user_list' %}">Users</a>
                         </li>
                         <li>
-                            <a href="{% url 'admin_freeitem_list' %}">Free items</a>
+                            <a href="{% url 'admin_product_list' %}">Products</a>
                         </li>
                         <li>
-                            <a href="{% url 'admin_purchase_statistics_by_category' %}">Purchases by category</a>
+                            <a href="{% url 'admin_category_list' %}">Categories</a>
                         </li>
                         <li>
-                            <a href="{% url 'admin_purchase_statistics_by_product' %}">Purchases by product</a>
+                            <a href="{% url 'admin_payment_list' %}">Payments</a>
                         </li>
                         <li>
-                            <a href="{% url 'admin_purchase_statistics_by_user' %}">Purchases by user</a>
+                            <a href="{% url 'admin_invoice_list' %}">Invoices</a>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                               aria-expanded="false">Misc
+                                <span class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu" role="menu">
+                                <li>
+                                    <a href="{% url 'admin_statsdisplay_list' %}">Stats Displays</a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'admin_productautochangeset_list' %}">Product Autochange Sets</a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'admin_freeitem_list' %}">Free items</a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'admin_purchase_statistics_by_category' %}">Purchases by
+                                        category</a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'admin_purchase_statistics_by_product' %}">Purchases by product</a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'admin_purchase_statistics_by_user' %}">Purchases by user</a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'admin_user_statistics_by_account_balance' %}">Users by balance</a>
+                                </li>
+                            </ul>
                         </li>
                         <li>
-                            <a href="{% url 'admin_user_statistics_by_account_balance' %}">Users by balance</a>
+                            <a href="{% url 'user_logout' %}">Logout</a>
                         </li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="{% url 'user_logout' %}">Logout</a>
-                </li>
 
-            </ul>
-        </div>{% endif %}
-    </div>
-</nav>
+                    </ul>
+                </div>{% endif %}
+        </div>
+    </nav>
 
     <div class="container">
         {% bootstrap_messages messages %}
@@ -82,8 +85,8 @@
         {% endblock %}
     </div>
 
-{% block bootstrap3_extra_script %}
-{% block extra_js %}
-{% endblock %}
-{% endblock %}
+    {% block bootstrap3_extra_script %}
+        {% block extra_js %}
+        {% endblock %}
+    {% endblock %}
 {% endblock %}
