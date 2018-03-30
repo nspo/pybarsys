@@ -20,11 +20,6 @@
     {% include "./payments_subtable.html" with payments=object_list show_user=True %}
 {% endblock %}
 
-{% block below_table %}
-    <p>{{ paginator.count }} results</p>
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
-{% endblock %}
-
 {% block additional_content %}
     {% include "barsys/admin/list_filter.html" with center=True %}
 {% endblock %}

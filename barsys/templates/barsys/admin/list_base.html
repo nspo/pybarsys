@@ -21,7 +21,15 @@
                 </table>
             {% endblock %}
         </div>
-        {% block below_table %}{% endblock %}
+        {% block below_table %}
+            <p>{{ paginator.count }} results</p>
+            <div class="hidden-xs">
+                {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+            </div>
+            <div class="visible-xs">
+                {% bootstrap_pagination page_obj extra=request.GET.urlencode pages_to_show=4 %}
+            </div>
+        {% endblock %}
     </div>
 
     {% block additional_content %}{% endblock %}
