@@ -32,6 +32,7 @@ INSTALLED_APPS = [
 ]
 
 STATIC_URL = '/static/'
+SESSION_COOKIE_NAME = "pybarsys"
 
 MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
@@ -113,13 +114,13 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 BOOTSTRAP3 = {
     # The URL to the jQuery JavaScript file
-    'jquery_url': '/static/barsys/jquery/jquery.min.js',
+    'jquery_url': STATIC_URL + '/barsys/jquery/jquery.min.js',
 
     # The Bootstrap base URL
-    'base_url': '/static/barsys/bootstrap-3.3.7-dist/',
+    'base_url': STATIC_URL + '/barsys/bootstrap-3.3.7-dist/',
 
     # The complete URL to the Bootstrap CSS file (None means no theme)
-    'theme_url': '/static/barsys/bootstrap-3.3.7-dist/css/bootstrap-theme.css',
+    'theme_url': STATIC_URL + '/barsys/bootstrap-3.3.7-dist/css/bootstrap-theme.css',
 
 }
 
