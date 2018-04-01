@@ -1,14 +1,13 @@
 import csv
-import os.path
 
+import os.path
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core import exceptions, paginator
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
 from django.utils.text import Truncator
 from django.views.generic import edit, View
 from django.views.generic.detail import DetailView
@@ -23,16 +22,28 @@ from .view_helpers import get_renderable_stats_elements, get_most_bought_product
     get_most_bought_product_for_users
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class UserListView(FilterView):
+class UserIsAdminMixin(UserPassesTestMixin):
+    raise_exception = False
+    permission_denied_message = "User is not an admin"
+    login_url = "user_login"
+
+    def test_func(self):
+        u = self.request.user
+        if u.is_authenticated:
+            # against redirect loops
+            self.raise_exception = True
+
+        return u.is_active and u.is_staff
+
+
+class UserListView(UserIsAdminMixin, FilterView):
     filterset_class = filters.UserFilter
     template_name = 'barsys/admin/user_list.html'
 
     paginate_by = 10
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class UserExportView(FilterView):
+class UserExportView(UserIsAdminMixin, FilterView):
     filterset_class = filters.UserFilter
 
     def render_to_response(self, context, **response_kwargs):
@@ -53,8 +64,7 @@ class UserExportView(FilterView):
         return response
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class UserDetailView(DetailView):
+class UserDetailView(UserIsAdminMixin, DetailView):
     model = User
     template_name = "barsys/admin/user_detail.html"
     purchases_paginate_by = 5
@@ -101,21 +111,18 @@ class UserDetailView(DetailView):
         return context
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class UserCreateView(edit.CreateView):
+class UserCreateView(UserIsAdminMixin, edit.CreateView):
     model = User
     form_class = UserCreateForm
     template_name = "barsys/admin/user_new.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class UserUpdateView(edit.UpdateView):
+class UserUpdateView(UserIsAdminMixin, edit.UpdateView):
     model = User
     form_class = UserUpdateForm
     template_name = "barsys/admin/user_update.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class CheckedDeleteView(View):
     """ Base view class for calling a check on object.cannot_be_deleted() before .delete()ing it """
     success_url = None
@@ -151,34 +158,29 @@ class CheckedDeleteView(View):
         return render(request, self.template_name, context)
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class UserDeleteView(CheckedDeleteView):
+class UserDeleteView(UserIsAdminMixin, CheckedDeleteView):
     success_url = reverse_lazy('admin_user_list')
     model = User
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PurchaseListView(FilterView):
+class PurchaseListView(UserIsAdminMixin, FilterView):
     filterset_class = filters.PurchaseFilter
     template_name = "barsys/admin/purchase_list.html"
     paginate_by = 10
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PurchaseDetailView(DetailView):
+class PurchaseDetailView(UserIsAdminMixin, DetailView):
     model = Purchase
     template_name = "barsys/admin/purchase_detail.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PurchaseCreateView(edit.CreateView):
+class PurchaseCreateView(UserIsAdminMixin, edit.CreateView):
     model = Purchase
     form_class = PurchaseForm
     template_name = "barsys/admin/purchase_new.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PurchaseUpdateView(edit.UpdateView):
+class PurchaseUpdateView(UserIsAdminMixin, edit.UpdateView):
     model = Purchase
     form_class = PurchaseForm
     template_name = "barsys/admin/purchase_update.html"
@@ -198,7 +200,7 @@ class PurchaseUpdateView(edit.UpdateView):
         return redirect('admin_purchase_list')
 
 
-class PurchaseDeleteView(CheckedDeleteView):
+class PurchaseDeleteView(UserIsAdminMixin, CheckedDeleteView):
     model = Purchase
     success_url = reverse_lazy('admin_purchase_list')
 
@@ -206,121 +208,109 @@ class PurchaseDeleteView(CheckedDeleteView):
 # Category
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class CategoryListView(FilterView):
+class CategoryListView(UserIsAdminMixin, FilterView):
     filterset_class = filters.CategoryFilter
     template_name = 'barsys/admin/category_list.html'
 
     paginate_by = 10
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class CategoryDetailView(DetailView):
+class CategoryDetailView(UserIsAdminMixin, DetailView):
     model = Category
     template_name = "barsys/admin/category_detail.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class CategoryCreateView(edit.CreateView):
+class CategoryCreateView(UserIsAdminMixin, edit.CreateView):
     model = Category
     form_class = CategoryForm
     template_name = "barsys/admin/category_new.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class CategoryUpdateView(edit.UpdateView):
+class CategoryUpdateView(UserIsAdminMixin, edit.UpdateView):
     model = Category
     form_class = CategoryForm
     template_name = "barsys/admin/category_update.html"
 
 
-class CategoryDeleteView(CheckedDeleteView):
+class CategoryDeleteView(UserIsAdminMixin, CheckedDeleteView):
     model = Category
     success_url = reverse_lazy('admin_category_list')
 
 
 # Category END
 # Product BEGIN
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductListView(FilterView):
+
+class ProductListView(UserIsAdminMixin, FilterView):
     filterset_class = filters.ProductFilter
     template_name = 'barsys/admin/product_list.html'
 
     paginate_by = 10
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductDetailView(DetailView):
+class ProductDetailView(UserIsAdminMixin, DetailView):
     model = Product
     template_name = "barsys/admin/product_detail.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductCreateView(edit.CreateView):
+class ProductCreateView(UserIsAdminMixin, edit.CreateView):
     model = Product
     form_class = ProductForm
     template_name = "barsys/admin/product_new.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductUpdateView(edit.UpdateView):
+class ProductUpdateView(UserIsAdminMixin, edit.UpdateView):
     model = Product
     form_class = ProductForm
     template_name = "barsys/admin/product_update.html"
 
 
-class ProductDeleteView(CheckedDeleteView):
+class ProductDeleteView(UserIsAdminMixin, CheckedDeleteView):
     model = Product
     success_url = reverse_lazy('admin_product_list')
 
 
 # Product END
 # StatsDisplay BEGIN
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class StatsDisplayListView(FilterView):
+
+class StatsDisplayListView(UserIsAdminMixin, FilterView):
     filterset_class = filters.StatsDisplayFilter
     template_name = 'barsys/admin/statsdisplay_list.html'
 
     paginate_by = 10
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class StatsDisplayDetailView(DetailView):
+class StatsDisplayDetailView(UserIsAdminMixin, DetailView):
     model = StatsDisplay
     template_name = "barsys/admin/statsdisplay_detail.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class StatsDisplayCreateView(edit.CreateView):
+class StatsDisplayCreateView(UserIsAdminMixin, edit.CreateView):
     model = StatsDisplay
     form_class = StatsDisplayForm
     template_name = "barsys/admin/statsdisplay_new.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class StatsDisplayUpdateView(edit.UpdateView):
+class StatsDisplayUpdateView(UserIsAdminMixin, edit.UpdateView):
     model = StatsDisplay
     form_class = StatsDisplayForm
     template_name = "barsys/admin/statsdisplay_update.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class StatsDisplayDeleteView(CheckedDeleteView):
+class StatsDisplayDeleteView(UserIsAdminMixin, CheckedDeleteView):
     model = StatsDisplay
     success_url = reverse_lazy('admin_statsdisplay_list')
 
 
 # StatsDisplay END
 # Payment BEGIN
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PaymentListView(FilterView):
+
+class PaymentListView(UserIsAdminMixin, FilterView):
     filterset_class = filters.PaymentFilter
     template_name = "barsys/admin/payment_list.html"
     paginate_by = 10
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PaymentExportView(FilterView):
+class PaymentExportView(UserIsAdminMixin, FilterView):
     filterset_class = filters.PaymentFilter
 
     def render_to_response(self, context, **response_kwargs):
@@ -342,21 +332,18 @@ class PaymentExportView(FilterView):
         return response
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PaymentDetailView(DetailView):
+class PaymentDetailView(UserIsAdminMixin, DetailView):
     model = Payment
     template_name = "barsys/admin/payment_detail.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PaymentCreateView(edit.CreateView):
+class PaymentCreateView(UserIsAdminMixin, edit.CreateView):
     model = Payment
     form_class = PaymentForm
     template_name = "barsys/admin/payment_new.html"
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PaymentUpdateView(edit.UpdateView):
+class PaymentUpdateView(UserIsAdminMixin, edit.UpdateView):
     model = Payment
     form_class = PaymentForm
     template_name = "barsys/admin/payment_update.html"
@@ -376,23 +363,21 @@ class PaymentUpdateView(edit.UpdateView):
         return redirect('admin_payment_list')
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PaymentDeleteView(CheckedDeleteView):
+class PaymentDeleteView(UserIsAdminMixin, CheckedDeleteView):
     model = Payment
     success_url = reverse_lazy('admin_payment_list')
 
 
 # PAYMENT END
 # Invoice BEGIN
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class InvoiceListView(FilterView):
+
+class InvoiceListView(UserIsAdminMixin, FilterView):
     filterset_class = filters.InvoiceFilter
     template_name = "barsys/admin/invoice_list.html"
     paginate_by = 10
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class InvoiceDetailView(DetailView):
+class InvoiceDetailView(UserIsAdminMixin, DetailView):
     model = Invoice
     template_name = "barsys/admin/invoice_detail.html"
 
@@ -405,16 +390,14 @@ class InvoiceDetailView(DetailView):
         return context
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class InvoiceResendView(View):
+class InvoiceResendView(UserIsAdminMixin, View):
     def get(self, request, pk):
         invoice = get_object_or_404(Invoice, pk=pk)
         view_helpers.send_invoice_mails(request, [invoice])
         return redirect("admin_invoice_list")
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PaymentReminderSendView(View):
+class PaymentReminderSendView(UserIsAdminMixin, View):
     def get(self, request, pk):
         user = get_object_or_404(User, pk=pk)
         view_helpers.send_reminder_mails(request, [user])
@@ -422,8 +405,8 @@ class PaymentReminderSendView(View):
 
 
 # for debugging mail
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class InvoiceMailDebugView(DetailView):
+
+class InvoiceMailDebugView(UserIsAdminMixin, DetailView):
     model = Invoice
     template_name = os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "normal_invoice.html.html")
 
@@ -443,8 +426,7 @@ class InvoiceMailDebugView(DetailView):
         return context
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PaymentReminderMailDebugView(DetailView):
+class PaymentReminderMailDebugView(UserIsAdminMixin, DetailView):
     model = User
     template_name = os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "payment_reminder.html.html")
 
@@ -463,8 +445,8 @@ class PaymentReminderMailDebugView(DetailView):
 
 # end debugging mail
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class InvoiceCreateView(edit.FormView):
+
+class InvoiceCreateView(UserIsAdminMixin, edit.FormView):
     template_name = "barsys/admin/invoice_new.html"
     form_class = InvoicesCreateForm
     success_url = reverse_lazy("admin_invoice_list")
@@ -517,8 +499,7 @@ class InvoiceCreateView(edit.FormView):
         return super(InvoiceCreateView, self).form_valid(form)
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class InvoiceDeleteView(CheckedDeleteView):
+class InvoiceDeleteView(UserIsAdminMixin, CheckedDeleteView):
     model = Invoice
     success_url = reverse_lazy('admin_invoice_list')
 
@@ -527,8 +508,7 @@ class InvoiceDeleteView(CheckedDeleteView):
 # Statistics BEGIN
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PurchaseStatisticsByCategoryView(FilterView):
+class PurchaseStatisticsByCategoryView(UserIsAdminMixin, FilterView):
     filterset_class = filters.PurchaseFilter
     template_name = "barsys/admin/purchase_statistics.html"
     paginate_by = 10
@@ -575,8 +555,7 @@ class PurchaseStatisticsByCategoryView(FilterView):
         return kwargs
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PurchaseStatisticsByProductView(FilterView):
+class PurchaseStatisticsByProductView(UserIsAdminMixin, FilterView):
     filterset_class = filters.PurchaseFilter
     template_name = "barsys/admin/purchase_statistics.html"
     paginate_by = 10
@@ -612,8 +591,7 @@ class PurchaseStatisticsByProductView(FilterView):
         return kwargs
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class PurchaseStatisticsByUserView(FilterView):
+class PurchaseStatisticsByUserView(UserIsAdminMixin, FilterView):
     filterset_class = filters.PurchaseFilter
     template_name = "barsys/admin/purchase_statistics.html"
     paginate_by = 10
@@ -649,7 +627,6 @@ class PurchaseStatisticsByUserView(FilterView):
         return kwargs
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
 class UserStatisticsByAccountBalance(FilterView):
     filterset_class = filters.UserFilter
     template_name = "barsys/admin/user_account_balance_statistics.html"
@@ -668,14 +645,14 @@ class UserStatisticsByAccountBalance(FilterView):
 
 # Statistics END
 # ProductAutochangeSet BEGIN
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductAutochangeSetListView(FilterView):
+
+class ProductAutochangeSetListView(UserIsAdminMixin, FilterView):
     filterset_class = filters.ProductAutochangeSetFilter
     template_name = "barsys/admin/productautochangeset_list.html"
     paginate_by = 10
 
 
-class ProductAutochangeSetManageView(View):
+class ProductAutochangeSetManageView(UserIsAdminMixin, View):
     template_name = "barsys/admin/productautochangeset_form.html"
     new_title = "New Product Autochange Set"
     update_title = "Update Product Autochange Set"
@@ -717,14 +694,12 @@ class ProductAutochangeSetManageView(View):
         return render(request, self.template_name, context)
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductAutochangeSetDeleteView(CheckedDeleteView):
+class ProductAutochangeSetDeleteView(UserIsAdminMixin, CheckedDeleteView):
     model = ProductAutochangeSet
     success_url = reverse_lazy('admin_productautochangeset_list')
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductAutochangeSetExecuteView(View):
+class ProductAutochangeSetExecuteView(UserIsAdminMixin, View):
     def get(self, request, pk):
         pacs = get_object_or_404(ProductAutochangeSet, pk=pk)
 
@@ -734,8 +709,7 @@ class ProductAutochangeSetExecuteView(View):
         return redirect("admin_productautochangeset_list")
 
 
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class ProductAutochangeSetImportView(View):
+class ProductAutochangeSetImportView(UserIsAdminMixin, View):
     def get(self, request, pk):
         pacs = get_object_or_404(ProductAutochangeSet, pk=pk)
 
@@ -748,7 +722,45 @@ class ProductAutochangeSetImportView(View):
 # ProductAutochangeSet END
 
 
-# user area end
+# FreeItem BEGIN
+
+class FreeItemListView(UserIsAdminMixin, FilterView):
+    filterset_class = filters.FreeItemFilter
+    template_name = "barsys/admin/freeitem_list.html"
+    paginate_by = 10
+
+
+class FreeItemCreateView(UserIsAdminMixin, edit.CreateView):
+    model = FreeItem
+    form_class = FreeItemForm
+    template_name = "barsys/admin/generic_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(FreeItemCreateView, self).get_context_data(**kwargs)
+        context["title"] = "New free item"
+        return context
+
+
+class FreeItemUpdateView(UserIsAdminMixin, edit.UpdateView):
+    model = FreeItem
+    form_class = FreeItemForm
+    template_name = "barsys/admin/generic_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(FreeItemUpdateView, self).get_context_data(**kwargs)
+        context["title"] = "Update free item"
+        return context
+
+
+class FreeItemDeleteView(UserIsAdminMixin, CheckedDeleteView):
+    model = FreeItem
+    success_url = reverse_lazy('admin_freeitem_list')
+
+
+# FreeItem END
+
+
+# admin area end
 
 
 class MainUserPurchaseView(View):
@@ -1005,43 +1017,3 @@ class MainUserHistoryView(View):
                    "last_invoice": last_invoice,
                    "pybarsys_preferences": PybarsysPreferences}
         return render(request, "barsys/main/user_history.html", context)
-
-
-# FreeItem BEGIN
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class FreeItemListView(FilterView):
-    filterset_class = filters.FreeItemFilter
-    template_name = "barsys/admin/freeitem_list.html"
-    paginate_by = 10
-
-
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class FreeItemCreateView(edit.CreateView):
-    model = FreeItem
-    form_class = FreeItemForm
-    template_name = "barsys/admin/generic_form.html"
-
-    def get_context_data(self, **kwargs):
-        context = super(FreeItemCreateView, self).get_context_data(**kwargs)
-        context["title"] = "New free item"
-        return context
-
-
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class FreeItemUpdateView(edit.UpdateView):
-    model = FreeItem
-    form_class = FreeItemForm
-    template_name = "barsys/admin/generic_form.html"
-
-    def get_context_data(self, **kwargs):
-        context = super(FreeItemUpdateView, self).get_context_data(**kwargs)
-        context["title"] = "Update free item"
-        return context
-
-
-@method_decorator(staff_member_required(login_url='user_login'), name='dispatch')
-class FreeItemDeleteView(CheckedDeleteView):
-    model = FreeItem
-    success_url = reverse_lazy('admin_freeitem_list')
-
-# FreeItem END
