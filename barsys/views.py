@@ -54,12 +54,13 @@ class UserExportView(UserIsAdminMixin, FilterView):
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
 
         writer = csv.writer(response)
-        writer.writerow(['display_name', 'email', 'pays_themselves', 'account_balance', 'unbilled_purchases'])
+        writer.writerow(
+            ['display_name', 'email', 'pays_themselves', 'account_balance', 'unbilled_purchases', 'unbilled_payments'])
 
-        for obj in self.object_list:
+        for user in self.object_list:
             writer.writerow(
-                [obj.display_name, obj.email, obj.pays_themselves(), obj.account_balance(),
-                 obj.purchases().unbilled().sum_cost()])
+                [user.display_name, user.email, user.pays_themselves(), user.account_balance(),
+                 user.purchases().unbilled().sum_cost(), user.payments().unbilled().sum_amount()])
 
         return response
 
