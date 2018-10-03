@@ -1,0 +1,16 @@
+{% load barsys_helpers %}
+{% if user.is_autolocked %}
+    Dein Account wurde vom System <b>automatisch gesperrt</b>, weil der Kontostand zweimal hintereinander weniger als
+    {{ pybarsys_preferences.Misc.BALANCE_BELOW_AUTOLOCK|currency }} betragen hat. Um die Sperre aufzuheben, stelle
+    bitte einen Kontostand über dem genannten Betrag sicher. Falls du Fragen zum Vorgang oder eine neue Zahlung
+    geleistet hast, kontaktiere bitte die Ansprechpartner am Ende der Mail.
+{% else %}
+    {% if user.account_balance < pybarsys_preferences.Misc.BALANCE_BELOW_AUTOLOCK %}
+        <b>Warnung:</b>
+    {% else %}
+        Info:
+    {% endif %}
+    Sollte dein Kontostand zweimal hintereinander unter {{ pybarsys_preferences.Misc.BALANCE_BELOW_AUTOLOCK|currency }}
+    fallen, sperrt das System automatisch den Account. Bis zur Aufhebung der Sperre können dann keine neuen Einkäufe
+    getätigt werden.
+{% endif %}

@@ -11,6 +11,10 @@
     <p>Falls dein Kontostand weniger als {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }} beträgt,
         überweise bitte Geld an das folgende Bankkonto:</p>
     {% include "./bank_account_details.html.html" %}
+
+    <br/>
+    {% include "./autolock_info.html" with user=recipient %}
+
     <p/>
 
     <hr/>

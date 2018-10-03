@@ -173,3 +173,7 @@ class PybarsysPreferences:
         # Whether to randomize order of StatsDisplays and show a random one first
         # (irrespective of show_by_default setting)
         SHUFFLE_STATSDISPLAY_ORDER = False
+
+        # Automatically lock account when balance is below this
+        # threshold before and after creating invoices
+        BALANCE_BELOW_AUTOLOCK = Decimal('-100')

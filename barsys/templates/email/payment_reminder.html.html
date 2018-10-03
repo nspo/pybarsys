@@ -9,9 +9,12 @@
         Your current account balance is: <b>{{ recipient.account_balance|currency }}</b></p>
 
     <p>If your account balance is below {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, please
-        transfer
-        money to the following bank account:</p>
+        transfer money to the following bank account:</p>
     {% include "./bank_account_details.html.html" %}
+
+    <br/>
+    {% include "./autolock_info.html" with user=recipient %}
+
     <p/>
 
     <hr/>

@@ -457,10 +457,17 @@ class InvoiceCreateView(UserIsAdminMixin, edit.FormView):
         send_invoices = form.cleaned_data["send_invoices"]
         send_dependant_notifications = form.cleaned_data["send_dependant_notifications"]
         send_payment_reminders = form.cleaned_data["send_payment_reminders"]
+        autolock_accounts = form.cleaned_data["autolock_accounts"]
+
         skipped_users = []
         invoices = []
         users_to_remind = []
+        users_autolocked = []
+
         for user in users:
+
+            balance_before = user.account_balance()
+
             if Purchase.objects.to_pay_by(user).exists() or user.payments().unbilled().exists():
                 # print("{} has {} purchases to pay for: ".format(user, purchases_to_pay.count()))
                 invoice = Invoice.objects.create_for_user(user)
@@ -471,20 +478,38 @@ class InvoiceCreateView(UserIsAdminMixin, edit.FormView):
                     users_to_remind.append(user)
                 skipped_users.append(user)
 
+            # remove autolock if new balance is adequate
+            if user.is_autolocked and user.account_balance() > PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK:
+                user.is_autolocked = False
+                user.save()
+
+            if autolock_accounts:
+                # autolock user if necessary
+                if balance_before < PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK and user.account_balance() < PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK:
+                    # user has surpassed autolock threshold twice
+                    user.is_autolocked = True
+                    user.save()
+                    users_autolocked.append(user)
+
         if len(invoices) > 0:
             created_str = "Created {} invoice(s) for the following user(s): {}. ".format(len(invoices), ", ".join(
                 ["{} ({})".format(i.recipient.display_name, currency(i.amount_purchases - i.amount_payments)) for i in
                  invoices]))
         else:
             created_str = "No invoices were created. "
+        messages.info(self.request, created_str)
 
         if len(skipped_users) > 0:
             # skipped_str = "Skipped {} user(s): {}".format(len(skipped_users), ' ,'.join([u.__str__() for u in skipped_users]))
             skipped_str = "Skipped {} user(s) because they did not need new invoices.".format(len(skipped_users))
-        else:
-            skipped_str = "No users were skipped because they did not need new invoices."
+            messages.info(self.request, skipped_str)
 
-        messages.info(self.request, created_str + skipped_str)
+        if len(users_autolocked) > 0:
+            autolocked_str = "The following users were autolocked: {}".format(
+                ', '.join([u.__str__() for u in users_autolocked])
+            )
+            messages.warning(self.request, autolocked_str)
+
 
         # Send invoice mails if wanted
         if send_invoices and len(invoices) > 0:
@@ -830,6 +855,14 @@ class MainUserPurchaseView(View):
 
     def get(self, request, user_id):
         user = get_object_or_404(User.objects.active().buyers(), pk=user_id)
+
+        if user.is_autolocked:
+            messages.error(request, "User is currently autolocked: {}".format(user))
+            return redirect("main_user_list")
+        if not user.pays_themselves() and user.purchases_paid_by_other.is_autolocked:
+            messages.error(request, "The payer of this users' purchases is currently autolocked: {}".format(user))
+            return redirect("main_user_list")
+
         categories = Category.objects.all()
 
         context = {}
@@ -911,10 +944,25 @@ class MainUserPurchaseMultiBuyView(View):
             messages.error(request, "Invalid format of user IDs")
             return None
 
-        users = User.objects.active().buyers().filter(pk__in=user_pks)
-        if users.count() is not len(user_pks):
+        all_users = User.objects.active().buyers().filter(pk__in=user_pks)
+        if all_users.count() is not len(user_pks):
             # Not all users could be found
             messages.error(request, "Not all requested users are active buyers")
+            return None
+
+        users = all_users.filter(is_autolocked=False)
+        if users.count() is not len(user_pks):
+            messages.error(request, "Some users are currently autolocked: {}".format(
+                ', '.join(u.__str__() for u in all_users.exclude(is_autolocked=False))
+            ))
+            return None
+
+        cond_autolock2 = Q(purchases_paid_by_other=None) | Q(purchases_paid_by_other__is_autolocked=False)
+        users = all_users.filter(cond_autolock2)
+        if users.count() is not len(user_pks):
+            messages.error(request, "The payers of some users' purchases are currently autolocked: {}".format(
+                ', '.join(u.__str__() for u in all_users.exclude(cond_autolock2))
+            ))
             return None
 
         return users

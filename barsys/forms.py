@@ -104,8 +104,12 @@ class InvoicesCreateForm(forms.Form):
 
     send_payment_reminders = forms.BooleanField(required=False, initial=True,
                                                 help_text="Whether to send payment reminder mails to users with an "
-                                                          "account balance below config.MAIL_BALANCE_SEND_MONEY, but "
+                                                          "account balance below number defined in settings, but "
                                                           "no unbilled purchases.")
+
+    autolock_accounts = forms.BooleanField(required=False, initial=True,
+                                           help_text="Automatically lock account if balance is below "
+                                                     "number defined in settings before and after creating new invoices.")
 
     def __init__(self, *args, **kwargs):
         super(InvoicesCreateForm, self).__init__(*args, **kwargs)
@@ -151,7 +155,7 @@ class UserCustomCreationForm(forms.ModelForm):
         model = User
         fields = (
             'email', 'display_name', 'password1', 'password2', "purchases_paid_by_other", 'is_active', 'is_buyer',
-            'is_favorite', 'is_admin')
+            'is_favorite', 'is_admin', 'is_autolocked')
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
@@ -251,6 +255,12 @@ class SingleUserSinglePurchaseForm(SinglePurchaseForm):
         user_id = self.cleaned_data["user_id"]
         try:
             user = User.objects.active().buyers().get(pk=user_id)
+
+            if user.is_autolocked:
+                raise ValidationError("User is currently autolocked and cannot purchase products")
+            elif not user.pays_themselves() and user.purchases_paid_by_other.is_autolocked:
+                raise ValidationError("The user responsible for this accounts' payments is currently autolocked")
+
             return user_id
         except User.DoesNotExist:
             raise ValidationError("Invalid user ID")
@@ -271,7 +281,7 @@ class SingleUserSinglePurchaseForm(SinglePurchaseForm):
                 pass
 
             if cleaned_data.get("give_away_free"):
-                raise ValidationError({'give_away_free' : 'Items that are already free cannot be given away for free.'})
+                raise ValidationError({'give_away_free': 'Items that are already free cannot be given away for free.'})
 
     user_id = forms.IntegerField()
     give_away_free = forms.BooleanField(required=False)

@@ -5,6 +5,8 @@ Your current account balance is: {{ recipient.account_balance|currency }}
 
 If your account balance is below {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, please send money to the following bank account:
 {% include "./bank_account_details.plaintext.html" %}
+{% if invoice.recipient.is_autolocked %}
+    Your account is currently autolocked.{% endif %}
 
 To see your last invoices and payments, please look at the HTML version of this mail.
 

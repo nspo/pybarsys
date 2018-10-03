@@ -101,6 +101,8 @@ class User(AbstractBaseUser):
     is_admin = models.BooleanField(default=False, help_text="User may login as admin")
     is_buyer = models.BooleanField(default=True, help_text="User may buy products")
     is_favorite = models.BooleanField(default=False, help_text="User is shown under favorites")
+    is_autolocked = models.BooleanField(default=False, help_text="User was automatically locked "
+                                                                 "due to the outstanding balance")
 
     purchases_paid_by_other = models.ForeignKey("self", on_delete=models.PROTECT, default=None, null=True, blank=True,
                                                 help_text="If set, another active user (who pays for their own "

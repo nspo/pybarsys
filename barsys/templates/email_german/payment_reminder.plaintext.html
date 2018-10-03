@@ -5,6 +5,8 @@ Dein aktueller Kontostand beträgt: {{ recipient.account_balance|currency }}
 
 Falls dein Kontostand weniger als {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }} beträgt, überweise bitte Geld an das folgende Bankkonto:
 {% include "./bank_account_details.plaintext.html" %}
+{% if invoice.recipient.is_autolocked %}
+    Dein Account hat zur Zeit einen Autolock-Vermerk.{% endif %}
 
 Um deine letzten Rechnungen und Zahlungen zu sehen, schaue bitte in die HTML-Version dieser E-Mail.
 

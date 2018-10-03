@@ -22,6 +22,10 @@
     {% endif %}
 
     {% include "./bank_account_details.html.html" %}
+
+    <br/>
+    {% include "./autolock_info.html" with user=invoice.recipient %}
+
     <p/>
 
     <p>Der Gesamtbetrag dieser Rechnung ist <b>{{ invoice.due|currency }}</b>. Sie besteht aus folgenden Einkäufen und

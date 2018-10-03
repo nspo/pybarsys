@@ -22,6 +22,10 @@
     {% endif %}
 
     {% include "./bank_account_details.html.html" %}
+
+    <br/>
+    {% include "./autolock_info.html" with user=invoice.recipient %}
+
     <p/>
 
     <p>The total amount of this invoice is <b>{{ invoice.due|currency }}</b>. It consists of the following purchases and

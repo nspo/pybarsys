@@ -1,0 +1,16 @@
+{% load barsys_helpers %}
+{% if user.is_autolocked %}
+    Your account was <b>automatically locked</b> by the system due to a balance below
+    {{ pybarsys_preferences.Misc.BALANCE_BELOW_AUTOLOCK|currency }} twice in a row. To remove the lock, please
+    ensure a balance above the stated amount. If you have questions about the process or have made a new payment,
+    please contact the administrators stated at the end of the mail.
+{% else %}
+    {% if user.account_balance < pybarsys_preferences.Misc.BALANCE_BELOW_AUTOLOCK %}
+        <b>Warning:</b>
+    {% else %}
+        Note:
+    {% endif %}
+    Should your account balance fall below {{ pybarsys_preferences.Misc.BALANCE_BELOW_AUTOLOCK|currency }}
+    twice in a row, the system will automatically lock your account from making further purchases until
+    the next payment is received.
+{% endif %}
