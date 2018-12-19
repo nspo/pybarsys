@@ -1,3 +1,4 @@
+from .common import *
 # Put your production settings in this file!
 
 # SECURITY WARNING: keep the secret key used in production secret!
