@@ -64,7 +64,7 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    python3 manage.py runserver 0.0.0.0:4000 --insecure
    # CTRL+C
    ```
-3. Think about [how to deploy Django](https://docs.djangoproject.com/en/1.11/howto/deployment/)
+3. Think about [how to deploy Django](https://docs.djangoproject.com/en/1.11/howto/deployment/): Django is written in Python and does not include a real webserver. Therefore you need something else (e.g. Apache2) to run a Django site.
 4. Easiest/example method to deploy: [apache2 with mod_wsgi](https://docs.djangoproject.com/en/1.11/howto/deployment/wsgi/modwsgi/)
 5. Install apache2 (if not yet installed)
 
@@ -79,7 +79,7 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
 7. Create pybarsys apache2 config file (examples should work on Debian/Ubuntu and related Linux distributions):
 
    ```bash
-   sudo vim /etc/apache2/sites-available/pybarsys.conf
+   sudo nano /etc/apache2/sites-available/pybarsys.conf
    ```
    
    File contents (example):
@@ -100,11 +100,18 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
         </Directory>
     </VirtualHost>
    ```
-8. Reload apache2
-   ```sudo systemctl restart apache2```
+8. Enable new site and reload apache2
+   ```bash
+   sudo a2ensite pybarsys
+   sudo systemctl restart apache2
+   ```
    
-9. Change pybarsys/settings.py: switch to production_yourbar settings file
-10. Copy pybarsys/_settings/production.py to pybarsys/_settings/production_yourbar.py:
+9. Copy pybarsys/_settings/production.py to pybarsys/_settings/production_yourbar.py and set your own settings:
+   ```bash
+   cd /var/www/pybarsys/pybarsys/_settings
+   cp production.py production_yourbar.py
+   nano production_yourbar.py
+   ```
    * Set own `SECRET_KEY`
    * Set `LANGUAGE_CODE` (e.g. `"de-de"` for German)
      * You can also switch to the German mail templates (with PybarsysPreferences)
@@ -113,7 +120,11 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    * Set own STATIC_URL if needed
    * ...
    
-11. Create superuser
+10. Change pybarsys/settings.py: comment out dev settings and uncomment the line with production_yourbar so that the pybarsys/_settings/production_yourbar.py settings file is used
+   
+11. Reload Apache2 to use new settings:
+   ```sudo systemctl reload apache2```
+12. Create superuser
    ```python
    /v/w/pybarsys> sudo python3 manage.py shell
    from barsys.models import *
@@ -122,8 +133,8 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    u.save()
    u2=User.objects.create(email="jessica@example.com", display_name="Jessica")
    ```
-12. Login at http://localhost/admin/ and create other users, categories, products, ...
-13. Adapt mail templates under barsys/templates/email/ to your own preferences
+13. Login at http://localhost/admin/ and create other users, categories, products, ...
+14. Adapt mail templates under barsys/templates/email/ to your own preferences
 
 # Bug reports
 Please feel free to open an issue in case you think you spotted a bug.
