@@ -1,0 +1,63 @@
+{% extends "email/html_email_base.html" %}
+{% load barsys_helpers %}
+{% load tz %}
+
+{% block main_content %}
+    <h1>{{ pybarsys_preferences.EMAIL.INVOICE_SUBJECT }}</h1>
+    <p>Beste {{ invoice.recipient.display_name }},</p>
+
+    <p>Dit is een factuur van <i>{{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}</i>. <br/>
+        Je huidige tegoed is <b>{{ invoice.recipient.account_balance|currency }}</b>.</p>
+
+    {% if invoice.recipient.account_balance <= pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY %}
+        <p>Het tegoed van je account is minder dan {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, 
+            daarom willen wij je verzoeken om geld over te maken naar onderstaande rekening:
+        </p>
+    {% else %}
+        <p>
+            Het tegoed van je account is boven {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }}, 
+            dus het is niet verplicht om geld over te maken.
+            Je kunt er voor kiezen om alsnog geld over te maken voor toekomstige aankopen.
+        </p>
+    {% endif %}
+
+    {% include "./bank_account_details.html.html" %}
+
+    <br/>
+    {% include "./autolock_info.html" with user=invoice.recipient %}
+
+    <p/>
+
+    <p>Het totaalbedrag van deze factuur is <b>{{ invoice.due|currency }}</b>. 
+        Dit is het resultaat van de volgende aankopen en betalingen:
+    </p>
+    <hr/>
+    <h2>Eigen aankopen:</h2>
+    {% include "./subtable_purchases.html" with purchases=own_purchases %}
+    <hr/>
+    {% for p_user, u_purchases in other_purchases_grouped %}
+        <h2>Aankoop van {{ p_user }}:</h2>
+        {% include "./subtable_purchases.html" with purchases=u_purchases %}
+        <hr/>
+    {% endfor %}
+    <h2>Betalingen:</h2>
+    {% include "./subtable_payments.html" with payments=payments %}
+    <hr/>
+
+    <h2>Je facturen tot nu toe (inclusief huidige):</h2>
+    {% include "./subtable_invoices.html" with invoices=last_invoices %}
+
+    <hr/>
+
+    <p>Als je nog vragen hebt, kun je mailen naar: <a
+            href="mailto:{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}">{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}</a>.
+    </p>
+
+    <p>Fijne dag!</p>
+{% endblock %}
+
+{% block footer %}
+    Je hebt tot nu toe aankopen gedaan met een totaalbedrag van {{ invoice.recipient.purchases.sum_cost|currency }}.<br/>
+    Deze factuur is automatisch aangemaakt op {{ invoice.created_date|localtime|sdate }} door
+    <a href="https://github.com/nspo/pybarsys">pybarsys</a>.
+{% endblock %}

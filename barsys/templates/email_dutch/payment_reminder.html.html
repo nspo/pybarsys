@@ -1,0 +1,40 @@
+{% extends "email/html_email_base.html" %}
+{% load barsys_helpers %}
+
+{% block main_content %}
+    <h1>{{ pybarsys_preferences.EMAIL.PAYMENT_REMINDER_SUBJECT }}</h1>
+    <p>Beste {{ recipient.display_name }},</p>
+
+    <p>Dit is een betaalherinnering van <i>{{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}</i>. <br/>
+        Je huidige tegoed is: <b>{{ recipient.account_balance|currency }}</b></p>
+
+    <p>Als het tegoed van je account onder {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }} is, 
+        verzoeken wij je om nogmaals geld over te maken naar het volgende rekeningnummer:</p>
+    {% include "./bank_account_details.html.html" %}
+
+    <br/>
+    {% include "./autolock_info.html" with user=recipient %}
+
+    <p/>
+
+    <hr/>
+
+    <h2>Je laatste facturen:</h2>
+    {% include "./subtable_invoices.html" with invoices=last_invoices %}
+
+    <hr/>
+
+    <h2>Je laatste betalingen:</h2>
+    {% include "./subtable_payments.html" with payments=last_payments %}
+
+    <hr/>
+
+    <p>Als je vragen hebt, kun je mailen naar <a
+            href="mailto:{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}">{{ pybarsys_preferences.EMAIL.CONTACT_EMAIL }}</a>.</p>
+
+    <p>Fijne dag!</p>
+{% endblock %}
+
+{% block footer %}
+    Deze mail is automatisch aangemaakt door <a href="https://github.com/nspo/pybarsys">pybarsys</a>.
+{% endblock %}

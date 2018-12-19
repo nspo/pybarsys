@@ -1,0 +1,25 @@
+{% load barsys_helpers %}
+{% load tz %}
+<table>
+    <thead class="left">
+    <th>Tijd</th>
+    <th>Aankoop</th>
+    <th>Betalingen</th>
+    <th>(Prijs)</th>
+    </thead>
+    <tbody>
+    {% for i in invoices %}
+        <tr>
+            <td>{{ i.created_date|localtime|sdatetime }}</td>
+            <td>{{ i.amount_purchases|currency }}</td>
+            <td>{{ i.amount_payments|currency }}</td>
+            <td>({{ i.due|currency }})</td>
+        </tr>
+    {% endfor %}
+    {% if not invoices %}
+        <tr>
+            <td colspan="2">Geen</td>
+        </tr>
+    {% endif %}
+    </tbody>
+</table>

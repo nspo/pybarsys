@@ -1,0 +1,16 @@
+{% load barsys_helpers %}Beste {{ recipient.display_name }},
+
+Dit is een betaalherinnering van {{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}.
+Het huidige tegoed van je account is: {{ recipient.account_balance|currency }}
+
+Als het tegoed van je account onder {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }} komt, 
+verzoeken we je om geld over te maken naar het volgende rekeningnummer:
+{% include "./bank_account_details.plaintext.html" %}
+{% if invoice.recipient.is_autolocked %}
+    Je account is momenteel automatisch geblokkeerd.{% endif %}
+
+Om je laatste facturen en betalingen te bekijken, open je de HTML versie van deze mail.
+
+Fijne dag!
+----------------
+Deze mail is automatisch aangemaakt door pybarsys (https://github.com/nspo/pybarsys)

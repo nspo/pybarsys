@@ -1,0 +1,17 @@
+{% load barsys_helpers %}
+{% if user.is_autolocked %}
+    Je account is <b>automatisch geblokkeerd</b> door het systeem, 
+    omdat je tegoed twee keer achter elkaar minder dan
+    {{ pybarsys_preferences.Misc.BALANCE_BELOW_AUTOLOCK|currency }} is.
+    Om de blokkade te verwijderen, moet je zorgen dat je tegoed boven het genoemde bedrag is.
+    Als je vragen hebt over het proces of al een nieuwe betaling hebt gedaan,
+    neem dan contact op met het mailadres dat onderaan deze mail staat.
+{% else %}
+    {% if user.account_balance < pybarsys_preferences.Misc.BALANCE_BELOW_AUTOLOCK %}
+        <b>Waarschuwing:</b>
+    {% else %}
+        Let op:
+    {% endif %}
+    Als je tegoed twee keer achter elkaar onder {{ pybarsys_preferences.Misc.BALANCE_BELOW_AUTOLOCK|currency }}
+    komt, zal het systeem je automatisch blokkeren. Je kunt dan geen nieuwe aankopen meer doen.
+{% endif %}
