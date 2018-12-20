@@ -158,8 +158,10 @@ If that is the case, proceed as follows. Otherwise, change everything back to th
 git stash # stash changes to python/settings.py
 git pull # get pybarsys update
 git stash pop # pop stashed changes from above
+sudo -u www-data /bin/bash # start bash as www-data
 source bin/activate
-sudo -u www-data python3 manage.py migrate # update database
+python3 manage.py migrate # update database
+# CTRL+D to get back to original shell
 sudo systemctl start apache2
 ```
 Finally, test whether everything works again. If not, you can try to fix the error or use your backup.
