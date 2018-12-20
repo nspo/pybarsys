@@ -68,7 +68,7 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    python3 manage.py migrate
    # Optional: test with builtin server
    python3 manage.py runserver 0.0.0.0:4000 --insecure
-   # CTRL+C
+   # CTRL+
    ```
 3. Think about [how to deploy Django](https://docs.djangoproject.com/en/1.11/howto/deployment/): Django is written in Python and does not include a real webserver. Therefore you need something else (e.g. Apache2) to run a Django site.
 4. Easiest/example method to deploy: [apache2 with mod_wsgi](https://docs.djangoproject.com/en/1.11/howto/deployment/wsgi/modwsgi/)
@@ -81,6 +81,10 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    ```bash
    sudo chown www-data .
    sudo chown www-data db.sqlite3
+   ```
+   Alternative, more drastic version if apache2 later complains about not having permissions:
+   ```bash
+   sudo chown www-data -R .
    ```
 7. Create pybarsys apache2 config file (examples should work on Debian/Ubuntu and related Linux distributions):
 
@@ -155,13 +159,14 @@ git diff # see what files you have changed
 You should *only* have changed `pybarsys/settings.py` to reference your own `production_yourbar` settings.
 If that is the case, proceed as follows. Otherwise, change everything back to the pybarsys default except `python/settings.py` or at least be careful what you do.
 ```bash
+# Make sure you have write permissions for pybarsys - in this example the current user is in the group assigned to pybarsys but has no write permissions
+sudo chmod g+rw -R . # allow reading/writing to all files in current folder for group
 git stash # stash changes to python/settings.py
 git pull # get pybarsys update
 git stash pop # pop stashed changes from above
-sudo -u www-data /bin/bash # start bash as www-data
+
 source bin/activate
 python3 manage.py migrate # update database
-# CTRL+D to get back to original shell
 sudo systemctl start apache2
 ```
 Finally, test whether everything works again. If not, you can try to fix the error or use your backup.
