@@ -144,6 +144,26 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    ```
 13. Login at http://your_server_ip/admin/ to create more users, categories, products etc. and understand pybarsys
 
+# How to update pybarsys?
+```bash
+sudo systemctl stop apache2
+cd /var/www
+sudo cp -a pybarsys /var/backups/2000-01-01-pybarsys # backup!
+cd pybarsys
+git diff # see what files you have changed
+```
+You should *only* have changed `pybarsys/settings.py` to reference your own `production_yourbar` settings.
+If that is the case, proceed as follows. Otherwise, change everything back to the pybarsys default except `python/settings.py` or at least be careful what you do.
+```bash
+git stash # stash changes to python/settings.py
+git pull # get pybarsys update
+git stash pop # pop stashed changes from above
+source bin/activate
+sudo -u www-data python3 manage.py migrate # update database
+sudo systemctl start apache2
+```
+Finally, test whether everything works again. If not, you can try to fix the error or use your backup.
+
 # Bug reports
 Please feel free to open an issue in case you think you spotted a bug.
 
