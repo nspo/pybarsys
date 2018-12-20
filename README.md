@@ -53,6 +53,10 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
  * [...]
 # Installation
 1. Download pybarsys into e.g. `/var/www/pybarsys`
+   ```bash
+   cd /var/www
+   git clone https://github.com/nspo/pybarsys.git
+   ```
 2. Setup virtualenv
    ```bash
    cd /var/www/
