@@ -1,0 +1,12 @@
+{% load barsys_helpers %}Beste {{ dependant.display_name }},
+
+Dit is een melding van je laatste aankopen bij {{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}.
+{{ invoice.recipient }} is verantwoordelijk om je aankopen te betalen, dus je hoeft zelf geen geld over te maken. 
+Hij of zij heeft al een factuur gekregen.
+
+Het totaalbedrag van de aankopen van deze factuur is {{ purchases.sum_cost|currency }}. 
+Om al deze aankopen te bekijken, open je de HTML versie van deze mail.
+
+Fijne dag!
+----------------
+Deze factuur is automatisch aangemaakt door (https://github.com/nspo/pybarsys)

@@ -1,0 +1,17 @@
+{% load barsys_helpers %}Beste {{ invoice.recipient.display_name }},
+
+Dit is een factuur van {{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}.
+Het huidige tegoed van je account is {{ invoice.recipient.account_balance|currency }}.
+
+Als het tegoed van je account onder {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRANSFER_MONEY|currency }} komt, 
+wordt er verzocht om geld over te maken naar het volgende rekeningnummer:
+{% include "./bank_account_details.plaintext.html" %}
+{% if invoice.recipient.is_autolocked %}
+    Je account is momenteel automatisch geblokkeerd.{% endif %}
+
+Het totale bedrag van deze factuur is {{ invoice.due|currency }}. 
+Om meer details te zien, bekijk de HTML versie van deze mail.
+
+Fijne dag!
+----------------
+Deze factuur is automatisch aangemaakt door pybarsys (https://github.com/nspo/pybarsys)

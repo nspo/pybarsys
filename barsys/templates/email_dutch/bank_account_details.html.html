@@ -1,0 +1,21 @@
+{% load barsys_helpers %}
+<table style="text-align: left;">
+    <tbody>
+    <tr>
+        <th>Ten name van</th>
+        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_RECIPIENT }}</td>
+    </tr>
+    <tr>
+        <th>Rekening Nr.</th>
+        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_NUMBER }}</td>
+    </tr>
+    <tr>
+        <th>Bank</th>
+        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_BANK }}</td>
+    </tr>
+    <tr>
+        <th>Betalingskenmerk</th>
+        <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_PAYMENT_REFERENCE }} {{ recipient.display_name|clean_str }}</td>
+    </tr>
+    </tbody>
+</table>
