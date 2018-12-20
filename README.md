@@ -158,8 +158,9 @@ git diff # see what files you have changed
 ```
 You should *only* have changed `pybarsys/settings.py` to reference your own `production_yourbar` settings.
 If that is the case, proceed as follows. Otherwise, change everything back to the pybarsys default except `python/settings.py` or at least be careful what you do.
+
+Make sure you have write permissions for pybarsys. In this example the current user `it` is in the group assigned to pybarsys but has no write permissions. If you want to set the group of all files to `it` first, you could do `sudo chgrp it -R .`.
 ```bash
-# Make sure you have write permissions for pybarsys - in this example the current user is in the group assigned to pybarsys but has no write permissions
 sudo chmod g+rw -R . # allow reading/writing to all files in current folder for group
 git stash # stash changes to python/settings.py
 git pull # get pybarsys update
