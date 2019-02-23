@@ -166,7 +166,8 @@ git stash # stash changes to python/settings.py
 git pull # get pybarsys update
 git stash pop # pop stashed changes from above
 
-source bin/activate
+source bin/activate # activate virtual environment
+pip3 install -r requirements.txt # update dependencies
 python3 manage.py migrate # update database
 sudo systemctl start apache2
 ```
