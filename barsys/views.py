@@ -1,6 +1,6 @@
 import csv
-
 import os.path
+
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core import exceptions, paginator
@@ -12,6 +12,9 @@ from django.utils.text import Truncator
 from django.views.generic import edit, View
 from django.views.generic.detail import DetailView
 from django_filters.views import FilterView
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from pybarsys.settings import PybarsysPreferences
 from . import filters
@@ -509,7 +512,6 @@ class InvoiceCreateView(UserIsAdminMixin, edit.FormView):
                 ', '.join([u.__str__() for u in users_autolocked])
             )
             messages.warning(self.request, autolocked_str)
-
 
         # Send invoice mails if wanted
         if send_invoices and len(invoices) > 0:
@@ -1066,3 +1068,29 @@ class MainUserHistoryView(View):
                    "last_invoice": last_invoice,
                    "pybarsys_preferences": PybarsysPreferences}
         return render(request, "barsys/main/user_history.html", context)
+
+
+@api_view(['GET', 'POST'])
+def main_user_purchase_api(request):
+    """
+    List all code snippets, or create a new snippet.
+    """
+    if request.method == 'GET':
+        # serializer = PurchaseSerializer(Purchase.objects.all())
+        return Response('{nice}', status=status.HTTP_200_OK)
+    elif request.method == 'POST':
+        form = SingleUserSinglePurchaseForm()
+        form.data = request.data.copy()
+        form.is_bound = True
+        if form.is_valid():
+            product = Product.objects.get(pk=form.cleaned_data['product_id'])
+            purchase = Purchase(user=User.objects.get(pk=form.cleaned_data['user_id']),
+                                product_name=product.name,
+                                product_amount=product.amount,
+                                product_category=product.category.name,
+                                product_price=product.price,
+                                quantity=form.cleaned_data['quantity'],
+                                comment=form.cleaned_data['comment'])
+            purchase.save()
+            return Response(form.cleaned_data, status=status.HTTP_201_CREATED)
+        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
