@@ -1093,8 +1093,6 @@ def main_purchase_api(request):
             purchase.save()
             return Response(form.cleaned_data, status=status.HTTP_201_CREATED)
         return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        return HttpResponse('{only GET and POST allowed}', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(['GET'])
@@ -1103,8 +1101,6 @@ def main_user_api(request):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
         return JsonResponse(serializer.data, safe=False)
-    else:
-        return HttpResponse('{only GET allowed}', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(['GET'])
@@ -1113,5 +1109,3 @@ def main_product_api(request):
         products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
         return JsonResponse(serializer.data, safe=False)
-    else:
-        return HttpResponse('{only GET allowed}', status=status.HTTP_405_METHOD_NOT_ALLOWED)
