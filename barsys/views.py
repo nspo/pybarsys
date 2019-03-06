@@ -4,7 +4,7 @@ import os.path
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core import exceptions, paginator
-from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
@@ -16,6 +16,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from barsys.serializers import PurchaseSerializer, UserSerializer, ProductSerializer
 from pybarsys.settings import PybarsysPreferences
 from . import filters
 from . import view_helpers
@@ -1071,13 +1072,11 @@ class MainUserHistoryView(View):
 
 
 @api_view(['GET', 'POST'])
-def main_user_purchase_api(request):
-    """
-    List all code snippets, or create a new snippet.
-    """
+def main_purchase_api(request):
     if request.method == 'GET':
-        # serializer = PurchaseSerializer(Purchase.objects.all())
-        return Response('{nice}', status=status.HTTP_200_OK)
+        purchases = Purchase.objects.all()
+        serializer = PurchaseSerializer(purchases, many=True)
+        return JsonResponse(serializer.data, safe=False)
     elif request.method == 'POST':
         form = SingleUserSinglePurchaseForm()
         form.data = request.data.copy()
@@ -1094,3 +1093,25 @@ def main_user_purchase_api(request):
             purchase.save()
             return Response(form.cleaned_data, status=status.HTTP_201_CREATED)
         return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return HttpResponse('{only GET and POST allowed}', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(['GET'])
+def main_user_api(request):
+    if request.method == 'GET':
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return JsonResponse(serializer.data, safe=False)
+    else:
+        return HttpResponse('{only GET allowed}', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(['GET'])
+def main_product_api(request):
+    if request.method == 'GET':
+        products = Product.objects.all()
+        serializer = ProductSerializer(products, many=True)
+        return JsonResponse(serializer.data, safe=False)
+    else:
+        return HttpResponse('{only GET allowed}', status=status.HTTP_405_METHOD_NOT_ALLOWED)
