@@ -797,57 +797,23 @@ class MainUserPurchaseView(View):
         form = SingleUserSinglePurchaseForm(request.POST)
 
         if form.is_valid():
-            user = User.objects.get(pk=form.cleaned_data["user_id"])
             if not form.is_free_item_purchase:
+                result = purchase_no_free_item_single_user_single_purchase_form(form)
                 product = Product.objects.get(pk=form.cleaned_data["product_id"])
 
-                comment = form.cleaned_data["comment"]
-                if form.cleaned_data["give_away_free"]:
-                    if comment:
-                        comment += " (give away for free)"
-                    else:
-                        comment = "give away for free"
-
-                purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
-                                    product_category=product.category.name, product_price=product.price,
-                                    quantity=form.cleaned_data["quantity"], comment=comment)
-                purchase.save()
-
-                if form.cleaned_data["give_away_free"]:
-                    # create free item
-                    free_item = FreeItem.objects.create(giver=user, product=product,
-                                                        leftover_quantity=form.cleaned_data["quantity"],
-                                                        comment=form.cleaned_data["comment"], purchasable=True)
+                if 'free_item' in result.values() is FreeItem:
                     messages.info(request, "Yay! You successfully purchased {}x {} for others! "
                                            "Anyone may now buy that for free until there's none left.".format(
-                        free_item.leftover_quantity, product.name
-                    ))
-
+                                            result['free_item'].leftover_quantity, product.name
+                                            ))
             else:
                 # free item purchase
-                free_item = FreeItem.objects.get(pk=form.cleaned_data["product_id"])
-                product = free_item.product
-                quantity = form.cleaned_data["quantity"]
-
-                comment = form.cleaned_data["comment"]
-                if comment:
-                    comment += " (free)"
-                else:
-                    comment = "free"
-
-                free_item.leftover_quantity -= quantity
-                free_item.save()
-
-                purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
-                                    product_category=product.category.name, product_price=Decimal(0),
-                                    quantity=quantity, comment=comment, is_free_item_purchase=True,
-                                    free_item_description=Truncator(free_item.verbose_str()).chars(120))
-                purchase.save()
+                result = purchase_free_item_single_user_single_purchase_form(form)
 
             if form.cleaned_data["purchase_more_for_same_users"]:
                 # notify user of successful purchase, so they are not confused b/c they
                 # stay on the same page
-                messages.info(request, "Purchase successful: {}".format(purchase))
+                messages.info(request, "Purchase successful: {}".format(result['purchase']))
 
                 return redirect("main_user_purchase", user_id)
             else:
@@ -880,6 +846,57 @@ class MainUserPurchaseView(View):
         context["most_bought_product"] = get_most_bought_product_for_user(user)
 
         return render(request, "barsys/main/user_purchase.html", context)
+
+
+def purchase_no_free_item_single_user_single_purchase_form(form):
+    user = User.objects.get(pk=form.cleaned_data["user_id"])
+    product = Product.objects.get(pk=form.cleaned_data["product_id"])
+
+    comment = form.cleaned_data["comment"]
+    if form.cleaned_data["give_away_free"]:
+        if comment:
+            comment += " (give away for free)"
+        else:
+            comment = "give away for free"
+
+    purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
+                        product_category=product.category.name, product_price=product.price,
+                        quantity=form.cleaned_data["quantity"], comment=comment)
+    purchase.save()
+
+    if form.cleaned_data["give_away_free"]:
+        # create free item
+        free_item = FreeItem.objects.create(giver=user, product=product,
+                                            leftover_quantity=form.cleaned_data["quantity"],
+                                            comment=form.cleaned_data["comment"], purchasable=True)
+        return {'purchase': purchase, 'free_item': free_item}
+
+    return {'purchase': purchase}
+    
+
+def purchase_free_item_single_user_single_purchase_form(form):
+    user = User.objects.get(pk=form.cleaned_data["user_id"])
+
+    # free item purchase
+    free_item = FreeItem.objects.get(pk=form.cleaned_data["product_id"])
+    product = free_item.product
+    quantity = form.cleaned_data["quantity"]
+
+    comment = form.cleaned_data["comment"]
+    if comment:
+        comment += " (free)"
+    else:
+        comment = "free"
+
+    free_item.leftover_quantity -= quantity
+    free_item.save()
+
+    purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
+                        product_category=product.category.name, product_price=Decimal(0),
+                        quantity=quantity, comment=comment, is_free_item_purchase=True,
+                        free_item_description=Truncator(free_item.verbose_str()).chars(120))
+    purchase.save()
+    return {'purchase': purchase}
 
 
 class MainUserListView(View):
@@ -1076,22 +1093,19 @@ def main_purchase_api(request):
     if request.method == 'GET':
         purchases = Purchase.objects.all()
         serializer = PurchaseSerializer(purchases, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.method == 'POST':
         form = SingleUserSinglePurchaseForm()
         form.data = request.data.copy()
         form.is_bound = True
         if form.is_valid():
-            product = Product.objects.get(pk=form.cleaned_data['product_id'])
-            purchase = Purchase(user=User.objects.get(pk=form.cleaned_data['user_id']),
-                                product_name=product.name,
-                                product_amount=product.amount,
-                                product_category=product.category.name,
-                                product_price=product.price,
-                                quantity=form.cleaned_data['quantity'],
-                                comment=form.cleaned_data['comment'])
-            purchase.save()
-            return Response(form.cleaned_data, status=status.HTTP_201_CREATED)
+            if not form.is_free_item_purchase:
+                result = purchase_no_free_item_single_user_single_purchase_form(form)
+            else:
+                result = purchase_free_item_single_user_single_purchase_form(form)
+
+            serializer = PurchaseSerializer(result['purchase'])
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -1100,7 +1114,7 @@ def main_user_api(request):
     if request.method == 'GET':
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data)
 
 
 @api_view(['GET'])
@@ -1108,4 +1122,4 @@ def main_product_api(request):
     if request.method == 'GET':
         products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data)
