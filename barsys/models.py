@@ -219,7 +219,7 @@ class User(AbstractBaseUser):
         return self.purchases_paid_by_other_id is None
 
     def account_balance(self):
-        return -self.invoices().sum_amount()
+        return -round(self.invoices().sum_amount(), 2)
 
 
 class Category(models.Model):
