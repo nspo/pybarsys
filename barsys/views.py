@@ -798,17 +798,17 @@ class MainUserPurchaseView(View):
 
         if form.is_valid():
             if not form.is_free_item_purchase:
-                result = purchase_no_free_item_single_user_single_purchase_form(form)
+                result = purchase_no_free_item(form)
                 product = Product.objects.get(pk=form.cleaned_data["product_id"])
 
-                if 'free_item' in result.values() is FreeItem:
+                if 'free_item' in result is FreeItem:
                     messages.info(request, "Yay! You successfully purchased {}x {} for others! "
                                            "Anyone may now buy that for free until there's none left.".format(
                                             result['free_item'].leftover_quantity, product.name
                                             ))
             else:
                 # free item purchase
-                result = purchase_free_item_single_user_single_purchase_form(form)
+                result = purchase_free_item(form)
 
             if form.cleaned_data["purchase_more_for_same_users"]:
                 # notify user of successful purchase, so they are not confused b/c they
@@ -848,7 +848,7 @@ class MainUserPurchaseView(View):
         return render(request, "barsys/main/user_purchase.html", context)
 
 
-def purchase_no_free_item_single_user_single_purchase_form(form):
+def purchase_no_free_item(form):
     user = User.objects.get(pk=form.cleaned_data["user_id"])
     product = Product.objects.get(pk=form.cleaned_data["product_id"])
 
@@ -874,7 +874,7 @@ def purchase_no_free_item_single_user_single_purchase_form(form):
     return {'purchase': purchase}
     
 
-def purchase_free_item_single_user_single_purchase_form(form):
+def purchase_free_item(form):
     user = User.objects.get(pk=form.cleaned_data["user_id"])
 
     # free item purchase
@@ -1091,7 +1091,7 @@ class MainUserHistoryView(View):
 @api_view(['GET', 'POST'])
 def main_purchase_api(request):
     if request.method == 'GET':
-        purchases = Purchase.objects.all()
+        purchases = Purchase.objects.all()[:PybarsysPreferences.Misc.NUM_USER_PURCHASE_HISTORY]
         serializer = PurchaseSerializer(purchases, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.method == 'POST':
@@ -1100,9 +1100,9 @@ def main_purchase_api(request):
         form.is_bound = True
         if form.is_valid():
             if not form.is_free_item_purchase:
-                result = purchase_no_free_item_single_user_single_purchase_form(form)
+                result = purchase_no_free_item(form)
             else:
-                result = purchase_free_item_single_user_single_purchase_form(form)
+                result = purchase_free_item(form)
 
             serializer = PurchaseSerializer(result['purchase'])
             return Response(serializer.data, status=status.HTTP_201_CREATED)

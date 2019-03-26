@@ -15,7 +15,7 @@ class PurchaseSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'display_name']
+        fields = ['id', 'display_name', 'is_favorite']
 
 
 class ProductSerializer(serializers.ModelSerializer):
