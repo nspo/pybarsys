@@ -1091,7 +1091,7 @@ class MainUserHistoryView(View):
 @api_view(['GET', 'POST'])
 def main_purchase_api(request):
     if request.method == 'GET':
-        purchases = Purchase.objects.all()[:PybarsysPreferences.Misc.NUM_USER_PURCHASE_HISTORY]
+        purchases = Purchase.objects.all()[:PybarsysPreferences.Misc.NUM_MAIN_LAST_PURCHASES]
         serializer = PurchaseSerializer(purchases, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.method == 'POST':
