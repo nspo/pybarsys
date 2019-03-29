@@ -801,7 +801,7 @@ class MainUserPurchaseView(View):
                 result = purchase_no_free_item(form)
                 product = Product.objects.get(pk=form.cleaned_data["product_id"])
 
-                if result['free_item']:
+                if "free_item" in result:
                     messages.info(request, "Yay! You successfully purchased {}x {} for others! "
                                            "Anyone may now buy that for free until there's none left.".format(
                                             result['free_item'].leftover_quantity, product.name
