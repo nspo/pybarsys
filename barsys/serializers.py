@@ -5,11 +5,11 @@ from barsys.models import Purchase, User, Product
 
 class PurchaseSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()
-    invoice = serializers.StringRelatedField()
 
     class Meta:
         model = Purchase
-        fields = '__all__'
+        fields = ['id', 'user', 'product_category', 'product_name', 'product_price', 'product_amount', 'quantity',
+                  'comment', 'is_free_item_purchase', 'free_item_description', 'created_date', 'modified_date']
 
 
 class UserSerializer(serializers.ModelSerializer):
