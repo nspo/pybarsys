@@ -1,10 +1,10 @@
 import csv
-
 import os.path
+
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core import exceptions, paginator
-from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
@@ -12,7 +12,11 @@ from django.utils.text import Truncator
 from django.views.generic import edit, View
 from django.views.generic.detail import DetailView
 from django_filters.views import FilterView
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
+from barsys.serializers import PurchaseSerializer, UserSerializer, ProductSerializer
 from pybarsys.settings import PybarsysPreferences
 from . import filters
 from . import view_helpers
@@ -510,7 +514,6 @@ class InvoiceCreateView(UserIsAdminMixin, edit.FormView):
             )
             messages.warning(self.request, autolocked_str)
 
-
         # Send invoice mails if wanted
         if send_invoices and len(invoices) > 0:
             view_helpers.send_invoice_mails(self.request, invoices,
@@ -794,57 +797,23 @@ class MainUserPurchaseView(View):
         form = SingleUserSinglePurchaseForm(request.POST)
 
         if form.is_valid():
-            user = User.objects.get(pk=form.cleaned_data["user_id"])
             if not form.is_free_item_purchase:
+                result = purchase_no_free_item(form)
                 product = Product.objects.get(pk=form.cleaned_data["product_id"])
 
-                comment = form.cleaned_data["comment"]
-                if form.cleaned_data["give_away_free"]:
-                    if comment:
-                        comment += " (give away for free)"
-                    else:
-                        comment = "give away for free"
-
-                purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
-                                    product_category=product.category.name, product_price=product.price,
-                                    quantity=form.cleaned_data["quantity"], comment=comment)
-                purchase.save()
-
-                if form.cleaned_data["give_away_free"]:
-                    # create free item
-                    free_item = FreeItem.objects.create(giver=user, product=product,
-                                                        leftover_quantity=form.cleaned_data["quantity"],
-                                                        comment=form.cleaned_data["comment"], purchasable=True)
+                if "free_item" in result:
                     messages.info(request, "Yay! You successfully purchased {}x {} for others! "
                                            "Anyone may now buy that for free until there's none left.".format(
-                        free_item.leftover_quantity, product.name
-                    ))
-
+                                            result['free_item'].leftover_quantity, product.name
+                                            ))
             else:
                 # free item purchase
-                free_item = FreeItem.objects.get(pk=form.cleaned_data["product_id"])
-                product = free_item.product
-                quantity = form.cleaned_data["quantity"]
-
-                comment = form.cleaned_data["comment"]
-                if comment:
-                    comment += " (free)"
-                else:
-                    comment = "free"
-
-                free_item.leftover_quantity -= quantity
-                free_item.save()
-
-                purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
-                                    product_category=product.category.name, product_price=Decimal(0),
-                                    quantity=quantity, comment=comment, is_free_item_purchase=True,
-                                    free_item_description=Truncator(free_item.verbose_str()).chars(120))
-                purchase.save()
+                result = purchase_free_item(form)
 
             if form.cleaned_data["purchase_more_for_same_users"]:
                 # notify user of successful purchase, so they are not confused b/c they
                 # stay on the same page
-                messages.info(request, "Purchase successful: {}".format(purchase))
+                messages.info(request, "Purchase successful: {}".format(result['purchase']))
 
                 return redirect("main_user_purchase", user_id)
             else:
@@ -877,6 +846,57 @@ class MainUserPurchaseView(View):
         context["most_bought_product"] = get_most_bought_product_for_user(user)
 
         return render(request, "barsys/main/user_purchase.html", context)
+
+
+def purchase_no_free_item(form):
+    user = User.objects.get(pk=form.cleaned_data["user_id"])
+    product = Product.objects.get(pk=form.cleaned_data["product_id"])
+
+    comment = form.cleaned_data["comment"]
+    if form.cleaned_data["give_away_free"]:
+        if comment:
+            comment += " (give away for free)"
+        else:
+            comment = "give away for free"
+
+    purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
+                        product_category=product.category.name, product_price=product.price,
+                        quantity=form.cleaned_data["quantity"], comment=comment)
+    purchase.save()
+
+    if form.cleaned_data["give_away_free"]:
+        # create free item
+        free_item = FreeItem.objects.create(giver=user, product=product,
+                                            leftover_quantity=form.cleaned_data["quantity"],
+                                            comment=form.cleaned_data["comment"], purchasable=True)
+        return {'purchase': purchase, 'free_item': free_item}
+
+    return {'purchase': purchase}
+    
+
+def purchase_free_item(form):
+    user = User.objects.get(pk=form.cleaned_data["user_id"])
+
+    # free item purchase
+    free_item = FreeItem.objects.get(pk=form.cleaned_data["product_id"])
+    product = free_item.product
+    quantity = form.cleaned_data["quantity"]
+
+    comment = form.cleaned_data["comment"]
+    if comment:
+        comment += " (free)"
+    else:
+        comment = "free"
+
+    free_item.leftover_quantity -= quantity
+    free_item.save()
+
+    purchase = Purchase(user=user, product_name=product.name, product_amount=product.amount,
+                        product_category=product.category.name, product_price=Decimal(0),
+                        quantity=quantity, comment=comment, is_free_item_purchase=True,
+                        free_item_description=Truncator(free_item.verbose_str()).chars(120))
+    purchase.save()
+    return {'purchase': purchase}
 
 
 class MainUserListView(View):
@@ -1066,3 +1086,40 @@ class MainUserHistoryView(View):
                    "last_invoice": last_invoice,
                    "pybarsys_preferences": PybarsysPreferences}
         return render(request, "barsys/main/user_history.html", context)
+
+
+@api_view(['GET', 'POST'])
+def main_purchase_api(request):
+    if request.method == 'GET':
+        purchases = Purchase.objects.all()[:PybarsysPreferences.Misc.NUM_MAIN_LAST_PURCHASES]
+        serializer = PurchaseSerializer(purchases, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'POST':
+        form = SingleUserSinglePurchaseForm()
+        form.data = request.data.copy()
+        form.is_bound = True
+        if form.is_valid():
+            if not form.is_free_item_purchase:
+                result = purchase_no_free_item(form)
+            else:
+                result = purchase_free_item(form)
+
+            serializer = PurchaseSerializer(result['purchase'])
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def main_user_api(request):
+    if request.method == 'GET':
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+
+@api_view(['GET'])
+def main_product_api(request):
+    if request.method == 'GET':
+        products = Product.objects.all()
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)

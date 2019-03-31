@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'barsys.apps.BarsysConfig',
     'django_filters',
     'crispy_forms',
+    'rest_framework',
 ]
 
 STATIC_URL = '/static/'

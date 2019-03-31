@@ -219,7 +219,12 @@ class User(AbstractBaseUser):
         return self.purchases_paid_by_other_id is None
 
     def account_balance(self):
-        return -self.invoices().sum_amount()
+        # rounding should NOT be necessary (and really is not), but there is
+        #   a problem with SQLite not handling Decimal objects quite as it
+        #   should: https://code.djangoproject.com/ticket/29823
+        #   This currently is mainly used so that a pybarsys unit test
+        #   does not fail, which is... somewhat suboptimal
+        return -round(self.invoices().sum_amount(), 2)
 
 
 class Category(models.Model):

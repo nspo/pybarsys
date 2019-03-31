@@ -110,4 +110,9 @@ urlpatterns = [
     url(r'^admin/freeitem/new/$', views.FreeItemCreateView.as_view(), name='admin_freeitem_new'),
     url(r'^admin/freeitem/(?P<pk>[0-9]+)/update/$', views.FreeItemUpdateView.as_view(), name='admin_freeitem_update'),
     url(r'^admin/freeitem/(?P<pk>[0-9]+)/delete/$', views.FreeItemDeleteView.as_view(), name='admin_freeitem_delete'),
+
+    # Rest-API
+    url(r'^api/purchase/', views.main_purchase_api, name='main_purchase_api'),
+    url(r'^api/user/', views.main_user_api, name='main_user_api'),
+    url(r'^api/product/', views.main_product_api, name='main_product_api')
 ]
