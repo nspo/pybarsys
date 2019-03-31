@@ -4,12 +4,11 @@ from barsys.models import Purchase, User, Product
 
 
 class PurchaseSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()
+    user = serializers.SlugRelatedField(many=False, read_only=True, slug_field='display_name')
 
     class Meta:
         model = Purchase
-        fields = ['id', 'user', 'product_category', 'product_name', 'product_price', 'product_amount', 'quantity',
-                  'comment', 'is_free_item_purchase', 'free_item_description', 'created_date', 'modified_date']
+        exclude = ('invoice',)
 
 
 class UserSerializer(serializers.ModelSerializer):
