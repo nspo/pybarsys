@@ -1112,7 +1112,7 @@ def main_purchase_api(request):
 @api_view(['GET'])
 def main_user_api(request):
     if request.method == 'GET':
-        users = User.objects.all()
+        users = User.objects.buyers().active()
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
