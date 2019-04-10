@@ -21,6 +21,7 @@ Developer: Nicolai Spohrer (nicolai[at]xeve.de)
   * Users can choose to "donate" products to all other users so that they can be purchased for no cost
   * Useful for birthday events etc.
 * Users can be "autolocked" if their balance falls below a threshold two times in a row
+* [REST API](/docs/api.md)
 * ...
 # Explanation & screenshots
 
