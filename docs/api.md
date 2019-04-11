@@ -1,5 +1,5 @@
 # API
-The system provides a simple API. All Endpoints use `application/json` as Content-Type.
+Pybarsys provides a simple REST API. All endpoints use `application/json` as Content-Type.
 Currently available are:
 * GET:
   * User
@@ -8,18 +8,18 @@ Currently available are:
 * POST:
   * Purchase
 
-URL: `<yourRootUrl>:<port>/api/<endpoint>`
-  So lets say your URL is `www.myFancyUrl.com` and the application is running on port `3000`. A request to get a JSON containing all users would be:
+URL: `<host>:<port>/api/<endpoint>`
+  So lets say your host domain is `example.com` and pybarsys is running on port `3000`. A request to get a JSON containing all users would be:
 ```bash
-curl www.myFancyUrl.com:3000/api/user/
+curl example.com:3000/api/user/
 ```
-The request for creating a new purchase would look like this:
+A request for creating a new purchase could look like this:
 
 ```bash
-curl -X POST -H "Content-Type: application/json" --data @purchase.json www.myFancyUrl.com:3000/api/purchase/
+curl -X POST -H "Content-Type: application/json" --data @purchase.json example.com:3000/api/purchase/
 ```
-With a JSON looking like this:
-```
+With a JSON (saved as `purchase.json`) looking like this:
+```json
 {
   "user_id":3,
   "quantity":1,
