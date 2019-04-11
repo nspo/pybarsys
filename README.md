@@ -1,7 +1,7 @@
 # pybarsys
 A beverage shopping system for bars of small private organizations - based on Django and Python 3.
 
-Developer: Nicolai Spohrer (nicolai[at]xeve.de)
+Main developer: Nicolai Spohrer (nicolai[at]xeve.de)
 
 # Features
 * Responsive main and admin interface
@@ -21,7 +21,7 @@ Developer: Nicolai Spohrer (nicolai[at]xeve.de)
   * Users can choose to "donate" products to all other users so that they can be purchased for no cost
   * Useful for birthday events etc.
 * Users can be "autolocked" if their balance falls below a threshold two times in a row
-* [REST API](/docs/api.md)
+* [REST API](/docs/api.md) (by courtesy of [@jallmenroeder](https://github.com/jallmenroeder))
 * ...
 # Explanation & screenshots
 
@@ -46,7 +46,7 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
 ![](/docs/screenshots/screenshot-18.png)|![](/docs/screenshots/screenshot-19.png)|![](/docs/screenshots/screenshot-20.png)
 
 # Limitations
- * German and Dutch translations are available for the mail templates, but not for the main and admin interface
+ * German and Dutch (thanks [@Merlijnv](https://github.com/Merlijnv)) translations are available for the mail templates, but not for the main and admin interface
  * Based on the assumption that everyone with access to the main page may purchase products for all active users
    * You should run the server in a trusted local area network
    * Login needed for admin access of course
