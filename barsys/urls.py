@@ -6,6 +6,7 @@ urlpatterns = [
     # main page for purchasing products (main_*)
     url(r'^$', views.MainUserListView.as_view(), name="root"),
     url(r'^user/list/$', views.MainUserListView.as_view(), name="main_user_list"),
+    url(r'^revert/$', views.MainUserListRevertLastView.as_view(), name="main_user_list_revert_last"),
 
     url(r'^multibuy/user/list/$', views.MainUserListMultiBuyView.as_view(), name="main_user_list_multibuy"),
     url(r'^multibuy/user/(?P<user_pkey_str>[0-9/]+)/purchase/$', views.MainUserPurchaseMultiBuyView.as_view(),

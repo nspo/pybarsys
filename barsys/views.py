@@ -863,6 +863,7 @@ def purchase_no_free_item(form):
                         product_category=product.category.name, product_price=product.price,
                         quantity=form.cleaned_data["quantity"], comment=comment)
     purchase.save()
+    MainUserListRevertLastView.last_purchase = purchase
 
     if form.cleaned_data["give_away_free"]:
         # create free item
@@ -1086,6 +1087,20 @@ class MainUserHistoryView(View):
                    "last_invoice": last_invoice,
                    "pybarsys_preferences": PybarsysPreferences}
         return render(request, "barsys/main/user_history.html", context)
+
+
+class MainUserListRevertLastView(View):
+    last_purchase = None
+
+    def get(self, request):
+        if MainUserListRevertLastView.last_purchase is None:
+            messages.info(request, "Last purchase already deleted")
+            return redirect("main_user_list")
+
+        MainUserListRevertLastView.last_purchase.delete()
+        MainUserListRevertLastView.last_purchase = None
+        messages.info(request, "Successfully deleted last purchase")
+        return redirect("main_user_list")
 
 
 @api_view(['GET', 'POST'])
