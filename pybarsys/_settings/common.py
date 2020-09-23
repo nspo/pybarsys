@@ -178,3 +178,7 @@ class PybarsysPreferences:
         # Automatically lock account when balance is below this
         # threshold before and after creating invoices
         BALANCE_BELOW_AUTOLOCK = Decimal('-100')
+
+        NEGATIVE_FIRST = False
+
+        VALUTASIGN = "€"

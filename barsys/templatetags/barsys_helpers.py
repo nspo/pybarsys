@@ -5,6 +5,8 @@ from bootstrap3.templatetags.bootstrap3 import bootstrap_icon
 from django import template
 from django.conf import settings
 from django.utils import formats
+from pybarsys import settings as pybarsys_settings
+from pybarsys.settings import PybarsysPreferences
 
 register = template.Library()
 
@@ -37,8 +39,20 @@ def currency(value):
     if not value:
         value = 0
 
-    locale.setlocale(locale.LC_ALL, get_locale_str())
-    return locale.currency(value, grouping=True)
+    if PybarsysPreferences.Misc.NEGATIVE_FIRST:
+        locale.setlocale(locale.LC_ALL, get_locale_str())
+        return locale.currency(value, grouping=True)
+    else:
+        return formatfunc(value)
+
+
+
+
+def formatfunc(value):
+    if value >= 0:
+        return PybarsysPreferences.Misc.VALUTASIGN + '{:,.2f}'.format(value)
+    else:
+        return '-' + PybarsysPreferences.Misc.VALUTASIGN + '{:,.2f}'.format(abs(value))
 
 
 @register.filter
