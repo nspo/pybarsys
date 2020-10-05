@@ -175,14 +175,5 @@ sudo systemctl start apache2
 ```
 Finally, test whether everything works again. If not, you can try to fix the error or use your backup.
 
-# Troubleshooting
-
-It shouldn't be necessary when running pip3 install with sudo if it gives errors then change the folder permission with:
-'''
-cd /var/www/
-chmod +rwx pybarsys
-'''
-
-
 # Bug reports
 Please feel free to open an issue in case you think you spotted a bug.
