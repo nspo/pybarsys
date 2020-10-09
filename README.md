@@ -67,9 +67,10 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    pip3 install -r requirements.txt
    # Create database
    python3 manage.py migrate
-   # Optional: test with builtin server
+   # Optional: test with builtin server - use this command and open http://127.0.0.1:4000 in your browser
+   # If you are running this on a remote server, you may need to change the IP you open in your browser and add the server's IP into the ALLOWED_HOSTS list in pybarsys/_settings/dev.py
    python3 manage.py runserver 0.0.0.0:4000 --insecure
-   # CTRL+
+   # CTRL+C to stop the server
    ```
 3. Think about [how to deploy Django](https://docs.djangoproject.com/en/1.11/howto/deployment/): Django is written in Python and does not include a real webserver. Therefore you need something else (e.g. Apache2) to run a Django site.
 4. Easiest/example method to deploy: [apache2 with mod_wsgi](https://docs.djangoproject.com/en/1.11/howto/deployment/wsgi/modwsgi/)
