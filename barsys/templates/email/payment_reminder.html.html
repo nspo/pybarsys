@@ -17,6 +17,16 @@
 
     <p/>
 
+    <table>
+        {% if invoice.comment != "" %}
+            <tr>
+                <th>Comment</th>
+                <td>{{ invoice.comment|comment_url_enhancement|safe }}</td>
+            </tr>
+        {% endif %}
+    </table>
+
+
     <hr/>
 
     <h2>Your last invoices:</h2>

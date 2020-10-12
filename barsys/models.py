@@ -302,7 +302,7 @@ class InvoiceQuerySet(models.QuerySet):
 
 
 class InvoiceManager(models.Manager):
-    def create_for_user(self, user):
+    def create_for_user(self, user, comment = ""):
         if not user.pays_themselves():
             raise IntegrityError("Cannot create an invoice for someone who does not pay for themselves")
 
@@ -331,10 +331,11 @@ class InvoiceManager(models.Manager):
 
         own_payments.update(invoice=invoice)
 
+        invoice.comment = comment;
+
         invoice.save()
 
         return invoice
-
 
 class Invoice(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -346,6 +347,8 @@ class Invoice(models.Model):
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
+
+    comment = models.TextField(default="")
 
     objects = InvoiceManager.from_queryset(InvoiceQuerySet)()
 

@@ -39,6 +39,10 @@
                 <td>{{ invoice.due|currency }}</td>
             </tr>
             <tr>
+                <th>Comment</th>
+                <td>{{ invoice.comment|comment_url_enhancement|safe }}</td>
+            </tr>
+            <tr>
                 <th colspan="2"><h4>Own purchases</h4></th>
             </tr>
             <tr>

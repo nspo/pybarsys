@@ -28,6 +28,14 @@
 
     <p/>
 
+    <table>
+        {% if invoice.comment != "" %}
+            <tr>
+                <th>Comment</th>
+                <td>{{ invoice.comment|comment_url_enhancement|safe }}</td>
+            </tr>
+        {% endif %}
+    </table>
     <p>The total amount of this invoice is <b>{{ invoice.due|currency }}</b>. It consists of the following purchases and
         payments:
     </p>
