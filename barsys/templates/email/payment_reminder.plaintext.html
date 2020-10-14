@@ -8,6 +8,10 @@ If your account balance is below {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRAN
 {% if invoice.recipient.is_autolocked %}
     Your account is currently autolocked.{% endif %}
 
+{% if invoice.comment != "" %}
+Comment:          {{ invoice.comment }}
+{% endif %}
+
 To see your last invoices and payments, please look at the HTML version of this mail.
 
 Have a nice day!

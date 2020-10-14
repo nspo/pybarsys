@@ -4,3 +4,6 @@ IBAN:             {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_NUMBER }}
 BIC:              {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_ROUTING_NUMBER }}
 Bank:             {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_BANK }}
 Verwendungszweck: {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_PAYMENT_REFERENCE }} {{ recipient.display_name|clean_str }}
+{% if invoice.comment != "" %}
+Kommentar:        {{ invoice.comment }}
+{% endif %}

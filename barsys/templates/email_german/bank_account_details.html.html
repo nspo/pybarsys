@@ -21,5 +21,11 @@
         <th>Verwendungszweck</th>
         <td>{{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_PAYMENT_REFERENCE }} {{ recipient.display_name|clean_str }}</td>
     </tr>
+    {% if invoice.comment != "" %}
+    <tr>
+        <th>Kommentar</th>
+        <td>{{ invoice.comment|comment_url_enhancement|safe }}</td>
+    </tr>
+    {% endif %}
     </tbody>
 </table>
