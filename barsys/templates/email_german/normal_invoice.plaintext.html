@@ -8,6 +8,10 @@ Falls dein Kontostand weniger als {{ pybarsys_preferences.Misc.BALANCE_BELOW_TRA
 {% if invoice.recipient.is_autolocked %}
     Dein Account hat zur Zeit einen Autolock-Vermerk.{% endif %}
 
+{% if invoice.comment != "" %}
+Kommentar: {{ invoice.comment }}
+{% endif %}
+
 Der Gesamtbetrag dieser Rechnung ist {{ invoice.due|currency }}. Um Details zu sehen, schau bitte in die HTML-Version dieser E-Mail.
 
 Einen schönen Tag noch!

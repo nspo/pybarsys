@@ -28,6 +28,12 @@
 
     <p/>
 
+    {% if invoice.comment != "" %}
+        <p>
+            <b>Commentaar:</b> {{ invoice.comment|comment_url_enhancement|safe }}
+        </p>
+    {% endif %}
+
     <p>Het totaalbedrag van deze factuur is <b>{{ invoice.due|currency }}</b>. 
         Dit is het resultaat van de volgende aankopen en betalingen:
     </p>

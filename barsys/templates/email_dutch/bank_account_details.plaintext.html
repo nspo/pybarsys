@@ -1,8 +1,5 @@
 {% load barsys_helpers %}
-Ten name van:         {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_RECIPIENT }}
-Rekening Nr.:         {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_NUMBER }}
-Bank:                 {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_BANK }}
-Onderwerp:            {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_PAYMENT_REFERENCE }} {{ recipient.display_name|clean_str }}
-{% if invoice.comment != "" %}
-Commentaar:           {{ invoice.comment }}
-{% endif %}
+Ten name van:        {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_RECIPIENT }}
+Rekening Nr.: {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_NUMBER }}
+Bank:             {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_BANK }}
+Onderwerp:          {{ pybarsys_preferences.EMAIL.BANK_ACCOUNT_PAYMENT_REFERENCE }} {{ recipient.display_name|clean_str }}

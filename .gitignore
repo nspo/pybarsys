@@ -1,6 +1,8 @@
 # (custom)
 db.sqlite3
 .idea/
+bin/
+pyvenv.cfg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

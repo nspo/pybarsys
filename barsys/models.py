@@ -337,6 +337,7 @@ class InvoiceManager(models.Manager):
 
         return invoice
 
+
 class Invoice(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.PROTECT)
     amount_purchases = models.DecimalField(max_digits=7, decimal_places=2, blank=False, null=False,
