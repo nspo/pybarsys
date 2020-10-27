@@ -9,6 +9,10 @@ wordt er verzocht om geld over te maken naar het volgende rekeningnummer:
 {% if invoice.recipient.is_autolocked %}
     Je account is momenteel automatisch geblokkeerd.{% endif %}
 
+{% if invoice.comment != "" %}
+Commentaar: {{ invoice.comment }}
+{% endif %}
+
 Het totale bedrag van deze factuur is {{ invoice.due|currency }}. 
 Om meer details te zien, bekijk de HTML versie van deze mail.
 

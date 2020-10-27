@@ -4,6 +4,7 @@ from re import sub as re_sub
 from bootstrap3.templatetags.bootstrap3 import bootstrap_icon
 from django import template
 from django.conf import settings
+from django.core.validators import URLValidator, ValidationError
 from django.utils import formats
 
 register = template.Library()
@@ -39,6 +40,19 @@ def currency(value):
 
     locale.setlocale(locale.LC_ALL, get_locale_str())
     return locale.currency(value, grouping=True)
+
+
+
+@register.filter()
+def comment_url_enhancement(value):
+    # If the input is a URL, return it as HTML link.
+    # Used for conditionally formatting invoice comments as those may contain links to send a payment
+    validate = URLValidator()
+    try:
+        validate(value)
+        return '<a href="{0}">{0}</a>'.format(value)
+    except ValidationError:
+        return value
 
 
 @register.filter

@@ -28,6 +28,12 @@
 
     <p/>
 
+    {% if invoice.comment != "" %}
+        <p>
+            <b>Kommentar:</b> {{ invoice.comment|comment_url_enhancement|safe }}
+        </p>
+    {% endif %}
+
     <p>Der Gesamtbetrag dieser Rechnung ist <b>{{ invoice.due|currency }}</b>. Sie besteht aus folgenden Einkäufen und
         Zahlungen:
     </p>
