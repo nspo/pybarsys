@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+
+  pybarsys-app:
+    build: .
+    volumes:
+      - static_volume:/app/static
+      - type: bind
+        source: ./.env
+        target: /app/.env
+        read_only: true
+      - type: bind
+        source: ./db.sqlite3
+        target: /app/db.sqlite3
+        read_only: false
+    networks:
+      - pybarsys_network
+
+  pybarsys-nginx:
+    image: nginxinc/nginx-unprivileged:1.18-alpine
+    ports:
+      - 80:8080
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - static_volume:/app/static
+    depends_on:
+      - pybarsys-app
+    networks:
+      - pybarsys_network
+
+volumes:
+  static_volume:
+
+networks:
+  pybarsys_network:
+    driver: bridge
+
