@@ -1,4 +1,5 @@
 import locale
+import babel.numbers
 from re import sub as re_sub
 
 from bootstrap3.templatetags.bootstrap3 import bootstrap_icon
@@ -39,7 +40,11 @@ def currency(value):
         value = 0
 
     locale.setlocale(locale.LC_ALL, get_locale_str())
-    return locale.currency(value, grouping=True)
+    currency_symbol = locale.localeconv()["currency_symbol"] # $/€/...  
+    # use babel for actual formatting as the locale module has weird behavior 
+    # in some cases (e.g. negative amounts with nl_NL)
+    # cmp. https://github.com/nspo/pybarsys/pull/23
+    return babel.numbers.format_currency(value, currency=currency_symbol, locale=get_locale_str())
 
 
 
