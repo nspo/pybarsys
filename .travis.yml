@@ -1,8 +1,15 @@
 language: python
+services:
+  - docker
 python:
   - "3.6"
+before_install: # use newer docker-compose
+  - sudo curl -L "https://github.com/docker/compose/releases/download/1.28.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 install:
   - pip3 install -r requirements.txt
   - cp .env.example .env
+  - touch db.sqlite3 # create empty file where DB should be so it can be mounted into container
 script: 
-  - python3 manage.py test
+  - python3 manage.py test # unit tests
+  - chmod 666 db.sqlite3 && sudo docker-compose up --build&
+  - sleep 120 && curl localhost | grep "There are no active users" # check if pybarsys is running
