@@ -2,6 +2,7 @@
 db.sqlite3
 .idea/
 bin/
+/static/
 pyvenv.cfg
 
 # Byte-compiled / optimized / DLL files
