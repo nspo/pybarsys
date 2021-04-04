@@ -5,9 +5,8 @@ FROM python:3
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
-        apt-utils 2>&1 | grep -v "delaying package configuration, since apt-utils is not installed" && \
-    apt-get install -yq --no-install-recommends \
-        locales-all && \
+        locales-all 2>&1 \
+        | grep -v "delaying package configuration, since apt-utils is not installed" && \
     rm -rf /var/lib/apt/lists/*
 
 # run everything as non-root user
