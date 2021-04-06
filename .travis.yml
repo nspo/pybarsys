@@ -3,13 +3,23 @@ services:
   - docker
 python:
   - "3.6"
-before_install: # use newer docker-compose
-  - sudo curl -L "https://github.com/docker/compose/releases/download/1.28.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+before_install:
+  - export REPO=$DOCKER_USERNAME/pybarsys
+  - export TAG=`if [ “$TRAVIS_BRANCH” == “master” ]; then echo “latest”; else echo $TRAVIS_BRANCH | sed 's/[^a-zA-Z0-9]/-/g'; fi`
+  - export TAG_BUILD=travis-$TRAVIS_BUILD_NUMBER
+  - echo $REPO:$TAG:$COMMIT
 install:
+  - sudo curl -L "https://github.com/docker/compose/releases/download/1.28.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - pip3 install -r requirements.txt
   - cp .env.example .env
-  - touch db.sqlite3 # create empty file where DB should be so it can be mounted into container
+  - touch db.sqlite3 && chmod 666 db.sqlite3 # create empty file where DB should be so it can be mounted into container
 script: 
   - python3 manage.py test # unit tests
-  - chmod 666 db.sqlite3 && sudo docker-compose up --build&
-  - sleep 120 && curl localhost | grep "There are no active users" # check if pybarsys is running
+  - sudo docker-compose -f docker-compose.yml -f docker-compose.build.yml build
+  - sudo docker-compose up&
+  - scripts/try_for_60s.sh bash -c 'curl localhost | grep "There are no active users"' # check if pybarsys is running
+after_success:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build -t $REPO:$TAG -t $REPO:$TAG_BUILD .
+  - docker push $REPO:$TAG
+  - docker push $REPO:$TAG_BUILD

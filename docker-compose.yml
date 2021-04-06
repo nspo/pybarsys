@@ -3,7 +3,7 @@ version: '3.9'
 services:
 
   pybarsys-app:
-    build: .
+    image: nspohrer/pybarsys
     volumes:
       - static_volume:/app/static
       - type: bind
@@ -14,6 +14,7 @@ services:
         source: ./db.sqlite3
         target: /app/db.sqlite3
         read_only: false
+    restart: unless-stopped
     networks:
       - pybarsys_network
 
@@ -24,6 +25,7 @@ services:
     volumes:
       - ./nginx:/etc/nginx/conf.d
       - static_volume:/app/static
+    restart: unless-stopped
     depends_on:
       - pybarsys-app
     networks:
