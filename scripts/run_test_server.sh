@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# Run a simple test server to test local non-docker pybarsys setup
 set -eu
 
 # cd to root folder
