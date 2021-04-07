@@ -5,9 +5,11 @@ python:
   - "3.6"
 before_install:
   - export REPO=$DOCKER_USERNAME/pybarsys
-  - export TAG=`if [ “$TRAVIS_BRANCH” == “master” ]; then echo “latest”; else echo $TRAVIS_BRANCH | sed 's/[^a-zA-Z0-9]/-/g'; fi`
-  - export TAG_BUILD=travis-$TRAVIS_BUILD_NUMBER
-  - echo $REPO:$TAG:$COMMIT
+  - export CLEANED_BRANCH_NAME=$(echo $TRAVIS_BRANCH | sed 's/[^a-zA-Z0-9]/_/g')
+  - export TAG_BRANCH=`if [ “$TRAVIS_BRANCH” = “master” ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then echo “latest”; else echo $CLEANED_BRANCH_NAME ; fi` # master (non PR): latest, feature/docker: feature_docker
+  - export TAG_BRANCH_COMMIT=$CLEANED_BRANCH_NAME-${TRAVIS_COMMIT::6} # master-abc123, feature_docker-abc123
+  - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export TAG_BRANCH=$TAG_BRANCH-pr-$TRAVIS_PULL_REQUEST; export TAG_BRANCH_COMMIT=$TAG_BRANCH_COMMIT-pr-$TRAVIS_PULL_REQUEST; fi # append -pr-123 if it is only a PR into branch
+  - echo $REPO:$TAG_BRANCH:$TAG_BRANCH_COMMIT
 install:
   - sudo curl -L "https://github.com/docker/compose/releases/download/1.28.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - pip3 install -r requirements.txt
@@ -20,6 +22,6 @@ script:
   - scripts/try_for_60s.sh bash -c 'curl localhost | grep "There are no active users"' # check if pybarsys is running
 after_success:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker build -t $REPO:$TAG -t $REPO:$TAG_BUILD .
-  - docker push $REPO:$TAG
-  - docker push $REPO:$TAG_BUILD
+  - docker build -t $REPO:$TAG_BRANCH -t $REPO:$TAG_BRANCH_COMMIT .
+  - docker push $REPO:$TAG_BRANCH
+  - docker push $REPO:$TAG_BRANCH_COMMIT
