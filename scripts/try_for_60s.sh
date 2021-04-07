@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Helper script to try a command for up to 60 s or until it succeeds
 # https://unix.stackexchange.com/a/137639/169109
 
 function fail {
