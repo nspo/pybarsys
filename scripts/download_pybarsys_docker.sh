@@ -46,7 +46,7 @@ if [ "$(ls -A $DIRECTORY)" ]; then
 fi
 
 # check if docker-compose is installed
-if ! command -v docker-compose &> /dev/null
+if ! [ -x "$(command -v docker-compose)" ]
 then
     echo "[ERROR] docker-compose could not be found. Please install docker and docker-compose first: $DOCKER_COMPOSE_INSTALL_URL"
     exit 1
@@ -68,7 +68,7 @@ wget $BASE_URL/docker-compose.yml
 
 # download .env example and generate a SECRET_KEY
 wget $BASE_URL/.env.example -O- | grep -v SECRET_KEY > .env
-echo SECRET_KEY=$(tr -dc 'a-z0-9!@#$%^&*(-_=+)' < /dev/urandom | head -c50) >> .env
+echo SECRET_KEY=$(tr -dc 'a-z0-9!@#%^&*(-_=+)' < /dev/urandom | head -c50) >> .env
 
 # create empty db file so it can be mounted into container
 touch db.sqlite3
