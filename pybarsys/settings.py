@@ -2,8 +2,10 @@ import os
 from decimal import Decimal
 import environ # https://django-environ.readthedocs.io/en/latest/
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 env = environ.Env()
-env.read_env(".env")
+env.read_env(os.path.join(BASE_DIR, ".env"))
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__ + "/..")))
 STATIC_ROOT = env("STATIC_ROOT", default="static/")
