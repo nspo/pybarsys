@@ -61,18 +61,19 @@ fi
 
 prompt_confirm "Continue?" || exit 1
 
-# download nginx and docker-compose files
+echo "[INFO] Setting up nginx configuration and docker-compose.yml"
 mkdir nginx
-wget $BASE_URL/nginx/pybarsys.conf -O nginx/pybarsys.conf
-wget $BASE_URL/docker-compose.yml
+curl -sSL $BASE_URL/nginx/pybarsys.conf -o nginx/pybarsys.conf
+curl -sSL $BASE_URL/docker-compose.yml -o docker-compose.yml
 
-# download .env example and generate a SECRET_KEY
-wget $BASE_URL/.env.example -O- | grep -v SECRET_KEY > .env
+echo "[INFO] Installing .env configuration file and generating custom SECRET_KEY"
+curl -sSL $BASE_URL/.env.example -o- | grep -v SECRET_KEY > .env
 echo SECRET_KEY=$(tr -dc 'a-z0-9!@#%^&*(-_=+)' < /dev/urandom | head -c50) >> .env
 
-# create empty db file so it can be mounted into container
+echo "[INFO] Creating empty database file so it can be mounted into container"
 touch db.sqlite3
 
+echo "------"
 echo "[INFO] Yay! Pybarsys was successfully set up in the current folder."
 echo "[INFO] To start pybarsys, run 'sudo docker-compose up' in the current folder."
 echo "[INFO] If everything works, cancel with CTRL+C and start it in the background with 'sudo docker-compose up -d'"
