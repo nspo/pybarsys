@@ -19,7 +19,8 @@ script:
   - python3 manage.py test # unit tests
   - sudo docker-compose -f docker-compose.yml -f docker-compose.build.yml build
   - sudo docker-compose up&
-  - scripts/try_for_60s.sh bash -c 'curl localhost | grep "There are no active users"' # check if pybarsys is running
+  - scripts/try_for_60s.sh bash -c 'curl -sSL localhost | grep "There are no active users"' # check if pybarsys is running
+  - curl -sSL localhost/static/barsys/style.css | grep media # check whether static files are served correctly
 after_success:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - docker build -t $REPO:$TAG_BRANCH -t $REPO:$TAG_BRANCH_COMMIT .
