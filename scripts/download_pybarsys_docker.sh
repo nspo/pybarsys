@@ -30,8 +30,7 @@ version_string_lt() {
 
 ### Variables
 DIRECTORY=$(pwd)/
-#BASE_URL=https://raw.githubusercontent.com/nspo/pybarsys/master/
-BASE_URL=https://raw.githubusercontent.com/nspo/pybarsys/feature/docker/
+BASE_URL=https://raw.githubusercontent.com/nspo/pybarsys/master/
 DOCKER_COMPOSE_VERSION_MIN=1.27.1 # min version to have docker-compose schema version 3.9
 DOCKER_COMPOSE_INSTALL_URL=https://docs.docker.com/compose/install/
 ###
