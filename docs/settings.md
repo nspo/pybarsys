@@ -50,7 +50,7 @@ DATABASE_URL=mysql://user:hunter2%21%22%C2%A7%24%25%26/%28%29%3D%3F@localhost:33
 The same goes for `EMAIL_URL`.
 
 ## Required settings
-These settings MUST be set in your `.env` file. If your secret key starts with a '$' you need to escape it with a backslash '\$', otherwise Django-environ will interpret it as en environment variable.
+These settings MUST be set in your `.env` file.
 
 | Parameter name | Example | Description | Other examples |
 | ---            | ---     | ---         | --- |
@@ -58,7 +58,7 @@ These settings MUST be set in your `.env` file. If your secret key starts with a
 | `EMAIL_URL` | `smtp+tls://user:hunter2%40%3Axyz%3F%21@localhost:587` | Email server settings - see [here](https://django-environ.readthedocs.io/en/latest/#supported-types) | `consolemail://` |
 | `LANGUAGE_CODE` | `en-us` | Language setting, used e.g. for the currency. Must have dash in the middle. The email template language needs to be set separately. | `de-de`, `nl-nl`, `en-gb` | 
 `TIME_ZONE` | `Europe/Berlin` | Time zone, see [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) | `Europe/Amsterdam`, `America/New_York` |
-| `SECRET_KEY` | `&_cx6qdzz^1w%per*z6emn$*&937j-^0@q93g+t9fk7hy%8p(%` | Secret key, see [here](https://docs.djangoproject.com/en/3.1/ref/settings/#std:setting-SECRET_KEY) | - |
+| `SECRET_KEY` | `&_cx6qdzz^1w%per*z6emn$*&937j-^0@q93g+t9fk7hy%8p(%` | Secret key, see [here](https://docs.djangoproject.com/en/3.1/ref/settings/#std:setting-SECRET_KEY). If your secret key starts with a `$` you need to escape it with a backslash `\$`, otherwise Django-environ will interpret it as an environment variable. | - |
 
 ## Optional settings
 These settings can optionally be set in your `.env` file.
