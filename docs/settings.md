@@ -1,7 +1,7 @@
 # Pybarsys settings
 ## General
 The settings of pybarsys (and related Django settings like for email or static files) are stored in a `.env` file.
-A template of this file is provided to you - you can just copy it, rename it to `.env`, and modify or add settings.
+A template of this file is provided to you as `.env.example` - you can just copy it, rename it to `.env`, and modify or add settings.
 
 A valid `.env` file should look similar to this:
 
@@ -25,7 +25,7 @@ NAME_TWO="Jessica Monorail"
 
 ## ALSO GOOD:
 # Apostrophes for strings are not necessary with django-environ - maybe it's even better this way because you're less likely to mistakenly add a comment to a line like this?
-NAME_TREE=Sri Unquoted Mueller
+NAME_THREE=Sri Unquoted Mueller
 ```
 
 ## Database and email URLs
@@ -50,7 +50,7 @@ DATABASE_URL=mysql://user:hunter2%21%22%C2%A7%24%25%26/%28%29%3D%3F@localhost:33
 The same goes for `EMAIL_URL`.
 
 ## Required settings
-These settings MUST be set in your `.env` file.
+These settings MUST be set in your `.env` file. If your secret key starts with a '$' you need to escape it with a backslash '\$', otherwise Django-environ will interpret it as en environment variable.
 
 | Parameter name | Example | Description | Other examples |
 | ---            | ---     | ---         | --- |
