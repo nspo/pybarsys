@@ -128,7 +128,7 @@ class User(AbstractBaseUser):
                 raise ValidationError({'purchases_paid_by_other': "Purchases cannot be paid by someone who does not "
                                                                   "pay for their own purchases."})
             dependents = self.dependents()
-            if dependents.exists():
+            if self.pk is not None and dependents.exists():
                 other_names = [u.display_name for u in dependents]
                 raise ValidationError({'purchases_paid_by_other': "This user pays for the following users, so "
                                                                   "their purchases cannot be paid by someone else: {}"

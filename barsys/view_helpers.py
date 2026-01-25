@@ -3,6 +3,7 @@ from collections import OrderedDict
 from itertools import groupby
 
 from django.contrib import messages
+from django.core import mail
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.template.loader import render_to_string
@@ -87,7 +88,29 @@ def send_invoice_mails(request, invoices, send_dependant_notifications=False):
     num_purchase_notif_mail_success = 0
     purchase_notif_mail_failure = []
 
+    # open connection only once to avoid repeated unnecessary connections for multiple mails
+    try:
+        mail_connection = mail.get_connection(fail_silently=False)
+        mail_connection.open()
+        mail_connection_error_count = 0 # keep track or errors below and abort after a few
+    except Exception as e:
+        for invoice in invoices:
+            invoice.delete()
+        messages.error(request, "Deleted new invoices because connection to mail server could not be "
+                                "established: {}".format(e))
+        return
+
     for invoice in invoices:
+        # first, check whether we already had too many failures sending mails. If yes, just delete the remaining invoices
+        MAIL_CONNECTION_FAILURE_COUNT_LIMIT = 4
+        if mail_connection_error_count >= MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
+            invoice.delete()
+            if mail_connection_error_count == MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
+                messages.error(request,
+                               "Too many errors during mail transmission - deleted all remaining, unsent invoices")
+            mail_connection_error_count += 1
+            continue
+
         context = {}
         context["pybarsys_preferences"] = PybarsysPreferences
         context["invoice"] = invoice
@@ -103,16 +126,18 @@ def send_invoice_mails(request, invoices, send_dependant_notifications=False):
         content_html = render_to_string(
             os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "normal_invoice.html.html"),
             context)
+        msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.INVOICE_SUBJECT, content_plain,
+                                     pybarsys_settings.EMAIL_FROM_ADDRESS, [invoice.recipient.email],
+                                     reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
+        msg.attach_alternative(content_html, "text/html")
         try:
-            msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.INVOICE_SUBJECT, content_plain,
-                                         pybarsys_settings.EMAIL_FROM_ADDRESS, [invoice.recipient.email],
-                                         reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
-            msg.attach_alternative(content_html, "text/html")
-            msg.send(fail_silently=False)
-
+            mail_connection.send_messages((msg, ))
             num_invoice_mail_success += 1
         except Exception as e:
             invoice_mail_failure.append((invoice.recipient, e))
+            invoice.delete()
+            mail_connection_error_count += 1
+            continue
 
         if send_dependant_notifications and invoice.has_dependant_purchases():
             # send purchase notifications to dependants
@@ -126,21 +151,25 @@ def send_invoice_mails(request, invoices, send_dependant_notifications=False):
                                                               "dependant_notification.plaintext.html"), notif_context)
                 content_html = render_to_string(os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR,
                                                              "dependant_notification.html.html"), notif_context)
+                msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.PURCHASE_NOTIFICATION_SUBJECT, content_plain,
+                                             pybarsys_settings.EMAIL_FROM_ADDRESS, [dependant.email],
+                                             reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
+                msg.attach_alternative(content_html, "text/html")
                 try:
-                    msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.PURCHASE_NOTIFICATION_SUBJECT, content_plain,
-                                                 pybarsys_settings.EMAIL_FROM_ADDRESS, [dependant.email],
-                                                 reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
-                    msg.attach_alternative(content_html, "text/html")
-                    msg.send(fail_silently=False)
-
+                    mail_connection.send_messages((msg,))
                     num_purchase_notif_mail_success += 1
                 except Exception as e:
                     purchase_notif_mail_failure.append((dependant, e))
+                    # do not delete invoice due to this, but count as error
+                    mail_connection_error_count += 1
+
+    mail_connection.close()
 
     if num_invoice_mail_success > 0:
         messages.info(request, "{} invoice mails were successfully sent. ".format(num_invoice_mail_success))
     if len(invoice_mail_failure) > 0:
-        messages.error(request, "Sending invoice mail(s) to the following user(s) failed: {}".
+        messages.error(request,
+                       "Sending invoice mail(s) to the following user(s) failed, deleted the invoice again: {}".
                        format(", ".join(["{} ({})".format(u, err) for u, err in invoice_mail_failure])))
 
     if num_purchase_notif_mail_success > 0:
@@ -155,7 +184,25 @@ def send_reminder_mails(request, users):
     """ Send payment reminder mails to users """
     num_reminder_mail_success = 0
     reminder_mail_failure = []  # [(username, error), ...]
+
+    # open connection only once to avoid repeated unnecessary connections for multiple mails
+    try:
+        mail_connection = mail.get_connection(fail_silently=False)
+        mail_connection.open()
+        mail_connection_error_count = 0  # keep track or errors below and abort after a few
+    except Exception as e:
+        messages.error(request, "Did not send payment reminders because connection to mail server could not be "
+                                "established: {}".format(e))
+        return
+
     for user in users:
+        # first, check whether we already had too many failures sending mails. If yes, just abort
+        MAIL_CONNECTION_FAILURE_COUNT_LIMIT = 4
+        if mail_connection_error_count >= MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
+            messages.error(request,
+                           "Too many errors during mail transmission - stopped sending payment reminders")
+            return
+
         context = {}
         context["pybarsys_preferences"] = PybarsysPreferences
         context["user"] = user
@@ -168,16 +215,17 @@ def send_reminder_mails(request, users):
         content_html = render_to_string(
             os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "payment_reminder.html.html"),
             context)
+        msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.PAYMENT_REMINDER_SUBJECT, content_plain,
+                                     pybarsys_settings.EMAIL_FROM_ADDRESS, [user.email],
+                                     reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
+        msg.attach_alternative(content_html, "text/html")
         try:
-            msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.PAYMENT_REMINDER_SUBJECT, content_plain,
-                                         pybarsys_settings.EMAIL_FROM_ADDRESS, [user.email],
-                                         reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
-            msg.attach_alternative(content_html, "text/html")
-            msg.send(fail_silently=False)
-
+            mail_connection.send_messages((msg,))
             num_reminder_mail_success += 1
         except Exception as e:
             reminder_mail_failure.append((user, e))
+            mail_connection_error_count += 1
+    mail_connection.close()
 
     if num_reminder_mail_success > 0:
         messages.info(request, "{} payment reminders were successfully sent. ".format(num_reminder_mail_success))
