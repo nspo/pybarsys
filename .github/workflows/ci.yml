@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build-test-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Set CI environment variables
+        shell: bash
+        run: |
+          REPO="nspohrer/pybarsys"
+          CLEANED_BRANCH_NAME=$(echo "${GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9]/_/g')
+
+          if [[ "${GITHUB_REF_NAME}" == "master" && "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            TAG_BRANCH="latest"
+          else
+            TAG_BRANCH="${CLEANED_BRANCH_NAME}"
+          fi
+
+          TAG_BRANCH_COMMIT="${CLEANED_BRANCH_NAME}-${GITHUB_SHA::6}"
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            TAG_BRANCH="${TAG_BRANCH}-pr-${PR_NUMBER}"
+            TAG_BRANCH_COMMIT="${TAG_BRANCH_COMMIT}-pr-${PR_NUMBER}"
+          fi
+
+          echo "REPO=${REPO}" >> $GITHUB_ENV
+          echo "TAG_BRANCH=${TAG_BRANCH}" >> $GITHUB_ENV
+          echo "TAG_BRANCH_COMMIT=${TAG_BRANCH_COMMIT}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          pip3 install -r requirements.txt
+          cp .env.example .env
+          touch db.sqlite3
+          chmod 666 db.sqlite3
+
+      - name: Run unit tests
+        run: python3 manage.py test
+
+      - name: Build Docker images
+        run: docker compose -f docker-compose.yml -f docker-compose.build.yml build
+
+      - name: Start application
+        run: docker compose up -d
+
+      - name: Smoke test application
+        run: |
+          scripts/try_for_60s.sh bash -c 'curl -sSL localhost | grep "There are no active users"'
+          curl -sSL localhost/static/barsys/style.css | grep media
+
+      - name: Login to DockerHub
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker images
+        if: github.event_name == 'push'
+        run: |
+          docker build -t ${REPO}:${TAG_BRANCH} -t ${REPO}:${TAG_BRANCH_COMMIT} .
+          docker push ${REPO}:${TAG_BRANCH}
+          docker push ${REPO}:${TAG_BRANCH_COMMIT}
+

@@ -1,5 +1,5 @@
 # alpine version is not usable due to issues with locales
-FROM python:3
+FROM python:3.10
 
 # system dependencies
 ARG DEBIAN_FRONTEND=noninteractive
