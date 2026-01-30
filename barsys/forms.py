@@ -94,7 +94,8 @@ class InvoicesCreateForm(forms.Form):
     send_invoices = forms.BooleanField(required=False, initial=True,
                                        help_text="Whether to send invoice mails to the users' mail addresses. "
                                                  "Users who do not pay for themselves will get a notification of their "
-                                                 "purchases instead of a real invoice. "
+                                                 "purchases instead of a real invoice. If an error occurs during "
+                                                 "sending, new invoices may be deleted again automatically."
                                                  "If false, invoices will only be created internally.")
 
     send_dependant_notifications = forms.BooleanField(required=False, initial=True,
