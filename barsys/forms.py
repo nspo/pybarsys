@@ -326,6 +326,10 @@ class PaymentForm(forms.ModelForm):
         model = Payment
         exclude = ('invoice',)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user'].queryset = User.objects.filter(purchases_paid_by_other__isnull=True)
+
 
 class FreeItemForm(forms.ModelForm):
     class Meta:

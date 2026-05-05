@@ -347,6 +347,16 @@ class PaymentCreateView(UserIsAdminMixin, edit.CreateView):
     form_class = PaymentForm
     template_name = "barsys/admin/payment_new.html"
 
+    def form_valid(self, form):
+        user = form.cleaned_data['user']
+        if not user.pays_themselves():
+            messages.error(self.request,
+                           "Cannot add payment for {}: purchases are paid by {}.".format(
+                               user, user.purchases_paid_by_other))
+            return redirect('admin_payment_new')
+        return super().form_valid(form)
+
+
 
 class PaymentUpdateView(UserIsAdminMixin, edit.UpdateView):
     model = Payment
@@ -398,7 +408,7 @@ class InvoiceDetailView(UserIsAdminMixin, DetailView):
 class InvoiceResendView(UserIsAdminMixin, View):
     def get(self, request, pk):
         invoice = get_object_or_404(Invoice, pk=pk)
-        view_helpers.send_invoice_mails(request, [invoice])
+        view_helpers.send_invoice_mails(request, [invoice], users_autolocked=[], send_dependant_notifications=True)
         return redirect("admin_invoice_list")
 
 
@@ -423,6 +433,7 @@ class InvoiceMailDebugView(UserIsAdminMixin, DetailView):
         context["invoice"] = invoice
         context["recipient"] = invoice.recipient
         context["pybarsys_preferences"] = PybarsysPreferences
+        context["subject"] = PybarsysPreferences.EMAIL.INVOICE_SUBJECT
         context["own_purchases"] = invoice.own_purchases()
         context["other_purchases_grouped"] = invoice.other_purchases_grouped()
         context["last_invoices"] = invoice.recipient.invoices()[:5]
@@ -442,6 +453,7 @@ class PaymentReminderMailDebugView(UserIsAdminMixin, DetailView):
 
         context["recipient"] = user
         context["pybarsys_preferences"] = PybarsysPreferences
+        context["subject"] = PybarsysPreferences.EMAIL.PAYMENT_REMINDER_SUBJECT
         context["last_invoices"] = user.invoices()[:5]
         context["last_payments"] = user.payments()[:5]
 
@@ -456,77 +468,25 @@ class InvoiceCreateView(UserIsAdminMixin, edit.FormView):
     form_class = InvoicesCreateForm
     success_url = reverse_lazy("admin_invoice_list")
 
+    def get_initial(self):
+        initial = super().get_initial()
+        user_pk = self.request.GET.get('user')
+        if user_pk:
+            initial['users'] = [user_pk]
+        return initial
+
     def form_valid(self, form):
-        users = form.cleaned_data["users"]
-        send_invoices = form.cleaned_data["send_invoices"]
-        send_dependant_notifications = form.cleaned_data["send_dependant_notifications"]
-        send_payment_reminders = form.cleaned_data["send_payment_reminders"]
-        autolock_accounts = form.cleaned_data["autolock_accounts"]
-        comment = form.cleaned_data["comment"]
-
-        skipped_users = []
-        invoices = []
-        users_to_remind = []
-        users_autolocked = []
-
-        for user in users:
-
-            balance_before = user.account_balance()
-
-            if Purchase.objects.to_pay_by(user).exists() or user.payments().unbilled().exists():
-                # print("{} has {} purchases to pay for: ".format(user, purchases_to_pay.count()))
-                invoice = Invoice.objects.create_for_user(user, comment)
-                invoices.append(invoice)
-            else:
-                # print("{} has no purchases to pay for".format(user))
-                if send_payment_reminders and user.account_balance() < PybarsysPreferences.Misc.BALANCE_BELOW_TRANSFER_MONEY:
-                    users_to_remind.append(user)
-                skipped_users.append(user)
-
-            # remove autolock if new balance is adequate
-            if user.is_autolocked and user.account_balance() > PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK:
-                user.is_autolocked = False
-                user.save()
-
-            if autolock_accounts:
-                # autolock user if necessary
-                if balance_before < PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK and user.account_balance() < PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK:
-                    # user has surpassed autolock threshold twice
-                    user.is_autolocked = True
-                    user.save()
-                    users_autolocked.append(user)
-
-        if len(invoices) > 0:
-            created_str = "Created {} invoice(s) for the following user(s): {}. ".format(len(invoices), ", ".join(
-                ["{} ({})".format(i.recipient.display_name, currency(i.amount_purchases - i.amount_payments)) for i in
-                 invoices]))
-        else:
-            created_str = "No invoices were created. "
-        messages.info(self.request, created_str)
-
-        if len(skipped_users) > 0:
-            # skipped_str = "Skipped {} user(s): {}".format(len(skipped_users), ' ,'.join([u.__str__() for u in skipped_users]))
-            skipped_str = "Skipped {} user(s) because they did not need new invoices.".format(len(skipped_users))
-            messages.info(self.request, skipped_str)
-
-        if len(users_autolocked) > 0:
-            autolocked_str = "The following users were autolocked: {}".format(
-                ', '.join([u.__str__() for u in users_autolocked])
-            )
-            messages.warning(self.request, autolocked_str)
-
-        # Send invoice mails if wanted
-        if send_invoices and len(invoices) > 0:
-            view_helpers.send_invoice_mails(self.request, invoices,
-                                            send_dependant_notifications=send_dependant_notifications)
-        else:
-            messages.info(self.request, "No invoice mails were sent.")
-
-        # Send payment reminder mails
-        if len(users_to_remind) > 0:
-            view_helpers.send_reminder_mails(self.request, users_to_remind)
-
+        view_helpers.create_invoices(
+            self.request,
+            users=form.cleaned_data["users"],
+            send_invoices=form.cleaned_data["send_invoices"],
+            send_dependant_notifications=form.cleaned_data["send_dependant_notifications"],
+            send_payment_reminders=form.cleaned_data["send_payment_reminders"],
+            autolock_accounts=form.cleaned_data["autolock_accounts"],
+            comment=form.cleaned_data["comment"],
+        )
         return super(InvoiceCreateView, self).form_valid(form)
+
 
 
 class InvoiceDeleteView(UserIsAdminMixin, CheckedDeleteView):

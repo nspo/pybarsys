@@ -6,4 +6,21 @@
 
     <h1>Create invoices</h1>
     {% crispy form %}
+    <script>
+        (function () {
+            var select = document.getElementById('id_users');
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'Filter by user name';
+            input.className = 'form-control';
+            input.style.marginBottom = '4px';
+            select.parentNode.insertBefore(input, select);
+            input.addEventListener('keyup', function () {
+                var q = input.value.toLowerCase();
+                Array.from(select.options).forEach(function (opt) {
+                    opt.style.display = opt.text.toLowerCase().includes(q) ? '' : 'none';
+                });
+            });
+        })();
+    </script>
 {% endblock %}
