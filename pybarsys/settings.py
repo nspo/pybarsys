@@ -7,6 +7,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env = environ.Env()
 env.read_env(os.path.join(BASE_DIR, ".env"))
 
+# TODO: this overwrites BASE_DIR with a path one level too high (resolves to parent of project root);
+# BASE_DIR is not used below so it has no effect — but unclear if this is a bug or intentional workaround
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__ + "/..")))
 STATIC_ROOT = env("STATIC_ROOT", default="static/")
 STATIC_URL = env("STATIC_URL", default="/static/")
