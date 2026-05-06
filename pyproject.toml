@@ -1,0 +1,11 @@
+[tool.ruff]
+line-length = 88
+exclude = ["barsys/migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = [
+    "E501",  # line too long — ruff format handles code; comments/strings are intentional
+    "F403",  # star imports used throughout; replacing with explicit imports is a separate task
+    "F405",  # may-be-undefined from star imports; same as above
+]
