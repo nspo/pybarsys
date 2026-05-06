@@ -63,6 +63,8 @@ WSGI_APPLICATION = "pybarsys.wsgi.application"
 
 DATABASES = {"default": env.db()}
 
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"  # keep 32-bit PKs; avoids migrations on existing tables
+
 AUTH_USER_MODEL = "barsys.User"  # custom Barsys user model
 
 # Password validation
