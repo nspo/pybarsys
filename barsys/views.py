@@ -8,7 +8,6 @@ from django.http import (
     HttpResponseRedirect,
     HttpResponseForbidden,
     HttpResponse,
-    JsonResponse,
 )
 from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render

@@ -5,23 +5,23 @@ from barsys.models import *
 
 class InvoiceTestCase(TransactionTestCase):
     def setUp(self):
-        u1 = User.objects.create_user("user1@example.com", "user1")
+        _u1 = User.objects.create_user("user1@example.com", "user1")
         u2 = User.objects.create_user("user2@example.com", "user2")
 
         u3 = User.objects.create_user("user3@example.com", "user3")
         u3.purchases_paid_by_other = u2
         u3.save()
 
-        u4 = User.objects.create_user("user4@example.com", "user4")
+        _u4 = User.objects.create_user("user4@example.com", "user4")
 
         cat1 = Category.objects.create(name="Softdrinks")
-        prod1 = Product.objects.create(
+        _prod1 = Product.objects.create(
             category=cat1, name="Cola", price="1.05", amount="0.5 l"
         )
-        prod2 = Product.objects.create(
+        _prod2 = Product.objects.create(
             category=cat1, name="Club-Mate", price="0.95", amount="0.5 l"
         )
-        prod3 = Product.objects.create(
+        _prod3 = Product.objects.create(
             category=cat1, name="OJ", price="0.90", amount="0.3 l"
         )
 
@@ -72,12 +72,12 @@ class InvoiceTestCase(TransactionTestCase):
         self.assertEqual(u1.account_balance(), Decimal("0"))
         self.assertEqual(u2.account_balance(), Decimal("0"))
 
-        invoice1 = Invoice.objects.create_for_user(u1)
+        _invoice1 = Invoice.objects.create_for_user(u1)
 
         self.assertEqual(u1.account_balance(), Decimal("-47.25"))
         self.assertEqual(u2.account_balance(), Decimal("0"))
 
-        invoice1_empty = Invoice.objects.create_for_user(u1)  # should have 0$
+        _invoice1_empty = Invoice.objects.create_for_user(u1)  # should have 0$
         self.assertEqual(u1.account_balance(), Decimal("-47.25"))
 
         invoice2 = Invoice.objects.create_for_user(u2)
@@ -144,8 +144,8 @@ class InvoiceTestCase(TransactionTestCase):
         self.assertEqual(u2.purchases().sum_cost(), -bal)
         self.assertEqual(u3.purchases().sum_cost(), -bal)
 
-        i1 = Invoice.objects.create_for_user(u1)
-        i2 = Invoice.objects.create_for_user(u2)
+        _i1 = Invoice.objects.create_for_user(u1)
+        _i2 = Invoice.objects.create_for_user(u2)
 
         with self.assertRaises(IntegrityError):
             # invoice for dependant not possible
@@ -164,8 +164,8 @@ class InvoiceTestCase(TransactionTestCase):
         self.assertEqual(u2.account_balance(), 2 * bal)
         self.assertEqual(u3.account_balance(), Decimal("0"))
 
-        i1 = Invoice.objects.create_for_user(u1)
-        i2 = Invoice.objects.create_for_user(u2)
+        _i1 = Invoice.objects.create_for_user(u1)
+        _i2 = Invoice.objects.create_for_user(u2)
 
         with self.assertRaises(IntegrityError):
             Invoice.objects.create_for_user(u3)
@@ -315,13 +315,13 @@ class ProductAutochangeSetTestCase(TransactionTestCase):
 
         pacs1 = ProductAutochangeSet.objects.create(title="pacs1")
 
-        pac1 = ProductAutochange.objects.create(
+        _pac1 = ProductAutochange.objects.create(
             pc_set=pacs1,
             product=prod1,
             change_active=ProductAutochange.CHANGE_TO_NO,
             change_bold=ProductAutochange.CHANGE_TO_YES,
         )
-        pac2 = ProductAutochange.objects.create(
+        _pac2 = ProductAutochange.objects.create(
             pc_set=pacs1, product=prod2, change_active=ProductAutochange.CHANGE_TO_NO
         )
 
@@ -351,13 +351,13 @@ class ProductAutochangeSetTestCase(TransactionTestCase):
             change_others_bold=ProductAutochange.CHANGE_TO_YES,
         )
 
-        pac1 = ProductAutochange.objects.create(
+        _pac1 = ProductAutochange.objects.create(
             pc_set=pacs1,
             product=prod1,
             change_active=ProductAutochange.CHANGE_TO_YES,
             change_bold=ProductAutochange.NO_CHANGE,
         )
-        pac3 = ProductAutochange.objects.create(
+        _pac3 = ProductAutochange.objects.create(
             pc_set=pacs1, product=prod3, change_active=ProductAutochange.CHANGE_TO_YES
         )
 

@@ -8,7 +8,7 @@ from django.core.validators import MinValueValidator
 from django.db import IntegrityError
 from django.db import models
 from django.db.models import DecimalField
-from django.db.models import F
+from django.db.models import F, Q
 from django.urls import reverse
 from django.utils import formats
 from django.utils import timezone
@@ -83,9 +83,6 @@ class UserManager(BaseUserManager):
     def get_by_natural_key(self, username):
         """Match username/email case-insensitive"""
         return self.get(**{self.model.USERNAME_FIELD + "__iexact": username})
-
-
-from django.db.models import Q
 
 
 class User(AbstractBaseUser):
@@ -284,6 +281,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = "Categories"
+        ordering = ["name"]
 
     def get_absolute_url(self):
         return reverse("admin_category_detail", kwargs={"pk": self.pk})
@@ -294,9 +292,6 @@ class Category(models.Model):
             return "There is at least one product in this category"
         else:
             return False
-
-    class Meta:
-        ordering = ["name"]
 
 
 class ProductQuerySet(models.QuerySet):
