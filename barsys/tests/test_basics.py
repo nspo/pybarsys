@@ -1,4 +1,4 @@
-from django.test import TransactionTestCase
+from django.test import TestCase, TransactionTestCase
 
 from barsys.models import *
 
@@ -375,3 +375,43 @@ class ProductAutochangeSetTestCase(TransactionTestCase):
         self.assertEqual(prod2.is_bold, True)
         self.assertEqual(prod3.is_bold, False)
         self.assertEqual(prod4.is_bold, True)
+
+
+class UserModelTest(TestCase):
+    def setUp(self):
+        self.u1 = User.objects.create_user("u1@example.com", "User1")
+        self.u2 = User.objects.create_user("u2@example.com", "User2")
+        self.u2.purchases_paid_by_other = self.u1
+        self.u2.save()
+
+    def test_pays_themselves_independent_user(self):
+        self.assertTrue(self.u1.pays_themselves())
+
+    def test_pays_themselves_dependant_user(self):
+        self.assertFalse(self.u2.pays_themselves())
+
+    def test_account_balance_zero_with_no_invoices(self):
+        self.assertEqual(self.u1.account_balance(), Decimal("0"))
+
+    def test_account_balance_negative_after_invoice(self):
+        cat = Category.objects.create(name="Drinks")
+        prod = Product.objects.create(
+            category=cat, name="Cola", price="2.00", amount="0.5 l"
+        )
+        Purchase.objects.create_from_product(prod, user=self.u1, quantity=3)
+        Invoice.objects.create_for_user(self.u1)
+        self.assertEqual(self.u1.account_balance(), Decimal("-6.00"))
+
+    def test_account_balance_dependant_always_zero(self):
+        cat = Category.objects.create(name="Drinks")
+        prod = Product.objects.create(
+            category=cat, name="Cola", price="2.00", amount="0.5 l"
+        )
+        Purchase.objects.create_from_product(prod, user=self.u2, quantity=5)
+        # invoice is billed to u1 (the payer), not u2
+        Invoice.objects.create_for_user(self.u1)
+        self.assertEqual(self.u2.account_balance(), Decimal("0"))
+        self.assertEqual(self.u1.account_balance(), Decimal("-10.00"))
+        # creating an invoice directly for a dependant is not allowed
+        with self.assertRaises(IntegrityError):
+            Invoice.objects.create_for_user(self.u2)
