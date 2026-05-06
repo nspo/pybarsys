@@ -172,101 +172,77 @@ def generate_email_purchase_notification(dependant: User, purchases: Iterable[Pu
     return msg
 
 
-def send_invoice_mails(request, invoices, users_autolocked: list[User], send_dependant_notifications: bool):
-    """ Send invoice mails to invoice recipients with a list of all purchases of that invoice.
-        Optionally send purchase notifications to users whose purchases are paid by someone else.
-    """
-    num_invoice_mail_success = 0
-    invoice_mail_failure = []  # [(username, error), ...]
 
-    num_purchase_notif_mail_success = 0
-    purchase_notif_mail_failure = []
-
-    # open connection only once to avoid repeated unnecessary connections for multiple mails
-    try:
-        conn = EmailConnectionWrapper(fake_sending_mails=False)
-    except Exception as e:
-        for invoice in invoices:
-            invoice.delete()
-        for user in users_autolocked:
-            user.is_autolocked = False
-            user.save()
-        messages.error(request, "Deleted new invoices and undid autolocks because connection to mail server could not be "
-                                "established: {}".format(e))
-        return
-
-    MAIL_CONNECTION_FAILURE_COUNT_LIMIT = 4
-    for invoice in invoices:
-        # first, check whether we already had too many failures sending mails. If yes, just delete the remaining invoices
-        if conn.error_count >= MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
-            invoice.delete()
-            if invoice.recipient.is_autolocked and invoice.recipient in users_autolocked:
-                # Recipient was autolocked through this invoice
-                invoice.recipient.is_autolocked = False
-                invoice.recipient.save()
-            if conn.error_count == MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
-                messages.error(request,
-                               "Too many errors during mail transmission - "
-                               "deleted all remaining, unsent invoices and undid autolocks")
-            conn.error_count += 1  # keep incrementing so the == check above fires only once
-            continue
-
-        if not conn.send_message(generate_email_invoice(invoice)):
-            invoice_mail_failure.append((invoice.recipient, conn.last_error))
-            invoice.delete()
-            if invoice.recipient.is_autolocked and invoice.recipient in users_autolocked:
-                # Recipient was autolocked through this invoice
-                invoice.recipient.is_autolocked = False
-                invoice.recipient.save()
-            continue
-        num_invoice_mail_success += 1
-
-        if send_dependant_notifications and invoice.has_dependant_purchases():
-            # send purchase notifications to dependants
-            for dependant, purchases in invoice.other_purchases_grouped():
-                if not conn.send_message(generate_email_purchase_notification(dependant, purchases, invoice)):
-                    purchase_notif_mail_failure.append((dependant, conn.last_error))
-                    # do not delete invoice due to this, but count as error
-                else:
-                    num_purchase_notif_mail_success += 1
-
-    conn.close()
-
-    if num_invoice_mail_success > 0:
-        messages.info(request, "{} invoice mails were successfully sent. ".format(num_invoice_mail_success))
-    if len(invoice_mail_failure) > 0:
-        messages.error(request,
-                       "Sending invoice mail(s) to the following user(s) failed, deleted the invoice again and "
-                       "undid potential autolock: {}".
-                       format(", ".join(["{} ({})".format(u, err) for u, err in invoice_mail_failure])))
-
-    if num_purchase_notif_mail_success > 0:
-        messages.info(request, "{} dependant notification mails were successfully sent. ".format(
-            num_purchase_notif_mail_success))
-    if len(purchase_notif_mail_failure) > 0:
-        messages.error(request, "Sending dependant notification mail(s) to the following user(s) failed: {}".
-                       format(", ".join(["{} ({})".format(u, err) for u, err in purchase_notif_mail_failure])))
-
-
-def create_invoices(request, users: list[User], send_invoices: bool = True, send_dependant_notifications: bool = True,
-                    send_payment_reminders: bool = True, autolock_accounts: bool = True, comment: str = "") -> list:
+def create_invoices(request, users: list[User], send_mails: bool, send_dependant_notifications: bool,
+                    send_payment_reminders: bool, autolock_accounts: bool, comment: str = "") -> list[Invoice]:
     """Create invoices for users, send mails, handle autolocking. Returns list of created Invoice objects."""
-    skipped_users = []
     invoices = []
-    users_to_remind = []
     users_autolocked: list[User] = []
     users_autounlocked: list[User] = []
 
+    # Only send these if we also want to send mails at all
+    send_dependant_notifications = send_mails and send_dependant_notifications
+    send_payment_reminders = send_mails and send_payment_reminders
+
+    num_invoice_mail_success = 0
+    invoice_mail_failure: list[tuple[User, Exception]] = []
+
+    num_reminder_mail_success = 0
+    reminder_mail_failure: list[tuple[User, Exception]] = []
+
+    # for dependants
+    num_purchase_notif_mail_success = 0
+    purchase_notif_mail_failure: list[tuple[User, Exception]] = []
+
+    # open connection only once to avoid repeated unnecessary connections for multiple mails
+    # fake opening the connection if we do not want to send any emails (to keep the logic the same as when we do)
+    try:
+        conn = EmailConnectionWrapper(fake_sending_mails=not send_mails)
+    except Exception as e:
+        messages.error(request,
+                       "No invoice(s) created because connection to mail server could not be "
+                       "established: {}".format(e))
+        return invoices
+
+    MAIL_CONNECTION_FAILURE_COUNT_LIMIT = 4
+
     for user in users:
+        if conn.error_count >= MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
+            messages.error(request,
+                           "Too many errors during mail transmission - "
+                           "stopped invoice creation process early")
+            break
+
         balance_before = user.account_balance()
 
         if Purchase.objects.to_pay_by(user).exists() or user.payments().unbilled().exists():
+            # create and send invoice
             invoice = Invoice.objects.create_for_user(user, comment)
-            invoices.append(invoice)
+            if conn.send_message(generate_email_invoice(invoice)):
+                num_invoice_mail_success += 1
+                invoices.append(invoice)
+
+                # check whether dependants need to get purchase notifications
+                if send_dependant_notifications and invoice.has_dependant_purchases():
+                    # send purchase notifications to dependants
+                    for dependant, purchases in invoice.other_purchases_grouped():
+                        if conn.send_message(generate_email_purchase_notification(dependant, purchases, invoice)):
+                            num_purchase_notif_mail_success += 1
+                        else:
+                            purchase_notif_mail_failure.append((dependant, conn.last_error))
+                            # do not delete invoice due to this, but count as error
+            else:
+                invoice_mail_failure.append((invoice.recipient, conn.last_error))
+                invoice.delete()  # do not locally create an invoice if mail tx failed
+                continue
         else:
+            # no new invoice needed -> check whether payment reminder is needed
             if send_payment_reminders and user.account_balance() < PybarsysPreferences.Misc.BALANCE_BELOW_TRANSFER_MONEY:
-                users_to_remind.append(user)
-            skipped_users.append(user)
+                # send payment reminder
+                if conn.send_message(generate_email_payment_reminder(user)):
+                    num_reminder_mail_success += 1
+                else:
+                    reminder_mail_failure.append((user, conn.last_error))
 
         if user.is_autolocked and user.account_balance() > PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK:
             user.is_autolocked = False
@@ -276,19 +252,17 @@ def create_invoices(request, users: list[User], send_invoices: bool = True, send
         if autolock_accounts and not user.is_autolocked:
             if (balance_before < PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK and
                     user.account_balance() < PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK):
+                # autolock is needed
                 user.is_autolocked = True
                 user.save()
                 users_autolocked.append(user)
 
     if len(invoices) > 0:
-        created_str = "Created {} invoice(s) for: {}.".format(len(invoices), ", ".join(
-            [i.recipient.display_name for i in invoices]))
+        messages.success(request, "Created {} invoice(s) for: {}.".format(len(invoices),
+                                                                 ", ".join(
+            [i.recipient.display_name for i in invoices])))
     else:
-        created_str = "No invoices were created."
-    messages.info(request, created_str)
-
-    if len(skipped_users) > 0:
-        messages.info(request, "Skipped {} user(s) because they did not need new invoices.".format(len(skipped_users)))
+        messages.info(request, "No invoices were created.")
 
     if len(users_autolocked) > 0:
         messages.warning(request, "The following users were autolocked: {}".format(
@@ -298,15 +272,30 @@ def create_invoices(request, users: list[User], send_invoices: bool = True, send
         messages.success(request, "The following users were auto-unlocked: {}".format(
             ', '.join([str(u) for u in users_autounlocked])))
 
-    if send_invoices and len(invoices) > 0:
-        # WARNING: This call may actually delete invoices or unlock users again if mails cannot be sent.
-        send_invoice_mails(request, invoices, users_autolocked,
-                           send_dependant_notifications=send_dependant_notifications)
-    else:
-        messages.info(request, "No invoice mails were sent.")
+    if send_mails:
+        if num_invoice_mail_success > 0:
+            messages.info(request, f"Sent {num_invoice_mail_success} invoice mails")
+        if len(invoice_mail_failure) > 0:
+            messages.error(request,
+                           "Sending invoice mail(s) to the following user(s) failed - no invoices were created: {}".
+                           format(", ".join(["{} ({})".format(u, err) for u, err in invoice_mail_failure])))
 
-    if len(users_to_remind) > 0:
-        send_reminder_mails(request, users_to_remind)
+    if send_dependant_notifications:
+        if num_purchase_notif_mail_success > 0:
+            messages.info(request, "{} dependant notification mails were successfully sent. ".format(
+                num_purchase_notif_mail_success))
+        if len(purchase_notif_mail_failure) > 0:
+            messages.error(request, "Sending dependant notification mail(s) to the following user(s) failed: {}".
+                           format(", ".join(["{} ({})".format(u, err) for u, err in purchase_notif_mail_failure])))
+
+    if send_payment_reminders:
+        if num_reminder_mail_success > 0:
+            messages.info(request, "{} payment reminders were successfully sent. ".format(num_reminder_mail_success))
+        if len(reminder_mail_failure) > 0:
+            messages.error(request, "Sending payment reminder mail(s) to the following user(s) failed: {}". \
+                           format(", ".join(["{} ({})".format(u, err) for u, err in reminder_mail_failure])))
+
+    conn.close()
 
     return invoices
 
@@ -332,49 +321,6 @@ def generate_email_payment_reminder(user: User) -> EmailMultiAlternatives:
     msg.attach_alternative(content_html, "text/html")
 
     return msg
-
-
-def send_reminder_mails(request, users):
-    """ Send payment reminder mails to users """
-    num_reminder_mail_success = 0
-    num_reminder_mail_skipped = 0
-    reminder_mail_failure = []  # [(username, error), ...]
-
-    # open connection only once to avoid repeated unnecessary connections for multiple mails
-    try:
-        conn = EmailConnectionWrapper(fake_sending_mails=False)
-    except Exception as e:
-        messages.error(request, "Did not send payment reminders because connection to mail server could not be "
-                                "established: {}".format(e))
-        return
-
-    MAIL_CONNECTION_FAILURE_COUNT_LIMIT = 4
-    for user in users:
-        # first, check whether we already had too many failures sending mails. If yes, just abort
-        if conn.error_count >= MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
-            messages.error(request,
-                           "Too many errors during mail transmission - stopped sending payment reminders")
-            return
-
-        if user.account_balance() >= 0:
-            num_reminder_mail_skipped += 1
-            continue
-
-        if not conn.send_message(generate_email_payment_reminder(user)):
-            reminder_mail_failure.append((user, conn.last_error))
-        else:
-            num_reminder_mail_success += 1
-    conn.close()
-
-    if num_reminder_mail_success > 0:
-        messages.info(request, "{} payment reminders were successfully sent. ".format(num_reminder_mail_success))
-    if num_reminder_mail_skipped > 0:
-        messages.info(request,
-                      "{} payment reminder(s) skipped: account balance not below 0.".format(
-                          num_reminder_mail_skipped))
-    if len(reminder_mail_failure) > 0:
-        messages.error(request, "Sending payment reminder mail(s) to the following user(s) failed: {}". \
-                       format(", ".join(["{} ({})".format(u, err) for u, err in reminder_mail_failure])))
 
 
 def group_users(ungrouped_users):

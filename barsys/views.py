@@ -408,14 +408,35 @@ class InvoiceDetailView(UserIsAdminMixin, DetailView):
 class InvoiceResendView(UserIsAdminMixin, View):
     def get(self, request, pk):
         invoice = get_object_or_404(Invoice, pk=pk)
-        view_helpers.send_invoice_mails(request, [invoice], users_autolocked=[], send_dependant_notifications=True)
+        try:
+            conn = view_helpers.EmailConnectionWrapper(fake_sending_mails=False)
+        except Exception as e:
+            messages.error(request, "Could not connect to mail server: {}".format(e))
+            return redirect("admin_invoice_list")
+        if conn.send_message(view_helpers.generate_email_invoice(invoice)):
+            messages.success(request, "Invoice mail resent successfully.")
+        else:
+            messages.error(request, "Failed to resend invoice mail: {}".format(conn.last_error))
+        conn.close()
         return redirect("admin_invoice_list")
 
 
 class PaymentReminderSendView(UserIsAdminMixin, View):
     def get(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        view_helpers.send_reminder_mails(request, [user])
+        if user.account_balance() >= 0:
+            messages.warning(request, "Payment reminder not sent: {}'s account balance is not below 0.".format(user))
+            return redirect("admin_user_detail", pk=pk)
+        try:
+            conn = view_helpers.EmailConnectionWrapper(fake_sending_mails=False)
+        except Exception as e:
+            messages.error(request, "Could not connect to mail server: {}".format(e))
+            return redirect("admin_user_detail", pk=pk)
+        if conn.send_message(view_helpers.generate_email_payment_reminder(user)):
+            messages.success(request, "Payment reminder sent successfully.")
+        else:
+            messages.error(request, "Failed to send payment reminder: {}".format(conn.last_error))
+        conn.close()
         return redirect("admin_user_detail", pk=pk)
 
 
@@ -479,7 +500,7 @@ class InvoiceCreateView(UserIsAdminMixin, edit.FormView):
         view_helpers.create_invoices(
             self.request,
             users=form.cleaned_data["users"],
-            send_invoices=form.cleaned_data["send_invoices"],
+            send_mails=form.cleaned_data["send_invoices"],
             send_dependant_notifications=form.cleaned_data["send_dependant_notifications"],
             send_payment_reminders=form.cleaned_data["send_payment_reminders"],
             autolock_accounts=form.cleaned_data["autolock_accounts"],
