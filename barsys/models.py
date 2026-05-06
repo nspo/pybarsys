@@ -2,9 +2,7 @@ import datetime
 from collections import defaultdict
 from decimal import Decimal
 
-from django.contrib.auth.models import (
-    BaseUserManager, AbstractBaseUser
-)
+from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import IntegrityError
@@ -22,8 +20,8 @@ from barsys.templatetags.barsys_helpers import currency
 class DefaultSelectOrPrefetchManager(models.Manager):
     # https://stackoverflow.com/a/21291161/997151
     def __init__(self, *args, **kwargs):
-        self._select_related = kwargs.pop('select_related', None)
-        self._prefetch_related = kwargs.pop('prefetch_related', None)
+        self._select_related = kwargs.pop("select_related", None)
+        self._prefetch_related = kwargs.pop("prefetch_related", None)
 
         super(DefaultSelectOrPrefetchManager, self).__init__(*args, **kwargs)
 
@@ -61,7 +59,7 @@ class UserManager(BaseUserManager):
 
     def create_user(self, email, display_name, password=None):
         if not email:
-            raise ValueError('Users must have an email address')
+            raise ValueError("Users must have an email address")
 
         user = self.model(
             email=self.normalize_email(email),
@@ -83,33 +81,51 @@ class UserManager(BaseUserManager):
         return user
 
     def get_by_natural_key(self, username):
-        """ Match username/email case-insensitive """
-        return self.get(**{self.model.USERNAME_FIELD + '__iexact': username})
+        """Match username/email case-insensitive"""
+        return self.get(**{self.model.USERNAME_FIELD + "__iexact": username})
 
 
 from django.db.models import Q
 
 
 class User(AbstractBaseUser):
-    email = models.EmailField(max_length=255, unique=True, blank=False, help_text="Email is used as username when "
-                                                                                  "logging into the user-only area")
+    email = models.EmailField(
+        max_length=255,
+        unique=True,
+        blank=False,
+        help_text="Email is used as username when logging into the user-only area",
+    )
 
-    display_name = models.CharField(max_length=40, unique=True, blank=False, help_text="What is shown on the "
-                                                                                       "main purchase page")
+    display_name = models.CharField(
+        max_length=40,
+        unique=True,
+        blank=False,
+        help_text="What is shown on the main purchase page",
+    )
 
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False, help_text="User may login as admin")
     is_buyer = models.BooleanField(default=True, help_text="User may buy products")
-    is_favorite = models.BooleanField(default=False, help_text="User is shown under favorites")
-    is_autolocked = models.BooleanField(default=False, help_text="User was automatically locked "
-                                                                 "due to the outstanding balance")
+    is_favorite = models.BooleanField(
+        default=False, help_text="User is shown under favorites"
+    )
+    is_autolocked = models.BooleanField(
+        default=False,
+        help_text="User was automatically locked due to the outstanding balance",
+    )
 
-    purchases_paid_by_other = models.ForeignKey("self", on_delete=models.PROTECT, default=None, null=True, blank=True,
-                                                help_text="If set, another active user (who pays for their own "
-                                                          "purchases) is responsible to pay for all purchases made by "
-                                                          "this user. Invoices are sent to the responsible user, and a "
-                                                          "copy goes to the dependent as notification.",
-                                                limit_choices_to=(Q(purchases_paid_by_other=None)))
+    purchases_paid_by_other = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        default=None,
+        null=True,
+        blank=True,
+        help_text="If set, another active user (who pays for their own "
+        "purchases) is responsible to pay for all purchases made by "
+        "this user. Invoices are sent to the responsible user, and a "
+        "copy goes to the dependent as notification.",
+        limit_choices_to=(Q(purchases_paid_by_other=None)),
+    )
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
@@ -117,39 +133,64 @@ class User(AbstractBaseUser):
 
     objects = UserManager.from_queryset(UserQuerySet)()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     def clean(self):
         if self.purchases_paid_by_other == self:
-            raise ValidationError({'purchases_paid_by_other': "This field cannot be set to the same user"})
+            raise ValidationError(
+                {"purchases_paid_by_other": "This field cannot be set to the same user"}
+            )
         if self.purchases_paid_by_other_id is not None:
             if self.purchases_paid_by_other.purchases_paid_by_other_id is not None:
-                raise ValidationError({'purchases_paid_by_other': "Purchases cannot be paid by someone who does not "
-                                                                  "pay for their own purchases."})
+                raise ValidationError(
+                    {
+                        "purchases_paid_by_other": "Purchases cannot be paid by someone who does not "
+                        "pay for their own purchases."
+                    }
+                )
             dependents = self.dependents()
             if self.pk is not None and dependents.exists():
                 other_names = [u.display_name for u in dependents]
-                raise ValidationError({'purchases_paid_by_other': "This user pays for the following users, so "
-                                                                  "their purchases cannot be paid by someone else: {}"
-                                      .format(', '.join(other_names))})
+                raise ValidationError(
+                    {
+                        "purchases_paid_by_other": "This user pays for the following users, so "
+                        "their purchases cannot be paid by someone else: {}".format(
+                            ", ".join(other_names)
+                        )
+                    }
+                )
         if self.pk is not None:
             # Check whether this user should pay for other active users' purchases but is not active
             dependents = self.dependents().active()
             if not self.is_active and dependents.exists():
-                raise ValidationError({'is_active': "This user has to pay for purchases of the following active users"
-                                                    ", so they cannot be deactivated: {}".
-                                      format(", ".join([d.display_name for d in dependents]))})
+                raise ValidationError(
+                    {
+                        "is_active": "This user has to pay for purchases of the following active users"
+                        ", so they cannot be deactivated: {}".format(
+                            ", ".join([d.display_name for d in dependents])
+                        )
+                    }
+                )
 
             orig = User.objects.get(pk=self.pk)
-            if orig.purchases_paid_by_other_id is None and self.purchases_paid_by_other_id is not None:
+            if (
+                orig.purchases_paid_by_other_id is None
+                and self.purchases_paid_by_other_id is not None
+            ):
                 # change from self-paying to dependant
                 if self.account_balance() < 0:
-                    raise ValidationError({'purchases_paid_by_other':
-                                               "Cannot make user a dependant if they have a negative account balance."})
+                    raise ValidationError(
+                        {
+                            "purchases_paid_by_other": "Cannot make user a dependant if they have a negative account balance."
+                        }
+                    )
                 if self.payments().unbilled().exists():
-                    raise ValidationError({'purchases_paid_by_other':
-                                               "Cannot make user a dependant if they have unbilled payments"})
+                    raise ValidationError(
+                        {
+                            "purchases_paid_by_other": "Cannot make user a dependant if they have unbilled payments"
+                        }
+                    )
 
     def save(self, *args, **kwargs):
         self.clean()  # do not call full_clean b/c password may be empty
@@ -194,7 +235,7 @@ class User(AbstractBaseUser):
         ordering = ["display_name"]
 
     def get_absolute_url(self):
-        return reverse('admin_user_detail', kwargs={'pk': self.pk})
+        return reverse("admin_user_detail", kwargs={"pk": self.pk})
 
     def cannot_be_deleted(self):
         if self.purchases().count() == 0:
@@ -212,7 +253,7 @@ class User(AbstractBaseUser):
         return Payment.objects.filter(user=self)
 
     def dependents(self):
-        """ FIXME: name """
+        """FIXME: name"""
         return User.objects.filter(purchases_paid_by_other=self)
 
     def pays_themselves(self):
@@ -245,7 +286,7 @@ class Category(models.Model):
         verbose_name_plural = "Categories"
 
     def get_absolute_url(self):
-        return reverse('admin_category_detail', kwargs={'pk': self.pk})
+        return reverse("admin_category_detail", kwargs={"pk": self.pk})
 
     def cannot_be_deleted(self):
         product_count = Product.objects.filter(category=self).count()
@@ -264,16 +305,31 @@ class ProductQuerySet(models.QuerySet):
 
 
 class Product(models.Model):
-    """ name of product is not unique, because there can be other products with the same name but different amount"""
-    name = models.CharField(max_length=40, blank=False, help_text="Multiple products can have the same name "
-                                                                  "as long as the amount is different")
-    price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
-                                validators=[MinValueValidator(Decimal('0.01'))])
+    """name of product is not unique, because there can be other products with the same name but different amount"""
+
+    name = models.CharField(
+        max_length=40,
+        blank=False,
+        help_text="Multiple products can have the same name "
+        "as long as the amount is different",
+    )
+    price = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        blank=False,
+        null=False,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
     amount = models.CharField(max_length=12, blank=False)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, null=False)
 
-    is_active = models.BooleanField(default=True, help_text="Whether this product is shown on the purchasing page")
-    is_bold = models.BooleanField(default=False, help_text="Whether this product is shown bold on the purchasing page")
+    is_active = models.BooleanField(
+        default=True, help_text="Whether this product is shown on the purchasing page"
+    )
+    is_bold = models.BooleanField(
+        default=False,
+        help_text="Whether this product is shown bold on the purchasing page",
+    )
 
     objects = ProductQuerySet.as_manager()
 
@@ -282,29 +338,36 @@ class Product(models.Model):
 
     class Meta:
         unique_together = ["name", "amount"]
-        ordering = ["category__name", "-is_bold", "name", ]
+        ordering = [
+            "category__name",
+            "-is_bold",
+            "name",
+        ]
 
     def cannot_be_deleted(self):
         return False
 
     def get_absolute_url(self):
-        return reverse('admin_product_detail', kwargs={'pk': self.pk})
+        return reverse("admin_product_detail", kwargs={"pk": self.pk})
 
 
 class InvoiceQuerySet(models.QuerySet):
     def sum_amount(self):
-        total_amount = self.aggregate(total_amount=models.Sum(F("amount_purchases") - F("amount_payments"))).get(
-            "total_amount")
+        total_amount = self.aggregate(
+            total_amount=models.Sum(F("amount_purchases") - F("amount_payments"))
+        ).get("total_amount")
         if total_amount is not None:
             return total_amount
         else:
-            return Decimal('0')
+            return Decimal("0")
 
 
 class InvoiceManager(models.Manager):
-    def create_for_user(self, user, comment = ""):
+    def create_for_user(self, user, comment=""):
         if not user.pays_themselves():
-            raise IntegrityError("Cannot create an invoice for someone who does not pay for themselves")
+            raise IntegrityError(
+                "Cannot create an invoice for someone who does not pay for themselves"
+            )
 
         invoice = Invoice()
         invoice.recipient = user
@@ -320,7 +383,7 @@ class InvoiceManager(models.Manager):
         own_purchases.update(invoice=invoice)
         # print("Subtotal for own purchases: {}".format(subtotal))
 
-        other_purchases = Purchase.objects.to_pay_by(user).order_by('user')
+        other_purchases = Purchase.objects.to_pay_by(user).order_by("user")
 
         invoice.amount_purchases += other_purchases.sum_cost()
         other_purchases.update(invoice=invoice)
@@ -331,8 +394,7 @@ class InvoiceManager(models.Manager):
 
         own_payments.update(invoice=invoice)
 
-        invoice.comment = comment;
-
+        invoice.comment = comment
         invoice.save()
 
         return invoice
@@ -340,10 +402,17 @@ class InvoiceManager(models.Manager):
 
 class Invoice(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.PROTECT)
-    amount_purchases = models.DecimalField(max_digits=7, decimal_places=2, blank=False, null=False,
-                                           validators=[MinValueValidator(Decimal('0.00'))])
+    amount_purchases = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        blank=False,
+        null=False,
+        validators=[MinValueValidator(Decimal("0.00"))],
+    )
 
-    amount_payments = models.DecimalField(max_digits=7, decimal_places=2, blank=False, null=False)
+    amount_payments = models.DecimalField(
+        max_digits=7, decimal_places=2, blank=False, null=False
+    )
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
@@ -366,10 +435,11 @@ class Invoice(models.Model):
         return self.amount_purchases - self.amount_payments
 
     def __str__(self):
-        return "Invoice to {} over {} on {}".format(self.recipient,
-                                                    currency(self.amount_purchases - self.amount_payments),
-                                                    formats.date_format(localtime(self.created_date),
-                                                                        "SHORT_DATETIME_FORMAT"))
+        return "Invoice to {} over {} on {}".format(
+            self.recipient,
+            currency(self.amount_purchases - self.amount_payments),
+            formats.date_format(localtime(self.created_date), "SHORT_DATETIME_FORMAT"),
+        )
 
     def cannot_be_deleted(self):
         return False
@@ -387,8 +457,8 @@ class Invoice(models.Model):
             return True
 
     def other_purchases_grouped(self):
-        """ Create a list of tuples in the format (User, PurchaseQuerySet) of purchases
-            that the recipient paid for other users
+        """Create a list of tuples in the format (User, PurchaseQuerySet) of purchases
+        that the recipient paid for other users
         """
         other_purchases = self.other_purchases()
 
@@ -399,12 +469,16 @@ class Invoice(models.Model):
         for u in other_users:
             user_id = u["user"]
             other_purchases_grouped.append(
-                (User.objects.get(pk=user_id), other_purchases.filter(user=user_id).order_by("-created_date")))
+                (
+                    User.objects.get(pk=user_id),
+                    other_purchases.filter(user=user_id).order_by("-created_date"),
+                )
+            )
 
         return other_purchases_grouped
 
     def get_absolute_url(self):
-        return reverse('admin_invoice_detail', kwargs={'pk': self.pk})
+        return reverse("admin_invoice_detail", kwargs={"pk": self.pk})
 
 
 class PurchaseQuerySet(models.QuerySet):
@@ -412,44 +486,55 @@ class PurchaseQuerySet(models.QuerySet):
         return self.filter(invoice=None)
 
     def to_pay_by(self, user):
-        """ Unbilled purchases that a user must pay for (either b/c they bought something themselves
-            or have to pay for others)
+        """Unbilled purchases that a user must pay for (either b/c they bought something themselves
+        or have to pay for others)
         """
-        return self.unbilled().filter(Q(user__purchases_paid_by_other=user) |
-                                      Q(user=user, user__purchases_paid_by_other__isnull=True))
+        return self.unbilled().filter(
+            Q(user__purchases_paid_by_other=user)
+            | Q(user=user, user__purchases_paid_by_other__isnull=True)
+        )
 
     def paid_as_other(self, payer):
-        """ Invoiced purchases that were paid by a user for others """
+        """Invoiced purchases that were paid by a user for others"""
         return self.filter(Q(invoice__recipient=payer) & ~Q(user=payer))
 
     def paid_as_self(self, payer):
-        """ Invoiced purchases that were paid by a user for themselves """
+        """Invoiced purchases that were paid by a user for themselves"""
         return self.filter(Q(invoice__recipient=payer) & Q(user=payer))
 
     def sum_cost(self):
-        total_cost = self.aggregate(total_cost=models.Sum(F("quantity") * F("product_price"),
-                                                          output_field=DecimalField(decimal_places=2))).get(
-            "total_cost")
+        total_cost = self.aggregate(
+            total_cost=models.Sum(
+                F("quantity") * F("product_price"),
+                output_field=DecimalField(decimal_places=2),
+            )
+        ).get("total_cost")
         if total_cost is not None:
             return total_cost
         else:
-            return Decimal('0')
+            return Decimal("0")
 
     def sum_quantity(self):
-        total_quantity = self.aggregate(total_quantity=models.Sum(F("quantity"))).get("total_quantity")
+        total_quantity = self.aggregate(total_quantity=models.Sum(F("quantity"))).get(
+            "total_quantity"
+        )
         if total_quantity is not None:
             return total_quantity
         else:
             return 0
 
     def stats_purchases_by_category_and_product(self):
-        """ Calculate sum of purchases of each product and group by category and product
-            Limit parameter would not make a lot of sense here
+        """Calculate sum of purchases of each product and group by category and product
+        Limit parameter would not make a lot of sense here
         """
 
         # Purchase quantity as list of dicts
-        purchases_per_product = self.values("product_category", "product_name", "product_amount") \
-            .annotate(total_quantity=models.Sum("quantity")).order_by("-total_quantity").distinct()
+        purchases_per_product = (
+            self.values("product_category", "product_name", "product_amount")
+            .annotate(total_quantity=models.Sum("quantity"))
+            .order_by("-total_quantity")
+            .distinct()
+        )
 
         # Create dict (categories) of list (products)
         categories = defaultdict(list)
@@ -461,12 +546,15 @@ class PurchaseQuerySet(models.QuerySet):
         return sorted(categories.items())  # Sort by category name
 
     def stats_purchases_by_user(self, limit=5):
-        """ Like stats_purchases_by_category_and_product, but groups by user """
+        """Like stats_purchases_by_category_and_product, but groups by user"""
 
         # Purchase quantity as list of dicts
-        purchases_per_user = self.values("user", "user__display_name") \
-                                 .annotate(total_quantity=models.Sum("quantity")).order_by(
-            "-total_quantity").distinct()[:limit]
+        purchases_per_user = (
+            self.values("user", "user__display_name")
+            .annotate(total_quantity=models.Sum("quantity"))
+            .order_by("-total_quantity")
+            .distinct()[:limit]
+        )
 
         # Create list of tuples in the format (user, total_quantity)
         users = []
@@ -476,11 +564,18 @@ class PurchaseQuerySet(models.QuerySet):
         return users
 
     def stats_cost_by_user(self, limit=5):
-        """ Calculate total cost of purchases and group by user """
-        cost_per_user = self.values("user", "user__display_name"). \
-                            annotate(total_cost=models.Sum(F("quantity") * F("product_price"),
-                                                           output_field=DecimalField(decimal_places=2))). \
-                            filter(total_cost__gt=0).order_by("-total_cost")[:limit]
+        """Calculate total cost of purchases and group by user"""
+        cost_per_user = (
+            self.values("user", "user__display_name")
+            .annotate(
+                total_cost=models.Sum(
+                    F("quantity") * F("product_price"),
+                    output_field=DecimalField(decimal_places=2),
+                )
+            )
+            .filter(total_cost__gt=0)
+            .order_by("-total_cost")[:limit]
+        )
 
         # Create list of tuples [(user, total_cost), ...]
         users = []
@@ -492,8 +587,13 @@ class PurchaseQuerySet(models.QuerySet):
 
 class PurchaseManager(models.Manager):
     def create_from_product(self, product, **kwargs):
-        p = Purchase(product_amount=product.amount, product_category=product.category.name, product_name=product.name,
-                     product_price=product.price, **kwargs)
+        p = Purchase(
+            product_amount=product.amount,
+            product_category=product.category.name,
+            product_name=product.name,
+            product_price=product.price,
+            **kwargs,
+        )
         p.save()
         return p
 
@@ -503,20 +603,35 @@ class Purchase(models.Model):
     # Don't save product reference as foreign key, b/c it could be changed after purchase
     product_category = models.CharField(max_length=40, blank=False)
     product_name = models.CharField(max_length=40, blank=False)
-    product_price = models.DecimalField(max_digits=5, decimal_places=2, blank=False, null=False,
-                                        validators=[MinValueValidator(Decimal('0.00'))])
+    product_price = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        blank=False,
+        null=False,
+        validators=[MinValueValidator(Decimal("0.00"))],
+    )
     product_amount = models.CharField(max_length=12, blank=False)
     quantity = models.PositiveIntegerField(default=1, null=False, blank=False)
 
-    comment = models.CharField(max_length=50, blank=True, help_text="An optional comment for this purchase")
+    comment = models.CharField(
+        max_length=50, blank=True, help_text="An optional comment for this purchase"
+    )
 
-    invoice = models.ForeignKey(Invoice, on_delete=models.SET_NULL, blank=True, null=True)
+    invoice = models.ForeignKey(
+        Invoice, on_delete=models.SET_NULL, blank=True, null=True
+    )
 
-    is_free_item_purchase = models.BooleanField(default=False, help_text="Whether this purchase was done with a free "
-                                                                         "item (i.e. it was shown as free on the main page)")
+    is_free_item_purchase = models.BooleanField(
+        default=False,
+        help_text="Whether this purchase was done with a free "
+        "item (i.e. it was shown as free on the main page)",
+    )
 
-    free_item_description = models.CharField(max_length=120, blank=True,
-                                             help_text="Description of free item (only if this was purchased for free)")
+    free_item_description = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text="Description of free item (only if this was purchased for free)",
+    )
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
@@ -528,16 +643,21 @@ class Purchase(models.Model):
         ordering = ["-created_date"]
 
     def __str__(self):
-        return "{}x {} ({}, {})".format(self.quantity, self.product_name, self.user.display_name, currency(self.cost()))
+        return "{}x {} ({}, {})".format(
+            self.quantity,
+            self.product_name,
+            self.user.display_name,
+            currency(self.cost()),
+        )
 
     def cost(self):
         return self.quantity * self.product_price
 
     def get_absolute_url(self):
-        return reverse('admin_purchase_detail', kwargs={'pk': self.pk})
+        return reverse("admin_purchase_detail", kwargs={"pk": self.pk})
 
     def cannot_be_deleted(self):
-        """ Returns False or an explanation why this cannot be deleted """
+        """Returns False or an explanation why this cannot be deleted"""
         if self.has_invoice():
             return "This purchase already has an invoice"
         else:
@@ -564,12 +684,14 @@ class Purchase(models.Model):
 
 class PaymentQuerySet(models.QuerySet):
     def sum_amount(self):
-        """ Total amount of all payments """
-        total_amount = self.aggregate(total_amount=models.Sum(F("amount"))).get("total_amount")
+        """Total amount of all payments"""
+        total_amount = self.aggregate(total_amount=models.Sum(F("amount"))).get(
+            "total_amount"
+        )
         if total_amount is not None:
             return total_amount
         else:
-            return Decimal('0')
+            return Decimal("0")
 
     def unbilled(self):
         return self.filter(invoice=None)
@@ -577,44 +699,59 @@ class PaymentQuerySet(models.QuerySet):
 
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
-    amount = models.DecimalField(max_digits=6, decimal_places=2, blank=False, null=False,
-                                 help_text="Positive amounts are deposits by the user. "
-                                           "Negative amounts are payouts to the user.")
+    amount = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        blank=False,
+        null=False,
+        help_text="Positive amounts are deposits by the user. "
+        "Negative amounts are payouts to the user.",
+    )
     comment = models.CharField(max_length=100, blank=True)
 
     PAYMENT_METHOD_CASH = "CASH"
     PAYMENT_METHOD_BANK = "BANK"
     PAYMENT_METHOD_OTHER = "OTHR"
-    PAYMENT_METHOD_CHOICES = ((PAYMENT_METHOD_CASH, "Cash"),
-                              (PAYMENT_METHOD_BANK, "Bank transfer"),
-                              (PAYMENT_METHOD_OTHER, "Other"))
-    payment_method = models.CharField(max_length=4, choices=PAYMENT_METHOD_CHOICES, default=PAYMENT_METHOD_BANK)
+    PAYMENT_METHOD_CHOICES = (
+        (PAYMENT_METHOD_CASH, "Cash"),
+        (PAYMENT_METHOD_BANK, "Bank transfer"),
+        (PAYMENT_METHOD_OTHER, "Other"),
+    )
+    payment_method = models.CharField(
+        max_length=4, choices=PAYMENT_METHOD_CHOICES, default=PAYMENT_METHOD_BANK
+    )
 
-    invoice = models.ForeignKey(Invoice, on_delete=models.SET_NULL, blank=True, null=True)
+    invoice = models.ForeignKey(
+        Invoice, on_delete=models.SET_NULL, blank=True, null=True
+    )
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
 
-    value_date = models.DateField(default=datetime.date.today, help_text="Date when payment is considered effective "
-                                                                         "(only for display)")
+    value_date = models.DateField(
+        default=datetime.date.today,
+        help_text="Date when payment is considered effective (only for display)",
+    )
 
     objects = PaymentQuerySet.as_manager()
 
     def get_absolute_url(self):
-        return reverse('admin_payment_detail', kwargs={'pk': self.pk})
+        return reverse("admin_payment_detail", kwargs={"pk": self.pk})
 
     class Meta:
         ordering = ["-created_date"]
 
     def __str__(self):
-        return "Payment of {} by {}".format(currency(self.amount), self.user.display_name)
+        return "Payment of {} by {}".format(
+            currency(self.amount), self.user.display_name
+        )
 
     def has_invoice(self):
         return self.invoice_id is not None
 
     def cannot_be_deleted(self):
-        """ Returns False or an explanation why this payment cannot be deleted """
+        """Returns False or an explanation why this payment cannot be deleted"""
         if self.has_invoice():
             return "This payment already has an invoice"
         else:
@@ -623,7 +760,8 @@ class Payment(models.Model):
     def save(self, *args, **kw):
         if not self.user.pays_themselves():
             raise IntegrityError(
-                "Users who do not pay themselves may not have new or changed payments. Make user independent first to do that.")
+                "Users who do not pay themselves may not have new or changed payments. Make user independent first to do that."
+            )
 
         """ Check whether obj has invoice but was changed """
         if self.pk is not None:
@@ -638,15 +776,23 @@ class Payment(models.Model):
 
 
 class StatsDisplay(models.Model):
-    """ Admin-defined filters that can be shown as stats in frontend """
-    title = models.CharField(max_length=30, blank=False, unique=True)
-    row_string = models.CharField(max_length=15, blank=True,
-                                  help_text="This is shown on the right side of each stats row in the format "
-                                            "'[row_string] [user_name]', so one example row could be "
-                                            "'10x Coffee by Peter' with 'Coffee by' being the row_string")
+    """Admin-defined filters that can be shown as stats in frontend"""
 
-    filter_by_category = models.ManyToManyField(Category, blank=True, help_text="If none, all categories are used")
-    filter_by_product = models.ManyToManyField(Product, blank=True, help_text="If none, all products are used")
+    title = models.CharField(max_length=30, blank=False, unique=True)
+    row_string = models.CharField(
+        max_length=15,
+        blank=True,
+        help_text="This is shown on the right side of each stats row in the format "
+        "'[row_string] [user_name]', so one example row could be "
+        "'10x Coffee by Peter' with 'Coffee by' being the row_string",
+    )
+
+    filter_by_category = models.ManyToManyField(
+        Category, blank=True, help_text="If none, all categories are used"
+    )
+    filter_by_product = models.ManyToManyField(
+        Product, blank=True, help_text="If none, all products are used"
+    )
 
     FIXED_DURATION = "FIXED"
     SINCE_MONDAY = "MONDAY"
@@ -655,35 +801,49 @@ class StatsDisplay(models.Model):
     SINCE_TODAY_MIDNIGHT = "TOD_MID"
     SINCE_4pm = "4pm"
 
-    TIME_PERIOD_METHOD_CHOICES = ((FIXED_DURATION, "Fixed duration"),
-                                  (SINCE_MONDAY, "Since Monday of current week (midnight)"),
-                                  (SINCE_1ST, "Since 1st of current month (midnight)"),
-                                  (SINCE_JAN_1ST, "Since January 1st of current year (midnight)"),
-                                  (SINCE_TODAY_MIDNIGHT, "Since midnight (00:00) of current day"),
-                                  (SINCE_4pm, "Since last time it was 4pm (16:00)"))
+    TIME_PERIOD_METHOD_CHOICES = (
+        (FIXED_DURATION, "Fixed duration"),
+        (SINCE_MONDAY, "Since Monday of current week (midnight)"),
+        (SINCE_1ST, "Since 1st of current month (midnight)"),
+        (SINCE_JAN_1ST, "Since January 1st of current year (midnight)"),
+        (SINCE_TODAY_MIDNIGHT, "Since midnight (00:00) of current day"),
+        (SINCE_4pm, "Since last time it was 4pm (16:00)"),
+    )
 
-    time_period_method = models.CharField(max_length=7, choices=TIME_PERIOD_METHOD_CHOICES, default=SINCE_MONDAY,
-                                          help_text="Method of how to determine the time frame in which purchases "
-                                                    "count into this statistics display.")
+    time_period_method = models.CharField(
+        max_length=7,
+        choices=TIME_PERIOD_METHOD_CHOICES,
+        default=SINCE_MONDAY,
+        help_text="Method of how to determine the time frame in which purchases "
+        "count into this statistics display.",
+    )
 
-    time_period = models.DurationField(default=datetime.timedelta(weeks=1),
-                                       help_text="Duration over which statistics are to be evaluated in the format "
-                                                 "'DAYS HOURS:MINUTES:SECONDS'. Only used if time period method "
-                                                 "is 'fixed duration'")
+    time_period = models.DurationField(
+        default=datetime.timedelta(weeks=1),
+        help_text="Duration over which statistics are to be evaluated in the format "
+        "'DAYS HOURS:MINUTES:SECONDS'. Only used if time period method "
+        "is 'fixed duration'",
+    )
 
     SORT_BY_NUM_PURCHASES = "NP"
     SORT_BY_TOTAL_COST_SHOW_RANK = "TC"
-    SORT_BY_AND_SHOW_CHOICES = ((SORT_BY_NUM_PURCHASES, "Sort by and show number of purchases"),
-                                (SORT_BY_TOTAL_COST_SHOW_RANK, "Sort by total cost and show rank"))
-    sort_by_and_show = models.CharField(max_length=2, choices=SORT_BY_AND_SHOW_CHOICES, default=SORT_BY_NUM_PURCHASES)
+    SORT_BY_AND_SHOW_CHOICES = (
+        (SORT_BY_NUM_PURCHASES, "Sort by and show number of purchases"),
+        (SORT_BY_TOTAL_COST_SHOW_RANK, "Sort by total cost and show rank"),
+    )
+    sort_by_and_show = models.CharField(
+        max_length=2, choices=SORT_BY_AND_SHOW_CHOICES, default=SORT_BY_NUM_PURCHASES
+    )
 
     # A special boolean field that may only be True for one StatsDisplay
     # i.e. only one StatsDisplay can be the chosen one
     # Need to override save() for this
-    show_by_default = models.BooleanField(default=False,
-                                          help_text="Whether this should always be shown first. " \
-                                                    "If not, it can be selected by cycling through the other ones, " \
-                                                    "as long as any one is shown by default.")
+    show_by_default = models.BooleanField(
+        default=False,
+        help_text="Whether this should always be shown first. "
+        "If not, it can be selected by cycling through the other ones, "
+        "as long as any one is shown by default.",
+    )
 
     class Meta:
         ordering = ["-show_by_default", "title"]
@@ -711,7 +871,7 @@ class StatsDisplay(models.Model):
             return "not supported"
 
     def get_absolute_url(self):
-        return reverse('admin_statsdisplay_detail', kwargs={'pk': self.pk})
+        return reverse("admin_statsdisplay_detail", kwargs={"pk": self.pk})
 
     def cannot_be_deleted(self):
         return False
@@ -722,7 +882,9 @@ class StatsDisplay(models.Model):
         elif self.time_period_method == self.SINCE_MONDAY:
             now = localtime(timezone.now())
             last_monday = now - datetime.timedelta(days=now.weekday())
-            last_monday = last_monday.replace(hour=0, minute=0, second=0, microsecond=0)  # midnight
+            last_monday = last_monday.replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )  # midnight
             return last_monday
         elif self.time_period_method == self.SINCE_1ST:
             now = localtime(timezone.now())
@@ -730,7 +892,9 @@ class StatsDisplay(models.Model):
             return month_1st
         elif self.time_period_method == self.SINCE_JAN_1ST:
             now = localtime(timezone.now())
-            jan_1st = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            jan_1st = now.replace(
+                month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+            )
             return jan_1st
         elif self.time_period_method == self.SINCE_TODAY_MIDNIGHT:
             now = localtime(timezone.now())
@@ -749,32 +913,40 @@ class StatsDisplay(models.Model):
 
 
 class ProductAutochange(models.Model):
-    """ Set of changes that can be applied to one product """
+    """Set of changes that can be applied to one product"""
+
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     pc_set = models.ForeignKey("ProductAutochangeSet", on_delete=models.CASCADE)
 
-    set_price = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True,
-                                    validators=[MinValueValidator(Decimal('0'))],
-                                    help_text="If set, will change the price to this value")
+    set_price = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text="If set, will change the price to this value",
+    )
 
     NO_CHANGE = "NC"
     CHANGE_TO_YES = "YES"
     CHANGE_TO_NO = "NO"
 
-    BOOLEAN_CHANGE_CHOICES = ((NO_CHANGE, "No change"),
-                              (CHANGE_TO_YES, "Change to yes"),
-                              (CHANGE_TO_NO, "Change to no"),)
+    BOOLEAN_CHANGE_CHOICES = (
+        (NO_CHANGE, "No change"),
+        (CHANGE_TO_YES, "Change to yes"),
+        (CHANGE_TO_NO, "Change to no"),
+    )
 
-    change_active = models.CharField(max_length=3,
-                                     choices=BOOLEAN_CHANGE_CHOICES,
-                                     default=NO_CHANGE)
+    change_active = models.CharField(
+        max_length=3, choices=BOOLEAN_CHANGE_CHOICES, default=NO_CHANGE
+    )
 
-    change_bold = models.CharField(max_length=3,
-                                   choices=BOOLEAN_CHANGE_CHOICES,
-                                   default=NO_CHANGE)
+    change_bold = models.CharField(
+        max_length=3, choices=BOOLEAN_CHANGE_CHOICES, default=NO_CHANGE
+    )
 
     def execute(self):
-        """ Execute product change """
+        """Execute product change"""
         product = self.product
         initial_data = product.__dict__.copy()
 
@@ -791,27 +963,37 @@ class ProductAutochange(models.Model):
         elif self.change_bold == self.CHANGE_TO_NO:
             product.is_bold = False
 
-        if product.price != initial_data["price"] or product.is_active != initial_data["is_active"] or \
-                product.is_bold != initial_data["is_bold"]:
+        if (
+            product.price != initial_data["price"]
+            or product.is_active != initial_data["is_active"]
+            or product.is_bold != initial_data["is_bold"]
+        ):
             # only save if changed
             product.save()
 
 
 class ProductAutochangeSet(models.Model):
-    """ Set of product autochanges that can each be applied to a product """
+    """Set of product autochanges that can each be applied to a product"""
+
     title = models.CharField(max_length=30, blank=False, unique=True)
     description = models.CharField(max_length=255, blank=True)
-    products = models.ManyToManyField(Product, through=ProductAutochange, help_text="These products will be changed.")
+    products = models.ManyToManyField(
+        Product, through=ProductAutochange, help_text="These products will be changed."
+    )
 
-    change_others_active = models.CharField(max_length=3,
-                                            choices=ProductAutochange.BOOLEAN_CHANGE_CHOICES,
-                                            default=ProductAutochange.NO_CHANGE,
-                                            help_text="Change active state of other products")
+    change_others_active = models.CharField(
+        max_length=3,
+        choices=ProductAutochange.BOOLEAN_CHANGE_CHOICES,
+        default=ProductAutochange.NO_CHANGE,
+        help_text="Change active state of other products",
+    )
 
-    change_others_bold = models.CharField(max_length=3,
-                                          choices=ProductAutochange.BOOLEAN_CHANGE_CHOICES,
-                                          default=ProductAutochange.NO_CHANGE,
-                                          help_text="Change bold state of other products")
+    change_others_bold = models.CharField(
+        max_length=3,
+        choices=ProductAutochange.BOOLEAN_CHANGE_CHOICES,
+        default=ProductAutochange.NO_CHANGE,
+        help_text="Change bold state of other products",
+    )
 
     objects = DefaultSelectOrPrefetchManager(prefetch_related=("products",))
 
@@ -839,8 +1021,11 @@ class ProductAutochangeSet(models.Model):
             elif self.change_others_bold == ProductAutochange.CHANGE_TO_NO:
                 product.is_bold = False
 
-            if product.price != initial_data["price"] or product.is_active != initial_data["is_active"] or \
-                    product.is_bold != initial_data["is_bold"]:
+            if (
+                product.price != initial_data["price"]
+                or product.is_active != initial_data["is_active"]
+                or product.is_bold != initial_data["is_bold"]
+            ):
                 # only save if changed
                 product.save()
 
@@ -852,7 +1037,9 @@ class ProductAutochangeSet(models.Model):
 
     def import_current_state(self):
         if not self.pk:
-            raise IntegrityError("Only saved PACS may be used to import the current state")
+            raise IntegrityError(
+                "Only saved PACS may be used to import the current state"
+            )
 
         self.productautochange_set.all().delete()
 
@@ -877,26 +1064,39 @@ class ProductAutochangeSet(models.Model):
 
 
 class FreeItem(models.Model):
-    """ Model to describe products which are free, but only for a limited number of purchases """
-    giver = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL,
-                              help_text="User thanks to whom this product is free")
+    """Model to describe products which are free, but only for a limited number of purchases"""
+
+    giver = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text="User thanks to whom this product is free",
+    )
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    leftover_quantity = models.PositiveIntegerField(null=False, blank=False,
-                                                    help_text="How many items can still be purchased for free")
+    leftover_quantity = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        help_text="How many items can still be purchased for free",
+    )
 
     comment = models.CharField(max_length=50, blank=True)
 
-    purchasable = models.BooleanField(default=True,
-                                      help_text="Whether these free items are shown on the main purchase page. "
-                                                "If no, only admins can change the leftover quantity.")
+    purchasable = models.BooleanField(
+        default=True,
+        help_text="Whether these free items are shown on the main purchase page. "
+        "If no, only admins can change the leftover quantity.",
+    )
 
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return "Free {} ({} item(s) leftover)".format(self.product.name, self.leftover_quantity)
+        return "Free {} ({} item(s) leftover)".format(
+            self.product.name, self.leftover_quantity
+        )
 
     def verbose_str(self):
         desc = "Free {} (".format(self.product.name)
@@ -909,9 +1109,11 @@ class FreeItem(models.Model):
         return desc
 
     def save(self, *args, **kw):
-        """ Extra check whether leftover_quantity >= 0 """
+        """Extra check whether leftover_quantity >= 0"""
         if self.leftover_quantity < 0:
-            raise IntegrityError("There may not be a leftover quantity smaller than zero")
+            raise IntegrityError(
+                "There may not be a leftover quantity smaller than zero"
+            )
         super(FreeItem, self).save(*args, **kw)
 
     def cannot_be_deleted(self):
@@ -921,4 +1123,4 @@ class FreeItem(models.Model):
         ordering = ["-leftover_quantity"]
 
     def get_absolute_url(self):
-        return reverse('admin_freeitem_list')
+        return reverse("admin_freeitem_list")
