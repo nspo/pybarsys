@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "barsys.apps.BarsysConfig",
     "django_filters",
     "crispy_forms",
+    "crispy_bootstrap3",
     "rest_framework",
 ]
 
