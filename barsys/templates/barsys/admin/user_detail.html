@@ -7,9 +7,16 @@
     <div>
         <h1 class="pull-left" style="margin-top: 0;">User details</h1>
         <div class="btn-group pull-right" role="group">
+            {% if object.pays_themselves %}
+            <a href="{% url 'admin_invoice_new' %}?user={{ object.pk }}" class="btn btn-default">
+                {% bootstrap_icon 'file' %} Create invoice
+            </a>
+            {% endif %}
+            {% if object.account_balance < 0 %}
             <a href="{% url 'admin_user_payment_reminder_send' object.pk %}" class="btn btn-warning">
                 {% bootstrap_icon 'warning-sign' %} Send payment reminder
             </a>
+            {% endif %}
             <a href="{% url 'admin_user_update' object.pk %}" class="btn btn-primary">
                 {% bootstrap_icon 'pencil' %} Change
             </a>
@@ -124,4 +131,9 @@
 
     <p>{{ invoices_page_obj.paginator.count }} result(s)</p>
     {% bootstrap_pagination invoices_page_obj extra=request.GET.urlencode parameter_name="invoices_page" %}
+    <p class="text-right">
+        <a href="{% url 'admin_user_payment_reminder_mail' object.pk %}" class="btn btn-default btn-xs" target="_blank">
+            {% bootstrap_icon 'new-window' %} Open payment reminder preview
+        </a>
+    </p>
 {% endblock %}

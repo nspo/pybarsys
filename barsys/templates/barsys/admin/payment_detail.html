@@ -53,4 +53,8 @@
 
         </tbody>
     </table>
+
+    <a href="{% url 'admin_invoice_new' %}?user={{ object.user_id }}" class="btn btn-primary btn-lg btn-block">
+        {% bootstrap_icon 'file' %} Generate invoice for {{ object.user }}
+    </a>
 {% endblock %}

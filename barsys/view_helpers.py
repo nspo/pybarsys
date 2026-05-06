@@ -1,6 +1,7 @@
 import os.path
 from collections import OrderedDict
 from itertools import groupby
+from typing import Iterable, Optional
 
 from django.contrib import messages
 from django.core import mail
@@ -11,7 +12,7 @@ from django.utils import timezone
 
 from pybarsys import settings as pybarsys_settings
 from pybarsys.settings import PybarsysPreferences
-from .models import StatsDisplay, Purchase, Invoice, Product
+from .models import StatsDisplay, Purchase, Invoice, Product, User
 
 
 def get_renderable_stats_elements():
@@ -78,160 +79,248 @@ def get_renderable_stats_elements():
     return stats_elements
 
 
-def send_invoice_mails(request, invoices, send_dependant_notifications=False):
-    """ Send invoice mails to invoice recipients with a list of all purchases of that invoice.
-        Optionally send purchase notifications to users whose purchases are paid by someone else.
+class EmailConnectionWrapper:
+    """Wraps a Django mail connection with error-safe bool-returning send_message().
+
+    This can also be used to simulate sending a mail when that may not be wanted due to preferences.
     """
-    num_invoice_mail_success = 0
-    invoice_mail_failure = []  # [(username, error), ...]
 
-    num_purchase_notif_mail_success = 0
-    purchase_notif_mail_failure = []
+    def __init__(self, fake_sending_mails: bool) -> None:
+        """Open the mail connection. Raises on connection failure.
 
-    # open connection only once to avoid repeated unnecessary connections for multiple mails
-    try:
-        mail_connection = mail.get_connection(fail_silently=False)
-        mail_connection.open()
-        mail_connection_error_count = 0 # keep track or errors below and abort after a few
-    except Exception as e:
-        for invoice in invoices:
-            invoice.delete()
-        messages.error(request, "Deleted new invoices because connection to mail server could not be "
-                                "established: {}".format(e))
-        return
+        Args:
+            fake_sending_mails: If True, simulate success without actually sending any mail.
+        """
+        self.fake_sending_mails = fake_sending_mails
+        self.last_error: Optional[Exception] = None
+        self.error_count: int = 0  # incremented on each failed send_message() call
+        self._connection = None
+        if not fake_sending_mails:
+            self._connection = mail.get_connection(fail_silently=False)
+            self._connection.open()  # may raise
 
-    for invoice in invoices:
-        # first, check whether we already had too many failures sending mails. If yes, just delete the remaining invoices
-        MAIL_CONNECTION_FAILURE_COUNT_LIMIT = 4
-        if mail_connection_error_count >= MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
-            invoice.delete()
-            if mail_connection_error_count == MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
-                messages.error(request,
-                               "Too many errors during mail transmission - deleted all remaining, unsent invoices")
-            mail_connection_error_count += 1
-            continue
+    def send_message(self, msg: EmailMultiAlternatives) -> bool:
+        """Send a single message. Returns True on success, False on failure.
 
-        context = {}
-        context["pybarsys_preferences"] = PybarsysPreferences
-        context["invoice"] = invoice
-        context["recipient"] = invoice.recipient
-        context["own_purchases"] = invoice.own_purchases()
-        context["other_purchases_grouped"] = invoice.other_purchases_grouped()
-        context["last_invoices"] = invoice.recipient.invoices()[:5]
-        context["payments"] = invoice.payments()
-
-        content_plain = render_to_string(
-            os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "normal_invoice.plaintext.html"
-                         ), context)
-        content_html = render_to_string(
-            os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "normal_invoice.html.html"),
-            context)
-        msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.INVOICE_SUBJECT, content_plain,
-                                     pybarsys_settings.EMAIL_FROM_ADDRESS, [invoice.recipient.email],
-                                     reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
-        msg.attach_alternative(content_html, "text/html")
+        Note: Django's send_messages() returns an int (number of messages sent);
+        this wrapper returns bool instead.
+        """
+        if self.fake_sending_mails:
+            return True
         try:
-            mail_connection.send_messages((msg, ))
-            num_invoice_mail_success += 1
+            self._connection.send_messages((msg,))
+            return True
         except Exception as e:
-            invoice_mail_failure.append((invoice.recipient, e))
-            invoice.delete()
-            mail_connection_error_count += 1
-            continue
+            self.last_error = e
+            self.error_count += 1
+            return False
 
-        if send_dependant_notifications and invoice.has_dependant_purchases():
-            # send purchase notifications to dependants
-            for dependant, purchases in invoice.other_purchases_grouped():
-                notif_context = {}
-                notif_context["pybarsys_preferences"] = PybarsysPreferences
-                notif_context["invoice"] = invoice
-                notif_context["dependant"] = dependant
-                notif_context["purchases"] = purchases
-                content_plain = render_to_string(os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR,
-                                                              "dependant_notification.plaintext.html"), notif_context)
-                content_html = render_to_string(os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR,
-                                                             "dependant_notification.html.html"), notif_context)
-                msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.PURCHASE_NOTIFICATION_SUBJECT, content_plain,
-                                             pybarsys_settings.EMAIL_FROM_ADDRESS, [dependant.email],
-                                             reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
-                msg.attach_alternative(content_html, "text/html")
-                try:
-                    mail_connection.send_messages((msg,))
-                    num_purchase_notif_mail_success += 1
-                except Exception as e:
-                    purchase_notif_mail_failure.append((dependant, e))
-                    # do not delete invoice due to this, but count as error
-                    mail_connection_error_count += 1
+    def close(self) -> None:
+        """Close the mail connection."""
+        if self._connection is not None:
+            self._connection.close()
+            self._connection = None
 
-    mail_connection.close()
-
-    if num_invoice_mail_success > 0:
-        messages.info(request, "{} invoice mails were successfully sent. ".format(num_invoice_mail_success))
-    if len(invoice_mail_failure) > 0:
-        messages.error(request,
-                       "Sending invoice mail(s) to the following user(s) failed, deleted the invoice again: {}".
-                       format(", ".join(["{} ({})".format(u, err) for u, err in invoice_mail_failure])))
-
-    if num_purchase_notif_mail_success > 0:
-        messages.info(request, "{} dependant notification mails were successfully sent. ".format(
-            num_purchase_notif_mail_success))
-    if len(purchase_notif_mail_failure) > 0:
-        messages.error(request, "Sending dependant notification mail(s) to the following user(s) failed: {}".
-                       format(", ".join(["{} ({})".format(u, err) for u, err in purchase_notif_mail_failure])))
+    def __del__(self) -> None:
+        self.close()
 
 
-def send_reminder_mails(request, users):
-    """ Send payment reminder mails to users """
+def generate_email_invoice(invoice: Invoice) -> EmailMultiAlternatives:
+    """Generate invoice mail for a normal, paying user."""
+    context = {}
+    context["pybarsys_preferences"] = PybarsysPreferences
+    context["subject"] = PybarsysPreferences.EMAIL.INVOICE_SUBJECT
+    context["invoice"] = invoice
+    context["recipient"] = invoice.recipient
+    context["own_purchases"] = invoice.own_purchases()
+    context["other_purchases_grouped"] = invoice.other_purchases_grouped()
+    context["last_invoices"] = invoice.recipient.invoices()[:5]
+    context["payments"] = invoice.payments()
+
+    content_plain = render_to_string(
+        os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "normal_invoice.plaintext.html"
+                     ), context)
+    content_html = render_to_string(
+        os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "normal_invoice.html.html"),
+        context)
+    msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.INVOICE_SUBJECT, content_plain,
+                                 pybarsys_settings.EMAIL_FROM_ADDRESS, [invoice.recipient.email],
+                                 reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
+    msg.attach_alternative(content_html, "text/html")
+
+    return msg
+
+
+def generate_email_purchase_notification(dependant: User, purchases: Iterable[Purchase],
+                                         invoice: Invoice) -> EmailMultiAlternatives:
+    """Generate purchase notification mail for a dependant."""
+    notif_context = {}
+    notif_context["pybarsys_preferences"] = PybarsysPreferences
+    notif_context["subject"] = PybarsysPreferences.EMAIL.PURCHASE_NOTIFICATION_SUBJECT
+    notif_context["invoice"] = invoice
+    notif_context["dependant"] = dependant
+    notif_context["purchases"] = purchases
+    content_plain = render_to_string(os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR,
+                                                  "dependant_notification.plaintext.html"), notif_context)
+    content_html = render_to_string(os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR,
+                                                 "dependant_notification.html.html"), notif_context)
+    msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.PURCHASE_NOTIFICATION_SUBJECT, content_plain,
+                                 pybarsys_settings.EMAIL_FROM_ADDRESS, [dependant.email],
+                                 reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
+    msg.attach_alternative(content_html, "text/html")
+
+    return msg
+
+
+
+def create_invoices(request, users: list[User], send_mails: bool, send_dependant_notifications: bool,
+                    send_payment_reminders: bool, autolock_accounts: bool, comment: str = "") -> list[Invoice]:
+    """Create invoices for users, send mails, handle autolocking. Returns list of created Invoice objects."""
+    invoices = []
+    users_autolocked: list[User] = []
+    users_autounlocked: list[User] = []
+
+    # Only send these if we also want to send mails at all
+    send_dependant_notifications = send_mails and send_dependant_notifications
+    send_payment_reminders = send_mails and send_payment_reminders
+
+    num_invoice_mail_success = 0
+    invoice_mail_failure: list[tuple[User, Exception]] = []
+
     num_reminder_mail_success = 0
-    reminder_mail_failure = []  # [(username, error), ...]
+    reminder_mail_failure: list[tuple[User, Exception]] = []
+
+    # for dependants
+    num_purchase_notif_mail_success = 0
+    purchase_notif_mail_failure: list[tuple[User, Exception]] = []
 
     # open connection only once to avoid repeated unnecessary connections for multiple mails
+    # fake opening the connection if we do not want to send any emails (to keep the logic the same as when we do)
     try:
-        mail_connection = mail.get_connection(fail_silently=False)
-        mail_connection.open()
-        mail_connection_error_count = 0  # keep track or errors below and abort after a few
+        conn = EmailConnectionWrapper(fake_sending_mails=not send_mails)
     except Exception as e:
-        messages.error(request, "Did not send payment reminders because connection to mail server could not be "
-                                "established: {}".format(e))
-        return
+        messages.error(request,
+                       "No invoice(s) created because connection to mail server could not be "
+                       "established: {}".format(e))
+        return invoices
+
+    MAIL_CONNECTION_FAILURE_COUNT_LIMIT = 4
 
     for user in users:
-        # first, check whether we already had too many failures sending mails. If yes, just abort
-        MAIL_CONNECTION_FAILURE_COUNT_LIMIT = 4
-        if mail_connection_error_count >= MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
+        if conn.error_count >= MAIL_CONNECTION_FAILURE_COUNT_LIMIT:
             messages.error(request,
-                           "Too many errors during mail transmission - stopped sending payment reminders")
-            return
+                           "Too many errors during mail transmission - "
+                           "stopped invoice creation process early")
+            break
 
-        context = {}
-        context["pybarsys_preferences"] = PybarsysPreferences
-        context["user"] = user
-        context["recipient"] = user
-        context["last_invoices"] = user.invoices()[:5]
-        context["last_payments"] = user.payments()[:5]
-        content_plain = render_to_string(
-            os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "payment_reminder.plaintext.html"),
-            context)
-        content_html = render_to_string(
-            os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "payment_reminder.html.html"),
-            context)
-        msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.PAYMENT_REMINDER_SUBJECT, content_plain,
-                                     pybarsys_settings.EMAIL_FROM_ADDRESS, [user.email],
-                                     reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
-        msg.attach_alternative(content_html, "text/html")
-        try:
-            mail_connection.send_messages((msg,))
-            num_reminder_mail_success += 1
-        except Exception as e:
-            reminder_mail_failure.append((user, e))
-            mail_connection_error_count += 1
-    mail_connection.close()
+        balance_before = user.account_balance()
 
-    if num_reminder_mail_success > 0:
-        messages.info(request, "{} payment reminders were successfully sent. ".format(num_reminder_mail_success))
-    if len(reminder_mail_failure) > 0:
-        messages.error(request, "Sending payment reminder mail(s) to the following user(s) failed: {}". \
-                       format(", ".join(["{} ({})".format(u, err) for u, err in reminder_mail_failure])))
+        if Purchase.objects.to_pay_by(user).exists() or user.payments().unbilled().exists():
+            # create and send invoice
+            invoice = Invoice.objects.create_for_user(user, comment)
+            if conn.send_message(generate_email_invoice(invoice)):
+                num_invoice_mail_success += 1
+                invoices.append(invoice)
+
+                # check whether dependants need to get purchase notifications
+                if send_dependant_notifications and invoice.has_dependant_purchases():
+                    # send purchase notifications to dependants
+                    for dependant, purchases in invoice.other_purchases_grouped():
+                        if conn.send_message(generate_email_purchase_notification(dependant, purchases, invoice)):
+                            num_purchase_notif_mail_success += 1
+                        else:
+                            purchase_notif_mail_failure.append((dependant, conn.last_error))
+                            # do not delete invoice due to this, but count as error
+            else:
+                invoice_mail_failure.append((invoice.recipient, conn.last_error))
+                invoice.delete()  # do not locally create an invoice if mail tx failed
+                continue
+        else:
+            # no new invoice needed -> check whether payment reminder is needed
+            if send_payment_reminders and user.account_balance() < PybarsysPreferences.Misc.BALANCE_BELOW_TRANSFER_MONEY:
+                # send payment reminder
+                if conn.send_message(generate_email_payment_reminder(user)):
+                    num_reminder_mail_success += 1
+                else:
+                    reminder_mail_failure.append((user, conn.last_error))
+
+        if user.is_autolocked and user.account_balance() > PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK:
+            user.is_autolocked = False
+            user.save()
+            users_autounlocked.append(user)
+
+        if autolock_accounts and not user.is_autolocked:
+            if (balance_before < PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK and
+                    user.account_balance() < PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK):
+                # autolock is needed
+                user.is_autolocked = True
+                user.save()
+                users_autolocked.append(user)
+
+    if len(invoices) > 0:
+        messages.success(request, "Created {} invoice(s) for: {}.".format(len(invoices),
+                                                                 ", ".join(
+            [i.recipient.display_name for i in invoices])))
+    else:
+        messages.info(request, "No invoices were created.")
+
+    if len(users_autolocked) > 0:
+        messages.warning(request, "The following users were autolocked: {}".format(
+            ', '.join([str(u) for u in users_autolocked])))
+
+    if len(users_autounlocked) > 0:
+        messages.success(request, "The following users were auto-unlocked: {}".format(
+            ', '.join([str(u) for u in users_autounlocked])))
+
+    if send_mails:
+        if num_invoice_mail_success > 0:
+            messages.info(request, f"Sent {num_invoice_mail_success} invoice mails")
+        if len(invoice_mail_failure) > 0:
+            messages.error(request,
+                           "Sending invoice mail(s) to the following user(s) failed - no invoices were created: {}".
+                           format(", ".join(["{} ({})".format(u, err) for u, err in invoice_mail_failure])))
+
+    if send_dependant_notifications:
+        if num_purchase_notif_mail_success > 0:
+            messages.info(request, "{} dependant notification mails were successfully sent. ".format(
+                num_purchase_notif_mail_success))
+        if len(purchase_notif_mail_failure) > 0:
+            messages.error(request, "Sending dependant notification mail(s) to the following user(s) failed: {}".
+                           format(", ".join(["{} ({})".format(u, err) for u, err in purchase_notif_mail_failure])))
+
+    if send_payment_reminders:
+        if num_reminder_mail_success > 0:
+            messages.info(request, "{} payment reminders were successfully sent. ".format(num_reminder_mail_success))
+        if len(reminder_mail_failure) > 0:
+            messages.error(request, "Sending payment reminder mail(s) to the following user(s) failed: {}". \
+                           format(", ".join(["{} ({})".format(u, err) for u, err in reminder_mail_failure])))
+
+    conn.close()
+
+    return invoices
+
+
+def generate_email_payment_reminder(user: User) -> EmailMultiAlternatives:
+    """ Generate an email to be sent to a normal, paying user who does not have a new invoice """
+    context = {}
+    context["pybarsys_preferences"] = PybarsysPreferences
+    context["subject"] = PybarsysPreferences.EMAIL.PAYMENT_REMINDER_SUBJECT
+    context["user"] = user
+    context["recipient"] = user
+    context["last_invoices"] = user.invoices()[:5]
+    context["last_payments"] = user.payments()[:5]
+    content_plain = render_to_string(
+        os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "payment_reminder.plaintext.html"),
+        context)
+    content_html = render_to_string(
+        os.path.join(PybarsysPreferences.EMAIL.TEMPLATE_DIR, "payment_reminder.html.html"),
+        context)
+    msg = EmailMultiAlternatives(PybarsysPreferences.EMAIL.PAYMENT_REMINDER_SUBJECT, content_plain,
+                                 pybarsys_settings.EMAIL_FROM_ADDRESS, [user.email],
+                                 reply_to=[PybarsysPreferences.EMAIL.CONTACT_EMAIL])
+    msg.attach_alternative(content_html, "text/html")
+
+    return msg
 
 
 def group_users(ungrouped_users):

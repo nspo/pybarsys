@@ -7,6 +7,7 @@ from django.contrib.auth import forms as auth_forms
 from django.utils.translation import ugettext_lazy as _
 
 from .models import *
+from pybarsys.settings import PybarsysPreferences
 
 
 class LoginForm(auth_forms.AuthenticationForm):
@@ -93,24 +94,25 @@ class InvoicesCreateForm(forms.Form):
 
     send_invoices = forms.BooleanField(required=False, initial=True,
                                        help_text="Whether to send invoice mails to the users' mail addresses. "
-                                                 "Users who do not pay for themselves will get a notification of their "
-                                                 "purchases instead of a real invoice. If an error occurs during "
-                                                 "sending, new invoices may be deleted again automatically."
+                                                 "If an error occurs during mail transmission, "
+                                                 "no invoice will be created."
                                                  "If false, invoices will only be created internally.")
 
     send_dependant_notifications = forms.BooleanField(required=False, initial=True,
                                                       help_text="Whether to send purchase notifications to users who do"
-                                                                " not pay themselves (only valid if invoices are sent "
-                                                                "at all).")
+                                                                " not pay themselves (only valid if invoice mails are "
+                                                                "sent at all).")
 
     send_payment_reminders = forms.BooleanField(required=False, initial=True,
                                                 help_text="Whether to send payment reminder mails to users with an "
                                                           "account balance below number defined in settings, but "
-                                                          "no unbilled purchases.")
+                                                          "no unbilled purchases (only valid if invoice mails are "
+                                                          "sent at all).")
 
     autolock_accounts = forms.BooleanField(required=False, initial=True,
                                            help_text="Automatically lock account if balance is below "
-                                                     "number defined in settings before and after creating new invoices.")
+                                                     "{} before and after creating new invoices.".format(
+                                                         currency(PybarsysPreferences.Misc.BALANCE_BELOW_AUTOLOCK)))
 
     comment = forms.CharField(label="Comment", required=False)
 
@@ -325,6 +327,10 @@ class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
         exclude = ('invoice',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user'].queryset = User.objects.filter(purchases_paid_by_other__isnull=True)
 
 
 class FreeItemForm(forms.ModelForm):

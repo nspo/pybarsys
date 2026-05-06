@@ -72,4 +72,9 @@
             </tbody>
         </table>
     </div>
+    <p class="text-right">
+        <a href="{% url 'admin_invoice_mail' invoice.pk %}" class="btn btn-default btn-xs" target="_blank">
+            {% bootstrap_icon 'new-window' %} Open mail preview
+        </a>
+    </p>
 {% endblock %}
