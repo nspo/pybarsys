@@ -27,11 +27,11 @@ def bool_to_icon(value):
 
 def get_locale_str():
     """Please tell me how to do this the right way"""
-    l = settings.LANGUAGE_CODE
-    l_split = l.split("-")
-    l = l_split[0].lower() + "_" + l_split[1].upper() + ".UTF-8"
+    locale = settings.LANGUAGE_CODE
+    locale_split = locale.split("-")
+    locale = locale_split[0].lower() + "_" + locale_split[1].upper() + ".UTF-8"
 
-    return l
+    return locale
 
 
 @register.filter(name="currency")

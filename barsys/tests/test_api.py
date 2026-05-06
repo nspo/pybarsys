@@ -18,7 +18,7 @@ class ApiTestCase(TransactionTestCase):
         u3.purchases_paid_by_other = u2
         u3.save()
 
-        u4 = User.objects.create_user("user4@example.com", "user4")
+        _u4 = User.objects.create_user("user4@example.com", "user4")
 
         cat1 = Category.objects.create(name="Softdrinks")
         self.prod1 = Product.objects.create(
@@ -27,11 +27,11 @@ class ApiTestCase(TransactionTestCase):
         prod2 = Product.objects.create(
             category=cat1, name="Club-Mate", price="0.95", amount="0.5 l"
         )
-        prod3 = Product.objects.create(
+        _prod3 = Product.objects.create(
             category=cat1, name="OJ", price="0.90", amount="0.3 l"
         )
 
-        purch1 = Purchase.objects.create(
+        _purch1 = Purchase.objects.create(
             user=self.u1,
             product_category=self.prod1.category.name,
             product_name=self.prod1.name,
@@ -39,7 +39,7 @@ class ApiTestCase(TransactionTestCase):
             product_amount=self.prod1.amount,
             quantity=1,
         )
-        purch2 = Purchase.objects.create(
+        _purch2 = Purchase.objects.create(
             user=u2,
             product_category=prod2.category.name,
             product_name=prod2.name,

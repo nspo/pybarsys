@@ -291,7 +291,7 @@ class SinglePurchaseForm(forms.Form):
                 raise ValidationError("Product ID is not an integer")
 
         try:
-            product = Product.objects.active().get(pk=product_id)
+            Product.objects.active().get(pk=product_id)
             return product_id
         except Product.DoesNotExist:
             raise ValidationError("Invalid product ID")
