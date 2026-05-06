@@ -44,10 +44,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip3 install -r requirements.txt
+          pip3 install -r requirements.txt -r requirements-dev.txt
           cp .env.example .env
           touch db.sqlite3
           chmod 666 db.sqlite3
+
+      - name: Lint and format check
+        run: |
+          ruff format --check . || (echo "Run 'ruff format .' to fix formatting" && exit 1)
+          ruff check . || (echo "Run 'ruff check --fix .' to fix lint violations" && exit 1)
 
       - name: Run unit tests
         run: python3 manage.py test

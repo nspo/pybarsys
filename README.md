@@ -123,7 +123,7 @@ In case you do not want to use the Docker installation method, e.g. because you 
    # possibly: sudo apt install virtualenv
    virtualenv -p python3 .
    source bin/activate # activate virtualenv
-   pip3 install -r requirements.txt
+   pip3 install -r requirements.txt -r requirements-dev.txt
    # Create .env configuration file and generate SECRET_KEY
    cat .env.example | grep -v "SECRET_KEY" > .env
    echo SECRET_KEY=$(tr -dc 'a-z0-9!@#%^&*(-_=+)' < /dev/urandom | head -c50) >> .env
