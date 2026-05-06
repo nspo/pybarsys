@@ -57,7 +57,7 @@ These settings MUST be set in your `.env` file.
 | `DATABASE_URL` | `sqlite:///db.sqlite3` | Database settings - see [here](https://django-environ.readthedocs.io/en/latest/#supported-types) | `mysql://user:%23password@127.0.0.1:3306/dbname`
 | `EMAIL_URL` | `smtp+tls://user:hunter2%40%3Axyz%3F%21@localhost:587` | Email server settings - see [here](https://django-environ.readthedocs.io/en/latest/#supported-types) | `consolemail://` |
 | `LANGUAGE_CODE` | `en-us` | Language setting, used e.g. for the currency. Must have dash in the middle. The email template language needs to be set separately. | `de-de`, `nl-nl`, `en-gb` | 
-`TIME_ZONE` | `Europe/Berlin` | Time zone, see [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) | `Europe/Amsterdam`, `America/New_York` |
+| `TIME_ZONE` | `Europe/Berlin` | Time zone, see [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) | `Europe/Amsterdam`, `America/New_York` |
 | `SECRET_KEY` | `&_cx6qdzz^1w%per*z6emn$*&937j-^0@q93g+t9fk7hy%8p(%` | Secret key, see [here](https://docs.djangoproject.com/en/3.1/ref/settings/#std:setting-SECRET_KEY). If your secret key starts with a `$` you need to escape it with a backslash `\$`, otherwise Django-environ will interpret it as an environment variable. | - |
 
 ## Optional settings
@@ -73,7 +73,7 @@ These settings can optionally be set in your `.env` file.
 | `STATIC_ROOT` | `static/` | Folder where `./manage.py collectstatic` collects static files | - |
 | `STATIC_URL` | `/static/` | URL of static files | - |
 | `SESSION_COOKIE_NAME` | `pybarsys` | Name of cookie | `pybarsys-custom` |
-| `EMAIL_FROM_ADDRESS` | - | Custom `FROM` address for mails | `no-reply@example.com` |
+| `EMAIL_FROM_ADDRESS` | - | `FROM` address for mails | `sample_bar@example.com` |
 
 ### Pybarsys customization
 ### Emails

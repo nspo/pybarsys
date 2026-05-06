@@ -1082,13 +1082,13 @@ class MainUserPurchaseMultiBuyView(View):
             return None
 
         all_users = User.objects.active().buyers().filter(pk__in=user_pks)
-        if all_users.count() is not len(user_pks):
+        if all_users.count() != len(user_pks):
             # Not all users could be found
             messages.error(request, "Not all requested users are active buyers")
             return None
 
         users = all_users.filter(is_autolocked=False)
-        if users.count() is not len(user_pks):
+        if users.count() != len(user_pks):
             messages.error(
                 request,
                 "Some users are currently autolocked: {}".format(
@@ -1103,7 +1103,7 @@ class MainUserPurchaseMultiBuyView(View):
             purchases_paid_by_other__is_autolocked=False
         )
         users = all_users.filter(cond_autolock2)
-        if users.count() is not len(user_pks):
+        if users.count() != len(user_pks):
             messages.error(
                 request,
                 "The payers of some users' purchases are currently autolocked: {}".format(

@@ -216,7 +216,7 @@ You can also look into the git log:
 ```bash
 git fetch # get information about changes but do not touch local files
 git log origin/master # show latest changes on master
-````
+```
 
 When you want to apply the update, simply pull in the changes (you should not have modified any pybarsys files):
 ```bash
