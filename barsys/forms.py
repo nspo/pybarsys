@@ -53,7 +53,7 @@ class ProductAutochangeForm(forms.ModelForm):
                 )
 
         self.helper = FormHelper()
-        self.helper.template = "bootstrap/table_inline_formset.html"
+        self.helper.template = "bootstrap3/table_inline_formset.html"
         self.helper.form_tag = False
 
 
