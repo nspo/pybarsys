@@ -57,6 +57,9 @@ jobs:
       - name: Run unit tests
         run: python3 manage.py test
 
+      - name: Check for missing migrations
+        run: python3 manage.py makemigrations --check --dry-run
+
       - name: Build Docker images
         run: docker compose -f docker-compose.yml -f docker-compose.build.yml build
 
