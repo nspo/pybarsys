@@ -1,6 +1,7 @@
 from decimal import Decimal
 
-from django.test import TestCase
+from django.core import mail
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from barsys.models import *
@@ -195,3 +196,143 @@ class MainKioskSmokeTest(TestCase):
         self.assertRedirects(response, reverse("main_user_list"))
         self.assertEqual(Purchase.objects.filter(user=self.user).count(), 1)
         self.assertEqual(Purchase.objects.filter(user=user2).count(), 1)
+
+
+class InvoiceCreateMailTest(TestCase):
+    """Test that invoice creation sends mail and creates the invoice."""
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            "admin@example.com", "Admin", "password"
+        )
+        self.client.login(username="admin@example.com", password="password")
+
+        cat = Category.objects.create(name="Drinks")
+        prod = Product.objects.create(
+            category=cat, name="Cola", price="1.00", amount="0.5 l"
+        )
+        self.user = User.objects.create_user("user@example.com", "Regular User")
+        Purchase.objects.create_from_product(prod, user=self.user, quantity=3)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_invoice_created_and_mail_sent(self):
+        response = self.client.post(
+            reverse("admin_invoice_new"),
+            {
+                "users": [self.user.pk],
+                "send_invoices": True,
+                "send_dependant_notifications": True,
+                "send_payment_reminders": True,
+                "autolock_accounts": False,
+                "comment": "",
+                "create": "Create",
+            },
+        )
+        self.assertRedirects(response, reverse("admin_invoice_list"))
+        self.assertEqual(Invoice.objects.filter(recipient=self.user).count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("user@example.com", mail.outbox[0].to)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_invoice_with_dependant_notifications(self):
+        # dependant1 has purchases → gets a notification; dependant2 does not → no mail
+        dependant1 = User.objects.create_user("dep1@example.com", "Dependant One")
+        dependant1.purchases_paid_by_other = self.user
+        dependant1.save()
+        dependant2 = User.objects.create_user("dep2@example.com", "Dependant Two")
+        dependant2.purchases_paid_by_other = self.user
+        dependant2.save()
+
+        prod = Product.objects.get(name="Cola")
+        Purchase.objects.create_from_product(prod, user=dependant1, quantity=2)
+
+        response = self.client.post(
+            reverse("admin_invoice_new"),
+            {
+                "users": [self.user.pk],
+                "send_invoices": True,
+                "send_dependant_notifications": True,
+                "send_payment_reminders": False,
+                "autolock_accounts": False,
+                "comment": "",
+                "create": "Create",
+            },
+        )
+        self.assertRedirects(response, reverse("admin_invoice_list"))
+        # payer gets invoice mail, dependant1 gets purchase notification, dependant2 gets nothing
+        self.assertEqual(len(mail.outbox), 2)
+        all_recipients = [addr for msg in mail.outbox for addr in msg.to]
+        self.assertIn("user@example.com", all_recipients)
+        self.assertIn("dep1@example.com", all_recipients)
+        self.assertNotIn("dep2@example.com", all_recipients)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_autolock_trigger(self):
+        post_kwargs = {
+            "users": [self.user.pk],
+            "send_invoices": True,
+            "send_dependant_notifications": False,
+            "send_payment_reminders": False,
+            "autolock_accounts": True,
+            "comment": "",
+            "create": "Create",
+        }
+        # Cycle 1: balance_before=0 (no prior invoices) → NOT autolocked despite large purchase
+        cat = Category.objects.get(name="Drinks")
+        prod = Product.objects.create(
+            category=cat, name="Beer", price="200.00", amount="0.5 l"
+        )
+        Purchase.objects.create_from_product(prod, user=self.user, quantity=1)
+        self.client.post(reverse("admin_invoice_new"), post_kwargs)
+        self.assertEqual(len(mail.outbox), 1)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_autolocked)
+        self.assertEqual(self.user.account_balance(), Decimal("-203.00"))
+
+        # Cycle 2: balance_before=-203 (below -100), autolock must trigger
+        Purchase.objects.create_from_product(prod, user=self.user, quantity=1)
+        self.client.post(reverse("admin_invoice_new"), post_kwargs)
+        self.assertEqual(len(mail.outbox), 2)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_autolocked)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_autolock_release(self):
+        post_kwargs = {
+            "users": [self.user.pk],
+            "send_invoices": True,
+            "send_dependant_notifications": False,
+            "send_payment_reminders": False,
+            "autolock_accounts": True,
+            "comment": "",
+            "create": "Create",
+        }
+        cat = Category.objects.get(name="Drinks")
+        expensive = Product.objects.create(
+            category=cat, name="Expensive", price="200.00", amount="1 l"
+        )
+        cola = Product.objects.get(name="Cola")
+
+        # Cycle 1: balance_before=0 (no prior invoices) → NOT autolocked despite large purchase
+        Purchase.objects.create_from_product(expensive, user=self.user, quantity=1)
+        self.client.post(reverse("admin_invoice_new"), post_kwargs)
+        self.assertEqual(len(mail.outbox), 1)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_autolocked)
+        self.assertEqual(self.user.account_balance(), Decimal("-203.00"))
+
+        # Cycle 2: balance_before=-203 < -100 and balance_after=-205 < -100 → autolocked
+        Purchase.objects.create_from_product(cola, user=self.user, quantity=2)
+        self.client.post(reverse("admin_invoice_new"), post_kwargs)
+        self.assertEqual(len(mail.outbox), 2)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_autolocked)
+        self.assertEqual(self.user.account_balance(), Decimal("-205.00"))
+
+        # Cycle 3: payment clears debt → balance_after=295 > -100 → auto-released
+        Payment.objects.create(user=self.user, amount=Decimal("500.00"))
+        self.client.post(reverse("admin_invoice_new"), post_kwargs)
+        self.assertEqual(len(mail.outbox), 3)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_autolocked)
+        self.assertEqual(self.user.account_balance(), Decimal("295.00"))
