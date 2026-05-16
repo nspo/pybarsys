@@ -31,7 +31,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -114,6 +113,7 @@ if DEBUG:
     TEMPLATES[0]["OPTIONS"]["string_if_invalid"] = "!INVALID!"
     if env.bool("SHOW_DEBUG_TOOLBAR", default=False):
         INSTALLED_APPS.append("debug_toolbar")
+        MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": lambda e: True,
             "DISABLE_PANELS": {
