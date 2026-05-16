@@ -26,11 +26,11 @@ INSTALLED_APPS = [
     "barsys.apps.BarsysConfig",
     "django_filters",
     "crispy_forms",
+    "crispy_bootstrap3",
     "rest_framework",
 ]
 
 MIDDLEWARE = [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -62,6 +62,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "pybarsys.wsgi.application"
 
 DATABASES = {"default": env.db()}
+
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"  # keep 32-bit PKs; avoids migrations on existing tables
 
 AUTH_USER_MODEL = "barsys.User"  # custom Barsys user model
 
@@ -111,12 +113,10 @@ if DEBUG:
     TEMPLATES[0]["OPTIONS"]["string_if_invalid"] = "!INVALID!"
     if env.bool("SHOW_DEBUG_TOOLBAR", default=False):
         INSTALLED_APPS.append("debug_toolbar")
+        MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": lambda e: True,
-            "DISABLE_PANELS": {
-                "debug_toolbar.panels.redirects.RedirectsPanel",
-                "debug_toolbar.panels.templates.TemplatesPanel",
-            },
+            "DISABLE_PANELS": set(),
         }
 
         DEBUG_TOOLBAR_PANELS = [
@@ -131,7 +131,7 @@ if DEBUG:
             "debug_toolbar.panels.cache.CachePanel",
             "debug_toolbar.panels.signals.SignalsPanel",
             "debug_toolbar.panels.logging.LoggingPanel",
-            "debug_toolbar.panels.redirects.RedirectsPanel",
+            "debug_toolbar.panels.history.HistoryPanel",
             "debug_toolbar.panels.profiling.ProfilingPanel",
         ]
 

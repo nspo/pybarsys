@@ -15,7 +15,7 @@ Including another URLconf
 """
 
 from django.conf import settings
-from django.conf.urls import include, url
+from django.urls import include, re_path as url
 from django.contrib.auth import views as auth_views
 
 from barsys.forms import LoginForm
@@ -39,7 +39,7 @@ urlpatterns = [
     ),
 ]
 
-if settings.DEBUG:
+if "debug_toolbar" in settings.INSTALLED_APPS:
     import debug_toolbar
 
     urlpatterns = [
