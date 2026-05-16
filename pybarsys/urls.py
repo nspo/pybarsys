@@ -39,7 +39,7 @@ urlpatterns = [
     ),
 ]
 
-if settings.DEBUG:
+if "debug_toolbar" in settings.INSTALLED_APPS:
     import debug_toolbar
 
     urlpatterns = [

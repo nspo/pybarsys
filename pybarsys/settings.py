@@ -116,10 +116,7 @@ if DEBUG:
         MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": lambda e: True,
-            "DISABLE_PANELS": {
-                "debug_toolbar.panels.redirects.RedirectsPanel",
-                "debug_toolbar.panels.templates.TemplatesPanel",
-            },
+            "DISABLE_PANELS": set(),
         }
 
         DEBUG_TOOLBAR_PANELS = [
@@ -134,7 +131,7 @@ if DEBUG:
             "debug_toolbar.panels.cache.CachePanel",
             "debug_toolbar.panels.signals.SignalsPanel",
             "debug_toolbar.panels.logging.LoggingPanel",
-            "debug_toolbar.panels.redirects.RedirectsPanel",
+            "debug_toolbar.panels.history.HistoryPanel",
             "debug_toolbar.panels.profiling.ProfilingPanel",
         ]
 
