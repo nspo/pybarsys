@@ -142,8 +142,17 @@ class AdminViewSmokeTest(TestCase):
 
     def test_unauthenticated_redirects(self):
         self.client.logout()
-        response = self.client.get(reverse("admin_user_list"))
-        self.assertEqual(response.status_code, 302)
+        # Statistics pages are included because they expose names and balances, and
+        # the account-balance one was reachable without logging in for a while.
+        for name in (
+            "admin_user_list",
+            "admin_purchase_statistics_by_category",
+            "admin_purchase_statistics_by_product",
+            "admin_purchase_statistics_by_user",
+            "admin_user_statistics_by_account_balance",
+        ):
+            response = self.client.get(reverse(name))
+            self.assertEqual(response.status_code, 302, "{} is public".format(name))
 
 
 class MainKioskSmokeTest(TestCase):
