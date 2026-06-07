@@ -1,10 +1,18 @@
 from decimal import Decimal
+from unittest import mock
 
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from barsys.forms import UserCreateForm
 from barsys.models import *
+from pybarsys.settings import PybarsysPreferences
+
+# EasyVerein behaviour is gated on PybarsysPreferences.EasyVerein.ACTIVE, a class
+# attribute read from .env. Pin it explicitly per test rather than depend on .env.
+ev_inactive = mock.patch.object(PybarsysPreferences.EasyVerein, "ACTIVE", False)
+ev_active = mock.patch.object(PybarsysPreferences.EasyVerein, "ACTIVE", True)
 
 
 class AdminViewSmokeTest(TestCase):
@@ -93,6 +101,7 @@ class AdminViewSmokeTest(TestCase):
         self._assert_200(reverse("admin_payment_update", kwargs={"pk": pk}))
         self._assert_200(reverse("admin_payment_delete", kwargs={"pk": pk}))
 
+    @ev_inactive
     def test_invoice_pages(self):
         pk = self.invoice.pk
         self._assert_200(reverse("admin_invoice_list"))
@@ -101,6 +110,27 @@ class AdminViewSmokeTest(TestCase):
         self._assert_200(reverse("admin_invoice_mail", kwargs={"pk": pk}))
         self._assert_200(reverse("admin_invoice_delete", kwargs={"pk": pk}))
         self._assert_redirects(reverse("admin_invoice_resend", kwargs={"pk": pk}))
+
+    @ev_active
+    def test_easyverein_pages(self):
+        # The EasyVerein admin pages load (GET does not touch the EasyVerein API).
+        self._assert_200(reverse("admin_easyverein_invoice_new"))
+        self._assert_200(reverse("admin_easyverein_sync_users"))
+        self._assert_200(reverse("admin_site_settings"))
+
+    @ev_active
+    def test_invoice_new_redirects_to_easyverein_when_active(self):
+        # When EasyVerein is active, the normal invoice page redirects to the EV flow,
+        # preserving the ?user= preselection.
+        self.assertRedirects(
+            self.client.get(reverse("admin_invoice_new")),
+            reverse("admin_easyverein_invoice_new"),
+        )
+        self.assertRedirects(
+            self.client.get(reverse("admin_invoice_new") + f"?user={self.user.pk}"),
+            reverse("admin_easyverein_invoice_new") + f"?user={self.user.pk}",
+            fetch_redirect_response=False,
+        )
 
     def test_statsdisplay_pages(self):
         pk = self.statsdisplay.pk
@@ -198,6 +228,7 @@ class MainKioskSmokeTest(TestCase):
         self.assertEqual(Purchase.objects.filter(user=user2).count(), 1)
 
 
+@ev_inactive
 class InvoiceCreateMailTest(TestCase):
     """Test that invoice creation sends mail and creates the invoice."""
 
@@ -235,7 +266,7 @@ class InvoiceCreateMailTest(TestCase):
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_invoice_with_dependant_notifications(self):
-        # dependant1 has purchases → gets a notification; dependant2 does not → no mail
+        # dependant1 has purchases -> gets a notification; dependant2 does not -> no mail
         dependant1 = User.objects.create_user("dep1@example.com", "Dependant One")
         dependant1.purchases_paid_by_other = self.user
         dependant1.save()
@@ -277,7 +308,7 @@ class InvoiceCreateMailTest(TestCase):
             "comment": "",
             "create": "Create",
         }
-        # Cycle 1: balance_before=0 (no prior invoices) → NOT autolocked despite large purchase
+        # Cycle 1: balance_before=0 (no prior invoices) -> NOT autolocked despite large purchase
         cat = Category.objects.get(name="Drinks")
         prod = Product.objects.create(
             category=cat, name="Beer", price="200.00", amount="0.5 l"
@@ -313,7 +344,7 @@ class InvoiceCreateMailTest(TestCase):
         )
         cola = Product.objects.get(name="Cola")
 
-        # Cycle 1: balance_before=0 (no prior invoices) → NOT autolocked despite large purchase
+        # Cycle 1: balance_before=0 (no prior invoices) -> NOT autolocked despite large purchase
         Purchase.objects.create_from_product(expensive, user=self.user, quantity=1)
         self.client.post(reverse("admin_invoice_new"), post_kwargs)
         self.assertEqual(len(mail.outbox), 1)
@@ -321,7 +352,7 @@ class InvoiceCreateMailTest(TestCase):
         self.assertFalse(self.user.is_autolocked)
         self.assertEqual(self.user.account_balance(), Decimal("-203.00"))
 
-        # Cycle 2: balance_before=-203 < -100 and balance_after=-205 < -100 → autolocked
+        # Cycle 2: balance_before=-203 < -100 and balance_after=-205 < -100 -> autolocked
         Purchase.objects.create_from_product(cola, user=self.user, quantity=2)
         self.client.post(reverse("admin_invoice_new"), post_kwargs)
         self.assertEqual(len(mail.outbox), 2)
@@ -329,10 +360,38 @@ class InvoiceCreateMailTest(TestCase):
         self.assertTrue(self.user.is_autolocked)
         self.assertEqual(self.user.account_balance(), Decimal("-205.00"))
 
-        # Cycle 3: payment clears debt → balance_after=295 > -100 → auto-released
+        # Cycle 3: payment clears debt -> balance_after=295 > -100 -> auto-released
         Payment.objects.create(user=self.user, amount=Decimal("500.00"))
         self.client.post(reverse("admin_invoice_new"), post_kwargs)
         self.assertEqual(len(mail.outbox), 3)
         self.user.refresh_from_db()
         self.assertFalse(self.user.is_autolocked)
         self.assertEqual(self.user.account_balance(), Decimal("295.00"))
+
+
+@ev_active
+class UserCreateFormEasyVereinTest(TestCase):
+    """With EasyVerein active, self-paying buyers must be attached to an EV contact."""
+
+    base_data = {
+        "email": "new@example.com",
+        "display_name": "New User",
+        "is_active": "on",
+        "is_buyer": "on",
+    }
+    ev_url = "https://easyverein.com/api/v2.0/contact-details/123"
+
+    def test_self_paying_buyer_requires_ev_link(self):
+        form = UserCreateForm(data=self.base_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("__all__", form.errors)
+
+    def test_self_paying_buyer_with_ev_link_is_valid(self):
+        form = UserCreateForm(
+            data={**self.base_data, "easyverein_contact_details_url": self.ev_url}
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_non_buyer_without_ev_link_is_valid(self):
+        form = UserCreateForm(data={**self.base_data, "is_buyer": ""})
+        self.assertTrue(form.is_valid(), form.errors)

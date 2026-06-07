@@ -1,0 +1,59 @@
+{% extends 'barsys/admin/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+{% load barsys_helpers %}
+{% block content %}
+
+    <h1>Create EasyVerein invoices</h1>
+    {% crispy form %}
+    <script>
+        (function () {
+            var select = document.getElementById('id_users');
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'Filter by user name';
+            input.className = 'form-control';
+            input.style.marginBottom = '4px';
+            select.parentNode.insertBefore(input, select);
+            input.addEventListener('keyup', function () {
+                var q = input.value.toLowerCase();
+                Array.from(select.options).forEach(function (opt) {
+                    opt.style.display = opt.text.toLowerCase().includes(q) ? '' : 'none';
+                });
+            });
+        })();
+    </script>
+
+    {% if not_attached_users %}
+        <h3 style="margin-top: 1.5em;">
+            {% bootstrap_icon 'warning-sign' %}
+            {{ not_attached_users|length }} users are active buyers but are not attached to EasyVerein:
+        </h3>
+        <p>
+            <a href="{% url 'admin_easyverein_sync_users' %}">
+                {% bootstrap_icon 'link' %} Match many users to EasyVerein at once
+            </a>
+        </p>
+        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 1em;">
+            <table class="table table-condensed table-striped" style="margin-bottom: 0;">
+                <thead>
+                    <tr>
+                        <th>Display name</th>
+                        <th>Account balance</th>
+                        <th>Unbilled purchases</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in not_attached_users %}
+                    <tr>
+                        <td><a href="{% url 'admin_user_detail' row.user.pk %}">{{ row.user.display_name }}</a></td>
+                        <td>{{ row.account_balance|currency }}</td>
+                        <td>{{ row.num_unbilled_purchases }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

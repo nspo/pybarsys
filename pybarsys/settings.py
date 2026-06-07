@@ -222,3 +222,8 @@ class PybarsysPreferences:
         BALANCE_BELOW_AUTOLOCK = Decimal(
             env("PYBARSYS_MISC_BALANCE_BELOW_AUTOLOCK", default="-100")
         )
+
+    class EasyVerein:
+        ACTIVE = env.bool("PYBARSYS_EASYVEREIN_ACTIVE", default=False)
+        # Other EasyVerein settings like the API token are part of the dynamic site
+        # settings (SiteSettings DB singleton), configured via the admin Settings page.

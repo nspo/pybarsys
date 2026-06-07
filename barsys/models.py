@@ -9,6 +9,8 @@ from django.db import IntegrityError
 from django.db import models
 from django.db.models import DecimalField
 from django.db.models import F, Q
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import formats
 from django.utils import timezone
@@ -48,6 +50,17 @@ class UserQuerySet(models.QuerySet):
 
     def pay_themselves(self):
         return self.filter(purchases_paid_by_other=None)
+
+    def attached_to_easyverein(self):
+        return self.exclude(easyverein_contact_details_url__isnull=True).exclude(
+            easyverein_contact_details_url=""
+        )
+
+    def not_attached_to_easyverein(self):
+        return self.filter(
+            Q(easyverein_contact_details_url__isnull=True)
+            | Q(easyverein_contact_details_url="")
+        )
 
     def purchases(self):
         return Purchase.objects.filter(user__in=self)
@@ -124,6 +137,13 @@ class User(AbstractBaseUser):
         limit_choices_to=(Q(purchases_paid_by_other=None)),
     )
 
+    easyverein_contact_details_url = models.URLField(
+        null=True,
+        blank=True,
+        unique=True,
+        help_text="URL of the linked EasyVerein contact-details resource",
+    )
+
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
@@ -134,6 +154,11 @@ class User(AbstractBaseUser):
     REQUIRED_FIELDS = []
 
     def clean(self):
+        # Store unset links as NULL, not "" -- so multiple unlinked users do not
+        # collide under the unique constraint (NULLs are treated as distinct).
+        if not self.easyverein_contact_details_url:
+            self.easyverein_contact_details_url = None
+
         if self.purchases_paid_by_other == self:
             raise ValidationError(
                 {"purchases_paid_by_other": "This field cannot be set to the same user"}
@@ -476,6 +501,15 @@ class Invoice(models.Model):
         return reverse("admin_invoice_detail", kwargs={"pk": self.pk})
 
 
+@receiver(pre_delete, sender=Invoice)
+def _delete_invoice_virtual_payments(sender, instance, **kwargs):
+    # Delete an invoice's virtual payments before the invoice itself, so they don't
+    # become orphaned unbilled payments (Payment.invoice is SET_NULL). Using a signal
+    # (rather than overriding delete()) preserves the (count, dict) return contract and
+    # also fires for bulk QuerySet deletes and cascades.
+    instance.payments().filter(is_virtual_payment=True).delete()
+
+
 class PurchaseQuerySet(models.QuerySet):
     def unbilled(self):
         return self.filter(invoice=None)
@@ -718,6 +752,11 @@ class Payment(models.Model):
 
     invoice = models.ForeignKey(
         Invoice, on_delete=models.SET_NULL, blank=True, null=True
+    )
+
+    is_virtual_payment = models.BooleanField(
+        default=False,
+        help_text="Automatically created payments (e.g. by EasyVerein invoicing) that should be deleted together with their invoice.",
     )
 
     # Dates
@@ -1119,3 +1158,26 @@ class FreeItem(models.Model):
 
     def get_absolute_url(self):
         return reverse("admin_freeitem_list")
+
+
+class SiteSettings(models.Model):
+    """Singleton model for runtime-mutable site configuration."""
+
+    easyverein_api_token = models.CharField(max_length=512, blank=True, default="")
+    easyverein_bank_account_id = models.IntegerField(default=0)
+    easyverein_finalize_invoices = models.BooleanField(
+        default=False,
+        help_text="If enabled, invoices are finalized (draft state removed, PDF generated). If disabled, they are kept as drafts. Note: does not send email to members.",
+    )
+
+    class Meta:
+        verbose_name = "Site settings"
+
+    def save(self, *args, **kwargs) -> None:
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get(cls) -> "SiteSettings":
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

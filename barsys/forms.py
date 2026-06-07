@@ -159,6 +159,28 @@ class InvoicesCreateForm(forms.Form):
         self.helper.add_input(layout.Reset("reset", "Reset"))
 
 
+class EasyVereinInvoicesCreateForm(forms.Form):
+    users = forms.ModelMultipleChoiceField(
+        queryset=User.objects.active()
+        .buyers()
+        .pay_themselves()
+        .attached_to_easyverein(),
+        help_text="Select users to generate EasyVerein invoices for. Only users who "
+        "pay themselves and are attached to EasyVerein can be selected.",
+    )
+
+    comment = forms.CharField(label="Comment", required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(EasyVereinInvoicesCreateForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper(form=self)
+        self.helper["users"].wrap(layout.Field, size="25")
+
+        self.helper.add_input(layout.Submit("create", "Create"))
+        self.helper.add_input(layout.Reset("reset", "Reset"))
+
+
 class UserCustomCreationForm(forms.ModelForm):
     """
     Mainly copied from auth.UserCreationForm, b/c UserChangeForm does not allow to change passwords
@@ -204,7 +226,13 @@ class UserCustomCreationForm(forms.ModelForm):
             "is_favorite",
             "is_admin",
             "is_autolocked",
+            "easyverein_contact_details_url",
         )
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        if not PybarsysPreferences.EasyVerein.ACTIVE:
+            self.fields.pop("easyverein_contact_details_url", None)
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
@@ -234,7 +262,19 @@ class UserCustomCreationForm(forms.ModelForm):
 
 
 class UserCreateForm(UserCustomCreationForm):
-    pass
+    def clean(self):
+        cleaned_data = super().clean()
+        if PybarsysPreferences.EasyVerein.ACTIVE:
+            is_buyer = cleaned_data.get("is_buyer")
+            pays_themselves = not cleaned_data.get("purchases_paid_by_other")
+            ev_url = cleaned_data.get("easyverein_contact_details_url")
+            if is_buyer and pays_themselves and not ev_url:
+                raise forms.ValidationError(
+                    "Buyers who pay for themselves must be attached to an EasyVerein "
+                    "contact. Use 'Fetch contacts from EasyVerein' below to find and "
+                    "select a contact."
+                )
+        return cleaned_data
 
 
 class UserUpdateForm(UserCustomCreationForm):
@@ -393,7 +433,7 @@ class ProductForm(forms.ModelForm):
 class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
-        exclude = ("invoice",)
+        exclude = ("invoice", "is_virtual_payment")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -418,3 +458,45 @@ class StatsDisplayForm(forms.ModelForm):
     class Meta:
         model = StatsDisplay
         exclude = ("",)
+
+
+class SiteSettingsForm(forms.ModelForm):
+    class Meta:
+        model = SiteSettings
+        fields = [
+            "easyverein_api_token",
+            "easyverein_bank_account_id",
+            "easyverein_finalize_invoices",
+        ]
+        labels = {
+            "easyverein_api_token": "API token",
+            "easyverein_bank_account_id": "Bank account ID",
+            "easyverein_finalize_invoices": "Finalize invoices",
+        }
+        # Do not echo the stored token back into the page. It renders empty; an empty
+        # submit keeps the current token (see clean_easyverein_api_token).
+        widgets = {
+            "easyverein_api_token": forms.PasswordInput(render_value=False),
+        }
+        help_texts = {
+            "easyverein_api_token": "Leave blank to keep the current token.",
+        }
+
+    def clean_easyverein_api_token(self):
+        # The token field renders empty (PasswordInput), so a blank submit means
+        # "unchanged" rather than "clear the token".
+        value = self.cleaned_data.get("easyverein_api_token")
+        return value or self.instance.easyverein_api_token
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The EasyVerein fields are only shown/editable when the integration is active
+        # (mirrors the template). Removing them when inactive avoids spurious validation
+        # errors and prevents a submit from overwriting stored values with blanks.
+        if not PybarsysPreferences.EasyVerein.ACTIVE:
+            for field_name in (
+                "easyverein_api_token",
+                "easyverein_bank_account_id",
+                "easyverein_finalize_invoices",
+            ):
+                self.fields.pop(field_name, None)
