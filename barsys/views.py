@@ -723,7 +723,9 @@ class PurchaseStatisticsByUserView(UserIsAdminMixin, FilterView):
 class UserStatisticsByAccountBalance(FilterView):
     filterset_class = filters.UserFilter
     template_name = "barsys/admin/user_account_balance_statistics.html"
-    paginate_by = 10
+    # The displayed rows are the separately-computed `balances` aggregation, not the
+    # FilterView's object_list, so it is paginated manually in get_context_data.
+    page_size = 20
 
     def get_context_data(self, **kwargs):
         context = super(UserStatisticsByAccountBalance, self).get_context_data(**kwargs)
@@ -738,7 +740,13 @@ class UserStatisticsByAccountBalance(FilterView):
             .order_by("account_balance")
         )
 
-        context["balances"] = balances
+        page = paginator.Paginator(balances, self.page_size).get_page(
+            self.request.GET.get("page")
+        )
+        context["balances"] = page
+        context["paginator"] = page.paginator
+        context["page_obj"] = page
+        context["is_paginated"] = page.has_other_pages()
         return context
 
 
