@@ -88,6 +88,15 @@
             <td>{{ object.modified_date }}</td>
         </tr>
 
+        {% if pybarsys_preferences.EasyVerein.ACTIVE %}
+        <tr>
+            <th>EasyVerein contact</th>
+            <td>{% if object.easyverein_contact_details_url %}
+                <a href="{{ object.easyverein_contact_details_url }}">{{ object.easyverein_contact_details_url }}</a>
+            {% else %}—{% endif %}</td>
+        </tr>
+        {% endif %}
+
         <tr>
             <th colspan="2"><h4>Account balance</h4></th>
         </tr>

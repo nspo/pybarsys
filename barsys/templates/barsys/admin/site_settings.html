@@ -1,0 +1,53 @@
+{% extends 'barsys/admin/base.html' %}
+
+{% load bootstrap3 %}
+
+{% block content %}
+
+<h1>Site settings</h1>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% if pybarsys_preferences.EasyVerein.ACTIVE %}
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>EasyVerein</strong></div>
+        <div class="panel-body">
+            {% bootstrap_field form.easyverein_api_token %}
+
+            {% bootstrap_field form.easyverein_bank_account_id %}
+            <button type="submit" name="action" value="fetch_bank_accounts" class="btn btn-default" style="margin-bottom: 1em;">
+                {% bootstrap_icon "refresh" %} Fetch bank accounts from EasyVerein
+            </button>
+
+            {% if bank_accounts %}
+                <p class="text-muted">Select an account to fill in its ID above, then click Save.</p>
+                <div style="max-height: 250px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 1em;">
+                    <table class="table table-condensed table-striped" style="margin-bottom: 0;">
+                        <thead><tr><th style="width: 30px;"></th><th>Name</th><th>ID</th></tr></thead>
+                        <tbody>
+                            {% for acc in bank_accounts %}
+                            <tr>
+                                <td><input type="radio" name="bank_account_radio" value="{{ acc.id }}"
+                                    onchange="document.getElementById('id_easyverein_bank_account_id').value = this.value;"
+                                    {% if acc.id == form.instance.easyverein_bank_account_id %}checked{% endif %}></td>
+                                <td>{{ acc.name }}</td>
+                                <td><small class="text-muted">{{ acc.id }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+            {% bootstrap_field form.easyverein_finalize_invoices %}
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted">No settings available here yet.</p>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+
+{% endblock %}

@@ -1,5 +1,5 @@
 # alpine version is not usable due to issues with locales
-FROM python:3.10
+FROM python:3.11
 
 # system dependencies
 ARG DEBIAN_FRONTEND=noninteractive
@@ -16,8 +16,8 @@ WORKDIR /app
 USER pybarsys
 ENV PATH="/home/pybarsys/.local/bin:${PATH}"
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # python dependencies
 COPY requirements.txt .
