@@ -5,6 +5,8 @@ bin/
 /static/
 pyvenv.cfg
 
+/lib64
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

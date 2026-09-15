@@ -19,6 +19,10 @@ Main developer: Nicolai Spohrer (nicolai[at]xeve.de)
 * *Pay your bills!* Users whose balance repeatedly falls below a threshold can be automatically locked from purchasing more until they clear their debts
 * *MultiBuy!* When multiple people order the same thing, use the MultiBuy feature to save lots of time
 * [REST API](docs/api.md) (by courtesy of [@jallmenroeder](https://github.com/jallmenroeder))
+* *EasyVerein integration* (optional): when enabled, invoicing is routed through [EasyVerein](https://easyverein.com/) instead of pybarsys' own mailing
+  * Match pybarsys users to EasyVerein contacts (with name-based suggestions) and attach them right from the user form
+  * Create EasyVerein invoices per user from their unbilled purchases/payments, as drafts or finalized, tracked on a live progress page
+  * API token (auto-refreshed) and bank account are configured at runtime via the admin *Settings* page - see [settings docs](docs/settings.md#easyverein-integration)
 * ...
 # Explanation & screenshots
 

@@ -23,6 +23,9 @@
     {% else %}
         <div class="jumbotron">
             <h1>Confirm deletion</h1>
+            {% for notice in extra_notices %}
+                <div class="alert alert-warning">{{ notice }}</div>
+            {% endfor %}
             <form action="" method="post" class="form">{% csrf_token %}
                 <p>Are you sure you want to delete "{{ object }}"?</p>
                 <button type="submit" class="btn btn-danger btn-lg">{% bootstrap_icon 'trash' %} Confirm</button>

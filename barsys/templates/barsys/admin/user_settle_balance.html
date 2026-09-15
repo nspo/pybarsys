@@ -1,0 +1,78 @@
+{% extends 'barsys/admin/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+{% load barsys_helpers %}
+{% block content %}
+
+    <h1>Settle balance of {{ object.display_name }}</h1>
+
+    <div class="alert alert-warning">
+        <strong>{% bootstrap_icon "warning-sign" %} This writes money off the books.</strong>
+        Only use it for accounts that cannot be settled the normal way - someone who died,
+        moved away and cannot be reached, or who cannot be invoiced at all.
+        {% if easyverein_active %}
+            Everyone else should be invoiced via EasyVerein instead.
+        {% else %}
+            Everyone else should get a normal invoice instead.
+        {% endif %}
+    </div>
+
+    <h3>What will happen</h3>
+    <ol>
+        <li>
+            All of {{ object.display_name }}'s unbilled purchases and payments are put on a
+            new invoice, exactly like a normal invoicing run would.
+        </li>
+        <li>
+            A correction payment of <strong>{{ settlement|currency }}</strong> is booked on
+            that invoice. It is not real money - it only brings the account balance to
+            exactly {{ 0|currency }}.
+        </li>
+        <li>
+            <strong>No email is sent</strong> and
+            {% if easyverein_active %}
+                <strong>nothing is transferred to EasyVerein</strong>.
+            {% else %}
+                <strong>no bill is handed to anyone</strong>.
+            {% endif %}
+            Nobody is going to pay this - the bar absorbs it.
+        </li>
+    </ol>
+
+    <h3>The numbers</h3>
+    <table class="table table-striped">
+        <tbody>
+        <tr>
+            <th style="width: 40%;">Account balance now</th>
+            <td>{{ balance|currency }}</td>
+        </tr>
+        <tr>
+            <th>Unbilled purchases (incl. dependants)</th>
+            <td>{{ open_purchases|currency }}</td>
+        </tr>
+        <tr>
+            <th>Unbilled payments</th>
+            <td>{{ open_payments|currency }}</td>
+        </tr>
+        <tr class="info">
+            <th>Correction payment that will be booked</th>
+            <td><strong>{{ settlement|currency }}</strong></td>
+        </tr>
+        <tr class="info">
+            <th>Account balance afterwards</th>
+            <td><strong>{{ 0|currency }}</strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h3>Afterwards</h3>
+    <p>
+        The correction payment stays in the payment list together with your reason, so
+        the write-off remains traceable later on.
+    </p>
+
+    {% crispy form %}
+
+    <a href="{% url 'admin_user_detail' object.pk %}" class="btn btn-default">Cancel</a>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% load barsys_helpers %}
+Hallo, {{ invoice.recipient.display_name }}!<br>
+<br>
+Dies ist eine Rechnung von <i>{{ pybarsys_preferences.EMAIL.NAME_OF_BAR }}</i>.
+{% if comment %}
+    <p><strong>Kommentar bei der Rechnungserstellung:</strong> {{ comment }}</p>
+{% endif %}
+
+{% if own_purchases %}
+    <hr>
+    <strong>Eigene Einkäufe:</strong>
+    {% include "./ev_purchases_list.html" with purchases=own_purchases %}
+{% endif %}
+
+{% for p_user, u_purchases in other_purchases_grouped %}
+    <hr>
+    <strong>Einkäufe von {{ p_user }}:</strong>
+    {% include "./ev_purchases_list.html" with purchases=u_purchases %}
+{% endfor %}
+
+<p><i>Diese Rechnung wurde automatisch generiert von <a href="https://github.com/nspo/pybarsys">pybarsys</a>,
+dem Open Source Barsystem.</i></p>

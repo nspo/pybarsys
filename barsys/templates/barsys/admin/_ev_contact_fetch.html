@@ -1,0 +1,29 @@
+{% load bootstrap3 %}
+{% comment %}
+EasyVerein contact fetch + selection UI. Requires `ev_contacts` (optional) in context
+and a form field rendered with id `id_easyverein_contact_details_url`.
+{% endcomment %}
+{% if pybarsys_preferences.EasyVerein.ACTIVE %}
+    <button type="submit" name="action" value="fetch_ev_contacts" class="btn btn-default" style="margin-bottom: 1em;">
+        {% bootstrap_icon "refresh" %} Fetch contacts from EasyVerein
+    </button>
+
+    {% if ev_contacts %}
+        <p class="text-muted">Select a contact to attach. Suggested matches for the entered name are at the top.</p>
+        <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 1em;">
+            <table class="table table-condensed table-striped" style="margin-bottom: 0;">
+                <thead><tr><th style="width: 30px;"></th><th>Name</th><th>ID</th></tr></thead>
+                <tbody>
+                    {% for row in ev_contacts %}
+                    <tr {% if row.is_match %}class="success"{% endif %}>
+                        <td><input type="radio" name="ev_contact_radio" value="{{ row.url }}"
+                            onchange="document.getElementById('id_easyverein_contact_details_url').value = this.value;"></td>
+                        <td>{{ row.contact.firstName }} {{ row.contact.familyName }}{% if row.is_match %} <span class="label label-success">match</span>{% endif %}</td>
+                        <td><small class="text-muted">{{ row.contact.id }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endif %}

@@ -24,6 +24,7 @@
         <th>Favorite?</th>
         <th>Account balance</th>
         <th>Dependant?</th>
+        {% if pybarsys_preferences.EasyVerein.ACTIVE %}<th>EasyVerein?</th>{% endif %}
         <th>{% bicon 'info-sign' %}</th>
         <th>{% bicon 'pencil' %}</th>
         <th>{% bicon 'trash' %}</th>
@@ -39,7 +40,8 @@
             <td>{% bool_to_icon user.is_admin %}</td>
             <td>{% bool_to_icon user.is_favorite %}</td>
             <td>{{ user.account_balance|currency }}</td>
-            <td>{% bool_to_icon user.purchases_paid_by_other %}</td>
+            <td>{% if user.purchases_paid_by_other %}<a href="{% url 'admin_user_detail' user.purchases_paid_by_other.pk %}" title="Paid by {{ user.purchases_paid_by_other.display_name }}">{% bool_to_icon user.purchases_paid_by_other %}</a>{% else %}{% bool_to_icon user.purchases_paid_by_other %}{% endif %}</td>
+            {% if pybarsys_preferences.EasyVerein.ACTIVE %}<td>{% if user.pays_themselves %}{% bool_to_icon user.easyverein_contact_details_url %}{% endif %}</td>{% endif %}
             <td><a href="{% url 'admin_user_detail' user.pk %}">{% bicon 'info-sign' %}</a></td>
             <td><a href="{% url 'admin_user_update' user.pk %}">{% bicon 'pencil' %}</a></td>
             <td><a href="{% url 'admin_user_delete' user.pk %}">{% bicon 'trash' %}</a></td>

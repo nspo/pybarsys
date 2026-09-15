@@ -6,9 +6,14 @@
     <div>
         <h1 class="pull-left" style="margin-top: 0;">Payment details</h1>
         {% if not object.has_invoice %}
-            <a href="{% url 'admin_payment_update' object.pk %}">
-                <button class="btn btn-primary pull-right">{% bootstrap_icon 'pencil' %} Change</button>
-            </a>
+            <div class="btn-group pull-right" role="group">
+                <a href="{% url 'admin_payment_update' object.pk %}" class="btn btn-primary">
+                    {% bootstrap_icon 'pencil' %} Change
+                </a>
+                <a href="{% url 'admin_payment_delete' object.pk %}" class="btn btn-danger">
+                    {% bootstrap_icon 'remove-sign' %} Delete
+                </a>
+            </div>
         {% endif %}
     </div>
     <table class="table table-striped">
@@ -45,6 +50,10 @@
                 {% bool_to_icon object.has_invoice %}
             {% endif %}
             </td>
+        </tr>
+        <tr>
+            <th>Virtual payment</th>
+            <td>{% bool_to_icon object.is_virtual_payment %}</td>
         </tr>
         <tr>
             <th>Comment</th>

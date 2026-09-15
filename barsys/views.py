@@ -1,21 +1,37 @@
 import csv
+import re
 import os.path
+import threading
+import uuid
 
+from django import forms
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core import exceptions, paginator
+from django.db import connection, transaction
+from django.db.models import Q
 from django.http import (
     HttpResponseRedirect,
     HttpResponseForbidden,
     HttpResponse,
+    HttpRequest,
+    JsonResponse,
 )
 from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
-from django.urls import reverse_lazy
+from django.template.loader import render_to_string
+from django.urls import reverse, reverse_lazy
 from django.utils.text import Truncator
-from django.views.generic import edit, View
+from django.views.generic import edit, View, TemplateView
 from django.views.generic.detail import DetailView
 from django_filters.views import FilterView
+from easyverein import EasyvereinAPI
+from easyverein.models import (
+    ContactDetails,
+    ContactDetailsFilter,
+    InvoiceCreate,
+    InvoiceItemCreate,
+)
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -25,6 +41,7 @@ from pybarsys.settings import PybarsysPreferences
 from . import filters
 from . import view_helpers
 from .forms import *
+from .models import SiteSettings, transfer_balance
 from .templatetags.barsys_helpers import currency
 from .view_helpers import (
     get_renderable_stats_elements,
@@ -45,6 +62,11 @@ class UserIsAdminMixin(UserPassesTestMixin):
             self.raise_exception = True
 
         return u.is_active and u.is_staff
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["pybarsys_preferences"] = PybarsysPreferences
+        return context
 
 
 class UserListView(UserIsAdminMixin, FilterView):
@@ -140,16 +162,129 @@ class UserDetailView(UserIsAdminMixin, DetailView):
         return context
 
 
-class UserCreateView(UserIsAdminMixin, edit.CreateView):
+class EasyVereinContactFetchMixin:
+    """Adds a "fetch_ev_contacts" POST action to a user create/update view.
+
+    The action re-renders the form (unbound, pre-filled from POST so no premature
+    validation errors) together with ranked, still-unattached EasyVerein contact
+    suggestions for the entered display name. Concrete views set ``self.object``
+    before delegating to :meth:`ev_contact_fetch_response`.
+    """
+
+    def _fetch_unattached_contacts(self) -> list[ContactDetails]:
+        """Non-company EV contacts not linked to any *other* pybarsys user.
+
+        The edited user's own contact (if any) stays selectable.
+        """
+        ev = _get_ev_api()
+        contacts = ev.contact_details.get_all(
+            search=ContactDetailsFilter(deleted=False), limit_per_page=100
+        )
+        contacts = [c for c in contacts if not c.isCompany]
+        other_users = User.objects.attached_to_easyverein()
+        if self.object is not None:
+            other_users = other_users.exclude(pk=self.object.pk)
+        assigned_urls = set(
+            other_users.values_list("easyverein_contact_details_url", flat=True)
+        )
+        return [c for c in contacts if _ev_contact_url(c.id) not in assigned_urls]
+
+    def ev_contact_fetch_response(self, request: HttpRequest) -> HttpResponse:
+        # Render the form unbound (pre-filled from POST) so this lookup action does not
+        # surface validation errors. Unchecked checkboxes are absent from POST, so
+        # normalize boolean fields to their submitted presence to preserve their state.
+        initial = request.POST.dict()
+        for name, field in self.form_class.base_fields.items():
+            if isinstance(field, forms.BooleanField):
+                initial[name] = name in request.POST
+        form = self.form_class(instance=self.object, initial=initial)
+        context = self.get_context_data(form=form)
+        try:
+            context["ev_contacts"] = _ev_rank_contacts_for_name(
+                self._fetch_unattached_contacts(), request.POST.get("display_name", "")
+            )
+        except Exception as e:
+            messages.error(
+                request, "Error fetching contacts from EasyVerein: {}".format(e)
+            )
+        return self.render_to_response(context)
+
+
+class UserCreateView(EasyVereinContactFetchMixin, UserIsAdminMixin, edit.CreateView):
     model = User
     form_class = UserCreateForm
     template_name = "barsys/admin/user_new.html"
 
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action") == "fetch_ev_contacts":
+            self.object = None
+            return self.ev_contact_fetch_response(request)
+        return super().post(request, *args, **kwargs)
 
-class UserUpdateView(UserIsAdminMixin, edit.UpdateView):
+
+class UserUpdateView(EasyVereinContactFetchMixin, UserIsAdminMixin, edit.UpdateView):
     model = User
     form_class = UserUpdateForm
     template_name = "barsys/admin/user_update.html"
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action") == "fetch_ev_contacts":
+            self.object = self.get_object()
+            return self.ev_contact_fetch_response(request)
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form: UserUpdateForm) -> HttpResponse:
+        transfer = None
+        # Moving the balance and linking the dependant have to stand or fall together:
+        # a transfer whose save failed afterwards would leave the payer charged for
+        # someone who never became their dependant.
+        with transaction.atomic():
+            if getattr(form.instance, "_balance_moves_to_payer", False):
+                payer = form.cleaned_data["purchases_paid_by_other"]
+                # Drop the flag so the save below re-runs the model check for real,
+                # against the balance the transfer has just zeroed.
+                del form.instance._balance_moves_to_payer
+                # form.instance already carries the new payer in memory, and
+                # Payment.save() refuses payments for users who do not pay themselves -
+                # so book against the unchanged row from the database.
+                transfer = transfer_balance(
+                    User.objects.get(pk=form.instance.pk), payer
+                )
+
+            response = super().form_valid(form)
+
+        if transfer is not None:
+            # payment_to carries the balance in the usual sign convention (negative =
+            # owes), so it reads like the account balance shown everywhere else.
+            _invoice, _payment_from, payment_to = transfer
+            payer = self.object.purchases_paid_by_other
+            messages.success(
+                self.request,
+                "Moved the remaining balance of {} from {} to {}. {}'s balance is now "
+                "0; it is included in {}'s next invoice.".format(
+                    currency(payment_to.amount),
+                    self.object,
+                    payer,
+                    self.object,
+                    payer,
+                ),
+            )
+
+        # Non-blocking warning: the create form forbids this state, update only warns.
+        user = self.object
+        if (
+            PybarsysPreferences.EasyVerein.ACTIVE
+            and user.is_buyer
+            and user.purchases_paid_by_other_id is None
+            and not user.easyverein_contact_details_url
+        ):
+            messages.error(
+                self.request,
+                "You should attach this user to EasyVerein! "
+                "This buyer pays for themselves but is not attached to an EasyVerein "
+                "contact, which will lead to non-invoiceable purchases.",
+            )
+        return response
 
 
 class CheckedDeleteView(View):
@@ -182,12 +317,17 @@ class CheckedDeleteView(View):
                 "No URL to redirect to. Provide a success_url."
             )
 
+    def get_extra_notices(self) -> list[str]:
+        return []
+
     def get(self, request, pk):
         self.object = get_object_or_404(self.model, pk=pk)
         context = {
             "object": self.object,
             "cannot_be_deleted": self.object.cannot_be_deleted(),
             "cancel_url": self.cancel_url,
+            "pybarsys_preferences": PybarsysPreferences,
+            "extra_notices": self.get_extra_notices(),
         }
         return render(request, self.template_name, context)
 
@@ -195,6 +335,91 @@ class CheckedDeleteView(View):
 class UserDeleteView(UserIsAdminMixin, CheckedDeleteView):
     success_url = reverse_lazy("admin_user_list")
     model = User
+
+
+class UserSettleBalanceView(UserIsAdminMixin, edit.FormView):
+    """Write off a user's balance inside pybarsys, without sending a bill.
+
+    The escape hatch for accounts that cannot be settled the normal way (deceased,
+    unreachable, or not attached to EasyVerein). Deliberately independent of
+    `EasyVereinPreferences.ACTIVE`: nothing is pushed anywhere, the money is written off.
+    """
+
+    template_name = "barsys/admin/user_settle_balance.html"
+    form_class = UserSettleBalanceForm
+
+    COMMENT_PREFIX = "Manual balance correction: "
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        # UserPassesTestMixin only checks in super().dispatch(), so anything done
+        # before that runs for anyone. The refusals below name users and their payers,
+        # so check first.
+        if not self.test_func():
+            return self.handle_no_permission()
+        self.target_user = get_object_or_404(User, pk=kwargs["pk"])
+        if not self.target_user.pays_themselves():
+            messages.error(
+                request,
+                "{} does not pay for their own purchases, so they have no balance "
+                "to settle. Their purchases are billed to {}.".format(
+                    self.target_user, self.target_user.purchases_paid_by_other
+                ),
+            )
+            return redirect("admin_user_detail", pk=self.target_user.pk)
+        preview = self.get_preview()
+        if (
+            preview["balance"] == 0
+            and preview["open_purchases"] == 0
+            and preview["open_payments"] == 0
+        ):
+            messages.warning(
+                request,
+                "Nothing to settle: {}'s balance is 0 and there are no unbilled "
+                "purchases or payments.".format(self.target_user),
+            )
+            return redirect("admin_user_detail", pk=self.target_user.pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_preview(self) -> dict:
+        """What the settlement would look like, for the confirmation page.
+
+        The authoritative amount is derived by `create_settled_for_user` from the
+        balance after invoicing; this only mirrors it so the admin can see it upfront.
+        """
+        return {
+            "balance": self.target_user.account_balance(),
+            "open_purchases": Purchase.objects.to_pay_by(self.target_user).sum_cost(),
+            "open_payments": self.target_user.payments().unbilled().sum_amount(),
+            "settlement": -self.target_user.open_balance(),
+        }
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["object"] = self.target_user
+        context["easyverein_active"] = PybarsysPreferences.EasyVerein.ACTIVE
+        context.update(self.get_preview())
+        return context
+
+    def form_valid(self, form: UserSettleBalanceForm) -> HttpResponse:
+        reason = form.cleaned_data["reason"].strip()
+        # The payment comment is a CharField, so the reason only fits abbreviated there;
+        # the invoice keeps it in full.
+        budget = Payment._meta.get_field("comment").max_length - len(
+            self.COMMENT_PREFIX
+        )
+        invoice, payment = Invoice.objects.create_settled_for_user(
+            self.target_user,
+            self.COMMENT_PREFIX + Truncator(reason).chars(budget),
+            invoice_comment=self.COMMENT_PREFIX + reason,
+        )
+        detail = (
+            "Settled {}'s balance to 0 with a correction payment of {}. "
+            "No bill was sent.".format(self.target_user, currency(payment.amount))
+        )
+        if PybarsysPreferences.EasyVerein.ACTIVE:
+            detail += " Nothing was transferred to EasyVerein."
+        messages.success(self.request, detail)
+        return redirect("admin_invoice_detail", pk=invoice.pk)
 
 
 class PurchaseListView(UserIsAdminMixin, FilterView):
@@ -557,6 +782,19 @@ class InvoiceCreateView(UserIsAdminMixin, edit.FormView):
     form_class = InvoicesCreateForm
     success_url = reverse_lazy("admin_invoice_list")
 
+    def dispatch(self, request, *args, **kwargs):
+        # Same reason as in UserSettleBalanceView: the redirect below would otherwise
+        # happen before UserPassesTestMixin gets to check anything.
+        if not self.test_func():
+            return self.handle_no_permission()
+        if PybarsysPreferences.EasyVerein.ACTIVE:
+            url = reverse("admin_easyverein_invoice_new")
+            user_pk = request.GET.get("user") or request.POST.get("user")
+            if user_pk:
+                url += "?user={}".format(user_pk)
+            return redirect(url)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_initial(self):
         initial = super().get_initial()
         user_pk = self.request.GET.get("user")
@@ -582,6 +820,19 @@ class InvoiceCreateView(UserIsAdminMixin, edit.FormView):
 class InvoiceDeleteView(UserIsAdminMixin, CheckedDeleteView):
     model = Invoice
     success_url = reverse_lazy("admin_invoice_list")
+
+    def get_extra_notices(self) -> list[str]:
+        virtual = self.object.payments().filter(is_virtual_payment=True)
+        if virtual.exists():
+            return [
+                "This will also delete the associated virtual payment of {}.".format(
+                    currency(virtual.sum_amount())
+                ),
+                "You must delete the automatically created EasyVerein invoice manually: {}".format(
+                    self.object.comment
+                ),
+            ]
+        return []
 
 
 # Invoice END
@@ -1251,6 +1502,750 @@ class MainUserHistoryView(View):
             "pybarsys_preferences": PybarsysPreferences,
         }
         return render(request, "barsys/main/user_history.html", context)
+
+
+# EasyVerein BEGIN
+
+EASYVEREIN_API_BASE = "https://easyverein.com/api/v2.0"
+EASYVEREIN_MATCH_FIRST_NAME_CHARS = 1
+
+# Marks a settlement invoice whose EasyVerein counterpart has not been confirmed yet.
+# Written before the API call and overwritten once EasyVerein answers, so anything
+# left carrying it settled a balance that EasyVerein never received.
+EV_PUSH_PENDING_COMMENT = "EasyVerein push pending"
+
+
+def _ev_contact_url(contact_id: int) -> str:
+    """URL of an EasyVerein contact-details resource (as stored on User)."""
+    return "{}/contact-details/{}".format(EASYVEREIN_API_BASE, contact_id)
+
+
+def _ev_clean_name(name: str) -> str:
+    """Remove nickname sections from a display name (quoted, parenthetical, dash-separated)."""
+    name = re.sub(r"\s*\([^)]*\)\s*", " ", name)  # (nickname)
+    name = re.sub(r"\s*'[^']*'\s*", " ", name)  # 'nickname'
+    name = re.sub(r'\s*"[^"]*"\s*', " ", name)  # "nickname"
+    name = re.sub(r"\s*„[^“]*“\s*", " ", name)  # „nickname“ (German quotes)
+    name = re.sub(r"\s*-\s*[^-]+-\s*", " ", name)  # First - Nickname - Last
+    name = re.sub(r"\s*-\s*", " ", name)  # remaining dashes
+    return " ".join(name.split())
+
+
+def _ev_name_parts(name: str) -> tuple[str, str]:
+    parts = name.split()
+    if len(parts) >= 2:
+        return parts[0], parts[-1]
+    return (parts[0], parts[0]) if parts else ("", "")
+
+
+def _ev_match_contacts(
+    contacts: list[ContactDetails],
+    display_name: str,
+    n: int = EASYVEREIN_MATCH_FIRST_NAME_CHARS,
+) -> tuple[list[ContactDetails], list[ContactDetails]]:
+    """Match EV contacts against a pybarsys display name.
+
+    Returns a (matches, same_family_name) tuple:
+      - same_family_name: all contacts whose family name equals the entered last name.
+      - matches: the subset of those that also match the first-name prefix (n chars,
+        lengthened to n+1/n+2 to break ties). Empty when no prefix matches.
+    Both are empty when no last name could be parsed.
+    """
+    first, last = _ev_name_parts(_ev_clean_name(display_name))
+    if not last:
+        return [], []
+    same_last = [
+        c for c in contacts if (c.familyName or "").strip().lower() == last.lower()
+    ]
+    matches = [
+        c
+        for c in same_last
+        if n > 0 and (c.firstName or "")[:n].lower() == first[:n].lower()
+    ]
+    # If multiple candidates survive, retry with n+1 and n+2 to break ties
+    for stricter_n in range(n + 1, n + 3):
+        if len(matches) <= 1:
+            break
+        narrowed = [
+            c
+            for c in same_last
+            if (c.firstName or "")[:stricter_n].lower() == first[:stricter_n].lower()
+        ]
+        if narrowed:
+            matches = narrowed
+    return matches, same_last
+
+
+def _ev_suggest_matches(
+    candidates: list[ContactDetails],
+    unconnected_users: list[User],
+    n: int = EASYVEREIN_MATCH_FIRST_NAME_CHARS,
+) -> dict[str, list[dict]]:
+    """Suggest EV-contact matches for pybarsys users without an EasyVerein link.
+
+    Returns {"user", "contact", "checked"} dicts as user->contact match suggestions split into two buckets:
+      - "high": a unique full match (family name + first-name prefix) - pre-checked.
+      - "low": ambiguous full matches, or (when there is no full match) every contact
+        sharing the family name - offered unchecked as weak hints.
+    """
+    high_confidence_suggestions: list[dict] = []
+    low_confidence_suggestions: list[dict] = []
+    for user in unconnected_users:
+        full_matches, same_family_name_matches = _ev_match_contacts(
+            candidates, user.display_name, n
+        )
+        if full_matches:
+            is_unique_match = len(full_matches) == 1
+            for contact in full_matches:
+                target = (
+                    high_confidence_suggestions
+                    if is_unique_match
+                    else low_confidence_suggestions
+                )
+                target.append(
+                    {"user": user, "contact": contact, "checked": is_unique_match}
+                )
+        else:
+            # No first-name match - offer every contact sharing the family name as a weak hint
+            for contact in same_family_name_matches:
+                low_confidence_suggestions.append(
+                    {"user": user, "contact": contact, "checked": False}
+                )
+    return {"high": high_confidence_suggestions, "low": low_confidence_suggestions}
+
+
+def _ev_rank_contacts_for_name(
+    contacts: list[ContactDetails],
+    display_name: str,
+    n: int = EASYVEREIN_MATCH_FIRST_NAME_CHARS,
+) -> list[dict]:
+    """Rank EV contacts for a single entered name, in three tiers.
+
+    Returns a list of {"contact", "url", "is_match"} dicts, ordered: strong matches
+    (family name + first-name prefix, is_match=True) first, then contacts sharing only
+    the family name, then everything else. Each tier is sorted by name.
+    """
+    full_matches, same_family_name_matches = _ev_match_contacts(
+        contacts, display_name, n
+    )
+    full_match_ids = {c.id for c in full_matches}
+    same_family_name_ids = {c.id for c in same_family_name_matches}
+
+    def sort_key(c):
+        return ((c.familyName or "").lower(), (c.firstName or "").lower())
+
+    def row(c):
+        return {
+            "contact": c,
+            "url": _ev_contact_url(c.id),
+            "is_match": c.id in full_match_ids,
+        }
+
+    tier_full_match = sorted(
+        [c for c in contacts if c.id in full_match_ids], key=sort_key
+    )
+    tier_same_family = sorted(
+        [
+            c
+            for c in contacts
+            if c.id in same_family_name_ids and c.id not in full_match_ids
+        ],
+        key=sort_key,
+    )
+    # Excludes the full same-family-name set, which already covers the full matches
+    # (every full match shares the family name, so it is in same_family_name_ids too).
+    tier_others = sorted(
+        [c for c in contacts if c.id not in same_family_name_ids], key=sort_key
+    )
+    return [row(c) for c in tier_full_match + tier_same_family + tier_others]
+
+
+class SiteSettingsView(UserIsAdminMixin, View):
+    template_name = "barsys/admin/site_settings.html"
+
+    def _render(
+        self, request: HttpRequest, form: SiteSettingsForm, extra_context: dict = None
+    ) -> HttpResponse:
+        context = {
+            "form": form,
+            "pybarsys_preferences": PybarsysPreferences,
+        }
+        if extra_context:
+            context.update(extra_context)
+        return render(request, self.template_name, context)
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        return self._render(request, SiteSettingsForm(instance=SiteSettings.get()))
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        action = request.POST.get("action")
+
+        if action == "fetch_bank_accounts":
+            form = SiteSettingsForm(instance=SiteSettings.get())
+            try:
+                accounts = _ev_fetch_bank_accounts()
+                return self._render(request, form, {"bank_accounts": accounts})
+            except Exception as e:
+                messages.error(
+                    request,
+                    "Error fetching bank accounts from EasyVerein: {}".format(e),
+                )
+            return self._render(request, form)
+
+        form = SiteSettingsForm(request.POST, instance=SiteSettings.get())
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Settings saved.")
+        return self._render(request, form)
+
+
+def _get_ev_api() -> EasyvereinAPI:
+    """Return an EasyvereinAPI instance using the token stored in SiteSettings."""
+
+    def _on_token_refresh(new_token) -> None:
+        settings = SiteSettings.get()
+        settings.easyverein_api_token = new_token.Bearer
+        settings.save()
+
+    site_settings = SiteSettings.get()
+    return EasyvereinAPI(
+        api_key=site_settings.easyverein_api_token,
+        auto_retry=True,
+        auto_refresh_token=True,
+        token_refresh_callback=_on_token_refresh,
+    )
+
+
+def _ev_fetch_bank_accounts() -> list[dict]:
+    """Fetch EasyVerein bank accounts (the resource selectionAcc references).
+
+    The python-easyverein library does not wrap the /bank-account endpoint, so we
+    fetch it via the raw client. Returns a list of {"id", "name"} dicts.
+    """
+    ev = _get_ev_api()
+    url = ev.invoice.c.get_url("/bank-account", {"limit": 100})
+    response = ev.invoice.c.fetch_paginated(url, 100)
+    return [{"id": acc.get("id"), "name": acc.get("name")} for acc in response.result]
+
+
+class EasyVereinSyncUsersView(UserIsAdminMixin, TemplateView):
+    template_name = "barsys/admin/easyverein_sync_users.html"
+
+    def post(self, request, *args, **kwargs) -> HttpResponse:
+        context = self.get_context_data(**kwargs)
+        action = request.POST.get("action")
+        if action == "pull":
+            try:
+                context["contact_details"] = self._fetch_contact_details()
+            except Exception as e:
+                messages.error(
+                    request,
+                    "Error fetching contact details from EasyVerein: {}".format(e),
+                )
+        elif action == "save_matches":
+            saved = []
+            parsed = []
+            for entry in request.POST.getlist("confirm_match"):
+                try:
+                    user_pk, contact_id, contact_name = entry.split("|", 2)
+                    contact_url = _ev_contact_url(contact_id)
+                    parsed.append(
+                        (User.objects.get(pk=int(user_pk)), contact_url, contact_name)
+                    )
+                except Exception as e:
+                    messages.error(request, "Could not parse match entry: {}".format(e))
+            seen_pks: set = set()
+            seen_urls: set = set()
+            duplicate_pks = {
+                user.pk
+                for user, _, _ in parsed
+                if user.pk in seen_pks or seen_pks.add(user.pk)
+            }
+            duplicate_urls = {
+                url for _, url, _ in parsed if url in seen_urls or seen_urls.add(url)
+            }
+            skipped: list[str] = [
+                "{} -> {}".format(contact_name, user.display_name)
+                for user, url, contact_name in parsed
+                if user.pk in duplicate_pks or url in duplicate_urls
+            ]
+            if skipped:
+                messages.error(
+                    request,
+                    "Not saved due to duplicates: {}".format(", ".join(skipped)),
+                )
+            for user, contact_url, contact_name in [
+                t
+                for t in parsed
+                if t[0].pk not in duplicate_pks and t[1] not in duplicate_urls
+            ]:
+                try:
+                    user.easyverein_contact_details_url = contact_url
+                    user.save()
+                    saved.append(
+                        {"user_name": user.display_name, "contact_name": contact_name}
+                    )
+                except Exception as e:
+                    messages.error(
+                        request,
+                        "Could not save match for {}: {}".format(user.display_name, e),
+                    )
+            context["saved_matches"] = saved
+            if saved:
+                messages.success(request, "Saved {} match(es).".format(len(saved)))
+        elif action == "match":
+            try:
+                all_contacts = self._fetch_contact_details()
+                if request.POST.get("match_scope") == "selected_only":
+                    selected = set(request.POST.getlist("selected_contacts"))
+                    candidates = [c for c in all_contacts if str(c.id) in selected]
+                else:
+                    candidates = all_contacts
+                assigned_urls = set(
+                    User.objects.attached_to_easyverein().values_list(
+                        "easyverein_contact_details_url", flat=True
+                    )
+                )
+                candidates = [
+                    c for c in candidates if _ev_contact_url(c.id) not in assigned_urls
+                ]
+                context["candidates"] = candidates
+                unconnected_users = list(
+                    User.objects.active()
+                    .buyers()
+                    .pay_themselves()
+                    .not_attached_to_easyverein()
+                )
+                context["unconnected_users"] = unconnected_users
+                suggestions = _ev_suggest_matches(candidates, unconnected_users)
+                context["high_confidence_suggestions"] = suggestions["high"]
+                context["low_confidence_suggestions"] = suggestions["low"]
+                context["high_confidence_user_pks"] = {
+                    s["user"].pk for s in suggestions["high"]
+                }
+                context["high_confidence_contact_ids"] = {
+                    s["contact"].id for s in suggestions["high"]
+                }
+            except Exception as e:
+                messages.error(
+                    request,
+                    "Error fetching contact details from EasyVerein: {}".format(e),
+                )
+        return self.render_to_response(context)
+
+    def _fetch_contact_details(self) -> list[ContactDetails]:
+        """Return non-deleted, non-company EasyVerein contact-details as model objects.
+
+        Company contacts are skipped: they carry only a companyName (no first/family
+        name), so they can't be name-matched to Pybarsys users.
+        """
+        ev = _get_ev_api()
+        contacts = ev.contact_details.get_all(
+            search=ContactDetailsFilter(deleted=False), limit_per_page=100
+        )
+        return [c for c in contacts if not c.isCompany]
+
+
+class EasyVereinInvoiceCreateView(UserIsAdminMixin, edit.FormView):
+    template_name = "barsys/admin/easyverein_invoice_new.html"
+    form_class = EasyVereinInvoicesCreateForm
+    success_url = reverse_lazy("admin_easyverein_invoice_new")
+
+    def get_initial(self) -> dict:
+        initial = super().get_initial()
+        user_pk = self.request.GET.get("user")
+        if user_pk:
+            initial["users"] = [user_pk]
+        return initial
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+
+        # Active buyers who pay themselves but have no EasyVerein link - they won't appear in the form
+        not_attached = (
+            User.objects.active().buyers().pay_themselves().not_attached_to_easyverein()
+        )
+        rows = [
+            {
+                "user": user,
+                "account_balance": user.account_balance(),
+                "num_unbilled_purchases": user.purchases().unbilled().count(),
+            }
+            for user in not_attached
+        ]
+        context["not_attached_users"] = sorted(
+            rows, key=lambda row: row["account_balance"]
+        )
+
+        # Settlement invoices whose EasyVerein counterpart was never confirmed. Their
+        # balance was zeroed here but EasyVerein may never have received it, so an
+        # admin has to check each one before that money is written off for good.
+        context["pending_invoices"] = Invoice.objects.filter(
+            comment=EV_PUSH_PENDING_COMMENT
+        ).select_related("recipient")
+        return context
+
+    def form_valid(self, form: EasyVereinInvoicesCreateForm) -> HttpResponse:
+        users = form.cleaned_data["users"]
+        try:
+            job_id = _ev_invoice_start_job(
+                user_ids=list(users.values_list("pk", flat=True)),
+                comment=form.cleaned_data["comment"],
+            )
+        except ValueError as e:
+            # Most likely a double submit; sending the same users twice would bill them
+            # twice in EasyVerein.
+            messages.error(self.request, str(e))
+            return redirect("admin_easyverein_invoice_new")
+        return redirect("admin_easyverein_invoice_progress", job_id=job_id)
+
+
+# --- EasyVerein invoice creation jobs (background-thread progress tracking) ---
+# In-process registry: works because we run a single gunicorn worker. If the
+# deployment ever scales to multiple workers, this must move to a shared store
+# (cache/DB), since a poll could hit a worker that does not hold the job.
+# TODO: also lost on restart (progress poll 404s mid-job; data itself is safe) and
+# entries are never evicted (slow unbounded growth). Deferred - a cache/DB-backed
+# store would fix restart-survival, multi-worker, and cleanup together.
+_ev_invoice_jobs: dict[str, dict] = {}
+_ev_invoice_jobs_lock = threading.Lock()
+
+
+def _ev_invoice_job_snapshot(job_id: str) -> dict | None:
+    """Return a shallow copy of the job state, or None if the job is unknown."""
+    with _ev_invoice_jobs_lock:
+        job = _ev_invoice_jobs.get(job_id)
+        return dict(job) if job is not None else None
+
+
+def _ev_invoice_start_job(user_ids: list[int], comment: str) -> str:
+    """Register a job and start a background thread that processes it.
+
+    Raises ValueError if any of the users is already being invoiced by a running job.
+    Two jobs over the same user would each read that user's balance before either
+    writes, and both would then create an EasyVerein invoice for it while pybarsys
+    records only one settlement - so the member gets billed twice.
+    """
+    job_id = uuid.uuid4().hex
+    with _ev_invoice_jobs_lock:
+        busy: set[int] = set()
+        for job in _ev_invoice_jobs.values():
+            if job["status"] == "running":
+                busy.update(job["user_ids"])
+
+        clash = busy.intersection(user_ids)
+        if clash:
+            raise ValueError(
+                "Already creating invoices for: {}".format(
+                    ", ".join(
+                        User.objects.filter(pk__in=clash)
+                        .order_by("display_name")
+                        .values_list("display_name", flat=True)
+                    )
+                )
+            )
+        _ev_invoice_jobs[job_id] = {
+            "total": len(user_ids),
+            "user_ids": list(user_ids),
+            "done": 0,
+            "status": "running",
+            "results": [],
+            "status_message": "",
+        }
+    threading.Thread(
+        target=_ev_invoice_run_job,
+        args=(job_id, user_ids, comment),
+        daemon=True,
+    ).start()
+    return job_id
+
+
+def _ev_job_set_message(job_id: str, message: str) -> None:
+    with _ev_invoice_jobs_lock:
+        if job_id in _ev_invoice_jobs:
+            _ev_invoice_jobs[job_id]["status_message"] = message
+
+
+def _ev_invoice_run_job(job_id: str, user_ids: list[int], comment: str) -> None:
+    """Background worker: create an EasyVerein invoice per user, updating progress.
+
+    Runs in its own thread, so it owns (and closes) its DB connection.
+    """
+    try:
+        users = list(User.objects.filter(pk__in=user_ids))
+        results = []
+        mail_conn = view_helpers.EmailConnectionWrapper(fake_sending_mails=False)
+        for user in users:
+            _ev_job_set_message(job_id, "Processing {}…".format(user.display_name))
+            try:
+                results.append(_ev_create_invoice_for_user(user, comment, mail_conn))
+            except Exception as e:
+                results.append(
+                    {"user": user.display_name, "ok": False, "detail": str(e)}
+                )
+            with _ev_invoice_jobs_lock:
+                _ev_invoice_jobs[job_id]["done"] += 1
+                _ev_invoice_jobs[job_id]["results"] = list(results)
+                _ev_invoice_jobs[job_id]["status_message"] = ""
+        with _ev_invoice_jobs_lock:
+            _ev_invoice_jobs[job_id]["status"] = "finished"
+            _ev_invoice_jobs[job_id]["results"] = results
+    except Exception as e:
+        with _ev_invoice_jobs_lock:
+            if job_id in _ev_invoice_jobs:
+                _ev_invoice_jobs[job_id]["status"] = "error"
+                _ev_invoice_jobs[job_id]["error"] = str(e)
+    finally:
+        connection.close()
+
+
+def _ev_invoice_description(invoice: Invoice, comment: str) -> str:
+    """Render the EasyVerein invoice description (HTML) listing billed purchases.
+
+    Reuses the same purchase sub-template as the normal invoice email; the language
+    follows the configured e-mail template dir. EasyVerein renders this as HTML.
+    """
+    return render_to_string(
+        os.path.join(
+            PybarsysPreferences.EMAIL.TEMPLATE_DIR, "ev_invoice_description.html.html"
+        ),
+        {
+            "invoice": invoice,
+            "own_purchases": invoice.own_purchases(),
+            "other_purchases_grouped": invoice.other_purchases_grouped(),
+            "comment": comment,
+            "pybarsys_preferences": PybarsysPreferences,
+        },
+    ).strip()
+
+
+def _ev_create_invoice_for_user(
+    user: User, comment: str, mail_conn: view_helpers.EmailConnectionWrapper
+) -> dict:
+    """Create a draft EasyVerein invoice for one user and mirror it on the pybarsys side.
+
+    EasyVerein invoice positions (signed so that positive = the user owes the bar):
+      - carried account balance (-account_balance)
+      - own unbilled purchases
+      - unbilled purchases per dependant (one position each)
+      - payments not yet invoiced (-unbilled payments)
+    The invoice sum must be positive, so a net credit becomes an "expense" (Ausgabe)
+    invoice with negated lines. On the pybarsys side a single invoice captures the
+    unbilled purchases/payments plus a virtual payment that zeroes the balance - its
+    amount equals the (signed) EasyVerein total.
+
+    Pybarsys is written first (quick), then the EasyVerein draft is created. If the
+    EasyVerein call fails, the pybarsys invoice + virtual payment are deleted again
+    (which un-bills the affected purchases/payments via SET_NULL).
+    """
+    result = {"user": user.display_name, "ok": False, "detail": ""}
+
+    contact_url = user.easyverein_contact_details_url
+    if not contact_url:
+        result["detail"] = "no EasyVerein link"
+        return result
+
+    # --- components (read-only) ---
+    balance = user.account_balance()  # B; negative = debt
+    own_sum = user.purchases().unbilled().sum_cost()  # S
+    sum_payments = user.payments().unbilled().sum_amount()  # P
+    dependant_purchases = Purchase.objects.unbilled().filter(
+        user__purchases_paid_by_other=user
+    )
+    dep_groups = []  # [(dependant, sum)]
+    for dep in User.objects.filter(purchases_paid_by_other=user).order_by(
+        "display_name"
+    ):
+        dep_sum = dependant_purchases.filter(user=dep).sum_cost()
+        if dep_sum:
+            dep_groups.append((dep, dep_sum))
+    dep_total = sum((s for _, s in dep_groups), Decimal("0"))
+
+    # Skip only when there is genuinely nothing to bill. A total of 0 with non-zero
+    # components (e.g. a credit balance cancelling purchases) is billed on purpose:
+    # the purchases/payments still need to be marked billed on the pybarsys side, and
+    # EasyVerein accepts the resulting zero-total invoice (verified in practice).
+    if balance == 0 and own_sum == 0 and dep_total == 0 and sum_payments == 0:
+        result["ok"] = True
+        result["detail"] = "skipped: nothing to transfer"
+        return result
+
+    # --- signed line items (positive = user owes the bar) ---
+    items_signed = []  # [(description, Decimal amount)]
+    if balance:
+        items_signed.append(("Kontostand-Übertrag (Pybarsys)", -balance))
+    if own_sum:
+        items_signed.append(("Eigene Einkäufe", own_sum))
+    for dep, dep_sum in dep_groups:
+        items_signed.append(("Einkäufe von {}".format(dep.display_name), dep_sum))
+    if sum_payments:
+        items_signed.append(
+            ("Noch nicht abgerechnete Zahlungen (Pybarsys)", -sum_payments)
+        )
+
+    ev = _get_ev_api()
+    site_settings = SiteSettings.get()
+    invoice = None
+    virtual_payment = None
+    ev_invoice = None
+    notif_failures: list[str] = []
+    notif_success: list[str] = []
+    try:
+        # 1) pybarsys side first (quick; no transaction held across the API call)
+        invoice, virtual_payment = Invoice.objects.create_settled_for_user(
+            user,
+            "Balance transferred to EasyVerein",
+            is_virtual_payment=True,
+            # Step 3 overwrites this with the EasyVerein invoice number. The pybarsys
+            # side is committed before the API call, so a process restart in between
+            # would leave the balance zeroed with nothing in EasyVerein - an invoice
+            # still carrying this marker is exactly that orphan.
+            invoice_comment=EV_PUSH_PENDING_COMMENT,
+        )
+        # What pybarsys hands over is exactly what it settled, so the settlement payment
+        # is the EasyVerein total (= -balance + own_sum + dep_total - sum_payments). It is
+        # read after settling though, so a purchase landing since the reads above would
+        # leave the line items not adding up to it.
+        ev_total = virtual_payment.amount
+
+        # The invoice sum must be positive: bill as revenue when owed, else as
+        # credit (Gutschrift) with negated lines so the total is positive.
+        if ev_total > 0:
+            kind, sign = "revenue", Decimal("1")
+        else:
+            kind, sign = "credit", Decimal("-1")
+
+        # 2) EasyVerein draft invoice (with positions)
+        inv_number = "Pybarsys Inv{} U{} {}".format(
+            invoice.pk, user.pk, invoice.created_date.strftime("%Y-%m-%d")
+        )
+        description = _ev_invoice_description(invoice, comment)
+        ev_invoice = ev.invoice.create_with_items(
+            InvoiceCreate(
+                isDraft=True,
+                kind=kind,
+                relatedAddress=contact_url,
+                # No bank account on credit invoices (the bar pays the user)
+                selectionAcc=(
+                    site_settings.easyverein_bank_account_id
+                    if kind == "revenue"
+                    else None
+                ),
+                totalPrice=float(ev_total * sign),
+                invNumber=inv_number,
+                # payer quotes this as the bank-transfer reference
+                refNumber=inv_number,
+                description=description or None,
+                paymentInformation="account",
+            ),
+            [
+                InvoiceItemCreate(
+                    title=desc,
+                    description="",
+                    quantity=1,
+                    unitPrice=float(amount * sign),
+                    totalPrice=float(amount * sign),
+                )
+                for desc, amount in items_signed
+            ],
+            # set_draft_state=True finalizes the invoice (draft state removed, PDF
+            # generated); False keeps it as a draft regardless of isDraft. Either way
+            # the EasyVerein API cannot send it, so a human still has to mail it out
+            # from EasyVerein.
+            set_draft_state=site_settings.easyverein_finalize_invoices,
+        )
+
+        # 3) link the pybarsys invoice back to the EasyVerein invoice
+        invoice.comment = (
+            f"Transferred to Easyverein with invoice ID {ev_invoice.id} ({inv_number})"
+        )
+        if comment:
+            invoice.comment += " — {}".format(comment)
+        invoice.save()
+
+        # 4) notify dependants whose purchases are included
+        for dependant, dep_purchases in invoice.other_purchases_grouped():
+            msg = view_helpers.generate_email_purchase_notification(
+                dependant, dep_purchases, invoice
+            )
+            if mail_conn.send_message(msg):
+                notif_success.append(dependant.display_name)
+            else:
+                notif_failures.append(
+                    "{}: {}".format(dependant.display_name, mail_conn.last_error)
+                )
+    except Exception as e:
+        # roll back: delete EV draft (best effort) + pybarsys invoice/payment.
+        # Delete the virtual payment before the invoice; deleting the invoice
+        # un-bills the real purchases/payments via SET_NULL.
+        ev_delete_error = None
+        if ev_invoice is not None:
+            try:
+                ev.invoice.delete(ev_invoice)
+            except Exception as delete_error:
+                ev_delete_error = delete_error
+        if virtual_payment is not None:
+            virtual_payment.delete()
+        if invoice is not None:
+            invoice.delete()
+        if ev_delete_error is not None:
+            # A finalized invoice cannot be deleted through the API, so this is the
+            # normal outcome once easyverein_finalize_invoices is on. The member has
+            # been billed; reporting a plain "rolled back" here would invite a re-run
+            # and bill them a second time.
+            result["detail"] = (
+                "FAILED AFTER BILLING: {}. Pybarsys was rolled back, but EasyVerein "
+                "invoice {} still exists and could not be removed ({}). Delete it in "
+                "EasyVerein before invoicing {} again, otherwise they are billed "
+                "twice.".format(e, ev_invoice.id, ev_delete_error, user.display_name)
+            )
+        else:
+            result["detail"] = "failed, rolled back: {}".format(e)
+        return result
+
+    result["ok"] = True
+    result["detail"] = "EV invoice '{}' — {} {}".format(
+        inv_number, kind, currency(ev_total * sign)
+    )
+    if notif_success:
+        result["detail"] += " | notified dependants: {}".format(
+            ", ".join(notif_success)
+        )
+    if notif_failures:
+        result["detail"] += " | dependant notification failed: {}".format(
+            ", ".join(notif_failures)
+        )
+    return result
+
+
+class EasyVereinInvoiceProgressView(UserIsAdminMixin, TemplateView):
+    template_name = "barsys/admin/easyverein_invoice_progress.html"
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["job_id"] = kwargs["job_id"]
+        context["job_missing"] = _ev_invoice_job_snapshot(kwargs["job_id"]) is None
+        return context
+
+
+class EasyVereinInvoiceStatusView(UserIsAdminMixin, View):
+    def get(self, request: HttpRequest, job_id: str) -> JsonResponse:
+        job = _ev_invoice_job_snapshot(job_id)
+        if job is None:
+            return JsonResponse({"status": "missing"}, status=404)
+        return JsonResponse(
+            {
+                "status": job["status"],
+                "done": job["done"],
+                "total": job["total"],
+                "results": job.get("results", []),
+                "error": job.get("error", ""),
+                "status_message": job.get("status_message", ""),
+            }
+        )
+
+
+# EasyVerein END
 
 
 @api_view(["GET", "POST"])
