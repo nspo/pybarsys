@@ -17,6 +17,12 @@
                 {% bootstrap_icon 'warning-sign' %} Send payment reminder
             </a>
             {% endif %}
+            {% if object.pays_themselves %}
+            <a href="{% url 'admin_user_settle_balance' object.pk %}" class="btn btn-warning"
+               title="Write the balance off inside Pybarsys - no bill is sent. Last resort.">
+                {% bootstrap_icon 'erase' %} Invoice and settle to 0
+            </a>
+            {% endif %}
             <a href="{% url 'admin_user_update' object.pk %}" class="btn btn-primary">
                 {% bootstrap_icon 'pencil' %} Change
             </a>
@@ -88,6 +94,15 @@
             <td>{{ object.modified_date }}</td>
         </tr>
 
+        {% if pybarsys_preferences.EasyVerein.ACTIVE %}
+        <tr>
+            <th>EasyVerein contact</th>
+            <td>{% if object.easyverein_contact_details_url %}
+                <a href="{{ object.easyverein_contact_details_url }}">{{ object.easyverein_contact_details_url }}</a>
+            {% else %}—{% endif %}</td>
+        </tr>
+        {% endif %}
+
         <tr>
             <th colspan="2"><h4>Account balance</h4></th>
         </tr>
@@ -97,12 +112,16 @@
             <td>{{ object.account_balance|currency }}</td>
         </tr>
         <tr>
-            <th style="padding-left: 25px;">{% bootstrap_icon "minus" %} Unbilled purchases</th>
-            <td>{{ object.purchases.unbilled.sum_cost|currency }}</td>
+            <th style="padding-left: 25px;">{% bootstrap_icon "minus" %} Unbilled purchases to pay</th>
+            <td>{{ object.purchases_to_pay.sum_cost|currency }}</td>
         </tr>
         <tr>
             <th style="padding-left: 25px;">{% bootstrap_icon "plus" %} Unbilled payments</th>
             <td>{{ object.payments.unbilled.sum_amount|currency }}</td>
+        </tr>
+        <tr class="table-total-row">
+            <th style="padding-left: 25px;">= Total open balance</th>
+            <td>{{ object.open_balance|currency }}</td>
         </tr>
 
         </tbody>

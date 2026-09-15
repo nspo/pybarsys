@@ -210,11 +210,24 @@ class InvoiceTestCase(TransactionTestCase):
         Invoice.objects.create_for_user(u4)
         self.assertEqual(u4.account_balance(), Decimal("0.99"))
 
+        # Credit is refused just like debt: a dependant can never be invoiced again,
+        # so the 0.99 would be stuck on their account for good.
+        with self.assertRaises(ValidationError):
+            u4.purchases_paid_by_other = u1
+            u4.save()
+
+        u4 = User.objects.get(pk=u4.pk)
+
+        # paying the credit out brings them to exactly 0, and then it goes through
+        Payment.objects.create(user=u4, amount=Decimal("-0.99"))
+        Invoice.objects.create_for_user(u4)
+        self.assertEqual(u4.account_balance(), Decimal("0"))
+
         try:
             u4.purchases_paid_by_other = u1
             u4.save()
-        except IntegrityError:
-            self.fail("Could not make user a dependant although account_balance > 0")
+        except ValidationError:
+            self.fail("Could not make user a dependant although account_balance == 0")
 
         with self.assertRaises(IntegrityError):
             Payment.objects.create(user=u4, amount=Decimal("5"))
@@ -224,7 +237,8 @@ class InvoiceTestCase(TransactionTestCase):
 
         Purchase.objects.create(user=u4, quantity=2, **self.prod_data)
 
-        self.assertEqual(u4.account_balance(), Decimal("0.99"))
+        # frozen at the balance they were converted with, which is now 0
+        self.assertEqual(u4.account_balance(), Decimal("0"))
         self.assertEqual(u4.purchases().sum_cost(), Decimal("47"))
 
         Purchase.objects.create(user=u1, quantity=3, **self.prod_data)
@@ -252,7 +266,8 @@ class InvoiceTestCase(TransactionTestCase):
 
         self.assertEqual(u1.account_balance(), Decimal("-40"))
 
-        self.assertEqual(u4.account_balance(), Decimal("0.99"))
+        # still frozen: a dependant's own balance never moves again
+        self.assertEqual(u4.account_balance(), Decimal("0"))
 
         with self.assertRaises(ValidationError):
             u4.purchases_paid_by_other = u4
@@ -415,3 +430,120 @@ class UserModelTest(TestCase):
         # creating an invoice directly for a dependant is not allowed
         with self.assertRaises(IntegrityError):
             Invoice.objects.create_for_user(self.u2)
+
+
+class CreateSettledForUserTest(TransactionTestCase):
+    """Invoice.objects.create_settled_for_user - the shared settlement primitive."""
+
+    def setUp(self):
+        self.user = User.objects.create_user("settle@example.com", "Settle")
+        cat = Category.objects.create(name="Drinks")
+        # 1.00 per unit, so quantity == euros
+        self.prod = Product.objects.create(
+            category=cat, name="Cola", price="1.00", amount="0.5 l"
+        )
+
+    def buy(self, quantity):
+        Purchase.objects.create_from_product(
+            self.prod, user=self.user, quantity=quantity
+        )
+
+    def test_settles_carried_balance_and_open_items_to_zero(self):
+        self.buy(20)
+        Invoice.objects.create_for_user(self.user)  # carried balance of -20
+        self.buy(5)  # unbilled purchases
+        Payment.objects.create(
+            user=self.user,
+            amount=Decimal("3.00"),
+            payment_method=Payment.PAYMENT_METHOD_BANK,
+        )  # unbilled deposit
+
+        invoice, payment = Invoice.objects.create_settled_for_user(
+            self.user, "Manual balance correction"
+        )
+
+        self.assertEqual(self.user.account_balance(), Decimal("0"))
+        # 20 carried + 5 new purchases - 3 deposited
+        self.assertEqual(payment.amount, Decimal("22.00"))
+        self.assertEqual(payment.invoice, invoice)
+        self.assertEqual(payment.payment_method, Payment.PAYMENT_METHOD_OTHER)
+        self.assertEqual(payment.comment, "Manual balance correction")
+        self.assertFalse(payment.is_virtual_payment)
+
+    def test_credit_balance_is_settled_with_a_negative_payment(self):
+        self.buy(10)
+        Payment.objects.create(
+            user=self.user,
+            amount=Decimal("30.00"),
+            payment_method=Payment.PAYMENT_METHOD_BANK,
+        )
+        Invoice.objects.create_for_user(self.user)
+        self.assertEqual(self.user.account_balance(), Decimal("20.00"))
+
+        _invoice, payment = Invoice.objects.create_settled_for_user(self.user, "payout")
+
+        self.assertEqual(payment.amount, Decimal("-20.00"))
+        self.assertEqual(self.user.account_balance(), Decimal("0"))
+
+    def test_folds_in_a_manual_correction_payment_made_beforehand(self):
+        """Two-step correction: book a real correction, then settle the remainder."""
+        self.buy(47)
+        Invoice.objects.create_for_user(self.user)
+        correction = Payment.objects.create(
+            user=self.user,
+            amount=Decimal("20.00"),
+            payment_method=Payment.PAYMENT_METHOD_OTHER,
+            comment="Overcharged in July",
+        )
+
+        invoice, payment = Invoice.objects.create_settled_for_user(
+            self.user, "write-off"
+        )
+
+        correction.refresh_from_db()
+        self.assertEqual(correction.invoice, invoice)  # folded in, not duplicated
+        self.assertEqual(payment.amount, Decimal("27.00"))  # only the remainder
+        self.assertEqual(self.user.account_balance(), Decimal("0"))
+
+    def test_nothing_to_settle_creates_a_zero_payment(self):
+        invoice, payment = Invoice.objects.create_settled_for_user(self.user, "noop")
+
+        self.assertEqual(payment.amount, Decimal("0"))
+        self.assertEqual(invoice.due(), Decimal("0"))
+        self.assertEqual(self.user.account_balance(), Decimal("0"))
+
+    def test_virtual_settlement_payment_is_deleted_with_its_invoice(self):
+        self.buy(20)
+        # separate earlier invoice, so the carried balance outlives the settlement
+        Invoice.objects.create_for_user(self.user)
+        self.assertEqual(self.user.account_balance(), Decimal("-20.00"))
+
+        invoice, payment = Invoice.objects.create_settled_for_user(
+            self.user, "Balance transferred to EasyVerein", is_virtual_payment=True
+        )
+        self.assertEqual(self.user.account_balance(), Decimal("0"))
+
+        invoice.delete()
+
+        self.assertFalse(Payment.objects.filter(pk=payment.pk).exists())
+        self.assertEqual(self.user.account_balance(), Decimal("-20.00"))
+
+    def test_non_virtual_settlement_payment_survives_its_invoice(self):
+        """A manual correction is an independent booking, so it outlives the invoice
+        that happened to settle it - it just becomes unbilled again."""
+        self.buy(20)
+        Invoice.objects.create_for_user(self.user)
+        invoice, payment = Invoice.objects.create_settled_for_user(
+            self.user, "Manual balance correction"
+        )
+        self.assertEqual(self.user.account_balance(), Decimal("0"))
+
+        invoice.delete()
+
+        payment.refresh_from_db()
+        self.assertIsNone(payment.invoice)
+        self.assertEqual(payment.amount, Decimal("20.00"))
+        # the correction is unbilled again, so it only takes effect on the next invoice
+        self.assertEqual(self.user.account_balance(), Decimal("-20.00"))
+        Invoice.objects.create_for_user(self.user)
+        self.assertEqual(self.user.account_balance(), Decimal("0"))

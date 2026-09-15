@@ -186,6 +186,11 @@ urlpatterns = [
         views.PaymentReminderSendView.as_view(),
         name="admin_user_payment_reminder_send",
     ),
+    url(
+        r"^admin/user/(?P<pk>[0-9]+)/settle_balance/$",
+        views.UserSettleBalanceView.as_view(),
+        name="admin_user_settle_balance",
+    ),
     # Mail debug
     url(
         r"^admin/invoice/(?P<pk>[0-9]+)/mail/$",
@@ -301,6 +306,33 @@ urlpatterns = [
         r"^admin/freeitem/(?P<pk>[0-9]+)/delete/$",
         views.FreeItemDeleteView.as_view(),
         name="admin_freeitem_delete",
+    ),
+    # Settings
+    url(
+        r"^admin/settings/$",
+        views.SiteSettingsView.as_view(),
+        name="admin_site_settings",
+    ),
+    # EasyVerein
+    url(
+        r"^admin/easyverein/sync-users/$",
+        views.EasyVereinSyncUsersView.as_view(),
+        name="admin_easyverein_sync_users",
+    ),
+    url(
+        r"^admin/easyverein/invoice/new/$",
+        views.EasyVereinInvoiceCreateView.as_view(),
+        name="admin_easyverein_invoice_new",
+    ),
+    url(
+        r"^admin/easyverein/invoice/progress/(?P<job_id>[0-9a-f]{32})/$",
+        views.EasyVereinInvoiceProgressView.as_view(),
+        name="admin_easyverein_invoice_progress",
+    ),
+    url(
+        r"^admin/easyverein/invoice/status/(?P<job_id>[0-9a-f]{32})/$",
+        views.EasyVereinInvoiceStatusView.as_view(),
+        name="admin_easyverein_invoice_status",
     ),
     # Rest-API
     url(r"^api/purchase/", views.main_purchase_api, name="main_purchase_api"),

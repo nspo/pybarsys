@@ -3,6 +3,13 @@
 {% load bootstrap3 %}
 {% block content %}
     <h1>New payment</h1>
+    {% if pybarsys_preferences.EasyVerein.ACTIVE %}
+        <div class="alert alert-warning">
+            <strong>{% bootstrap_icon "warning-sign" %} EasyVerein mode is active.</strong>
+            You most likely do not want to add payments in Pybarsys manually -
+            payments should be handled by EasyVerein.
+        </div>
+    {% endif %}
     <form method="POST" class="form">
         {% csrf_token %}
         {% bootstrap_form form %}
