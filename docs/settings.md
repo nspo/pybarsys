@@ -75,7 +75,6 @@ These settings can optionally be set in your `.env` file.
 | `SESSION_COOKIE_NAME` | `pybarsys` | Name of cookie | `pybarsys-custom` |
 | `EMAIL_FROM_ADDRESS` | - | `FROM` address for mails | `sample_bar@example.com` |
 
-### Pybarsys customization
 ### Emails
 | Parameter name | Default | Description | Other examples |
 | ---            | ---     | ---         | --- |
@@ -91,6 +90,21 @@ These settings can optionally be set in your `.env` file.
 | `PYBARSYS_EMAIL_BANK_ACCOUNT_BANK` | `Royal Bank of Moldova` | Bank account details | - |
 | `PYBARSYS_EMAIL_BANK_ACCOUNT_PAYMENT_REFERENCE` | `Bar debts` | Payment reference in bank transfers. Name of invoice recipient is always appended. | `Cookies` |
 
+### EasyVerein integration
+Only `PYBARSYS_EASYVEREIN_ACTIVE` lives in the environment. Other EasyVerein settings
+like the API token are part of the dynamic site settings.
+
+| Parameter name | Default | Description | Other examples |
+| ---            | ---     | ---         | --- |
+| `PYBARSYS_EASYVEREIN_ACTIVE` | `off` | Enable the EasyVerein integration (shows the EasyVerein menu in the admin UI, requires self-paying buyers to be linked, and routes invoice/payment creation through the EasyVerein flow) | `on` |
+
+**Automatic account locking does not apply while this is on.** Invoicing runs through
+the EasyVerein flow, which zeroes the Pybarsys balance every time, so
+`PYBARSYS_MISC_BALANCE_BELOW_AUTOLOCK` never triggers and nobody is locked out of the
+kiosk automatically. Debt limits have to be watched in EasyVerein, and an account can
+still be locked by hand on the user page. Payment reminders are likewise EasyVerein's
+job from then on.
+
 ### Misc
 | Parameter name | Default | Description | Other examples |
 | ---            | ---     | ---         | --- |
@@ -100,4 +114,15 @@ These settings can optionally be set in your `.env` file.
 | `PYBARSYS_MISC_NUM_MAIN_LAST_PURCHASES` | `5` | Number of purchases to show on main page | - |
 | `PYBARSYS_MISC_NUM_MAIN_USERS_IN_STATSDISPLAY` | `5` | `Number of users to show in a StatsDisplay on main page` | - |
 | `PYBARSYS_MISC_SHUFFLE_STATSDISPLAY_ORDER` | `off` | Whether to randomize order of StatsDisplays and show a random one first (irrespective of `show_by_default` setting) | `on` |
-| `PYBARSYS_MISC_BALANCE_BELOW_AUTOLOCK` | `-100` | Automatically lock account when balance is below this threshold before and after creating invoices | `0` |
+| `PYBARSYS_MISC_BALANCE_BELOW_AUTOLOCK` | `-100` | Automatically lock account when balance is below this threshold before and after creating invoices. Has no effect while `PYBARSYS_EASYVEREIN_ACTIVE` is on | `0` |
+
+### Dynamic settings
+These are configured at runtime through the admin *Settings* page and stored in the
+database (the `SiteSettings` singleton), not in the `.env` file.
+
+#### EasyVerein
+| Setting | Description |
+| ---     | ---         |
+| API token | EasyVerein API token (refreshed automatically). |
+| Bank account ID | EasyVerein bank account used as the invoice's `selectionAcc`. |
+| Finalize invoices | If enabled, invoices are finalized (PDF generated, draft state removed) instead of kept as drafts. |

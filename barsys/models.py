@@ -7,8 +7,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import IntegrityError
 from django.db import models
+from django.db import transaction
 from django.db.models import DecimalField
 from django.db.models import F, Q
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import formats
 from django.utils import timezone
@@ -48,6 +51,17 @@ class UserQuerySet(models.QuerySet):
 
     def pay_themselves(self):
         return self.filter(purchases_paid_by_other=None)
+
+    def attached_to_easyverein(self):
+        return self.exclude(easyverein_contact_details_url__isnull=True).exclude(
+            easyverein_contact_details_url=""
+        )
+
+    def not_attached_to_easyverein(self):
+        return self.filter(
+            Q(easyverein_contact_details_url__isnull=True)
+            | Q(easyverein_contact_details_url="")
+        )
 
     def purchases(self):
         return Purchase.objects.filter(user__in=self)
@@ -124,6 +138,13 @@ class User(AbstractBaseUser):
         limit_choices_to=(Q(purchases_paid_by_other=None)),
     )
 
+    easyverein_contact_details_url = models.URLField(
+        null=True,
+        blank=True,
+        unique=True,
+        help_text="URL of the linked EasyVerein contact-details resource",
+    )
+
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
@@ -134,6 +155,11 @@ class User(AbstractBaseUser):
     REQUIRED_FIELDS = []
 
     def clean(self):
+        # Store unset links as NULL, not "" -- so multiple unlinked users do not
+        # collide under the unique constraint (NULLs are treated as distinct).
+        if not self.easyverein_contact_details_url:
+            self.easyverein_contact_details_url = None
+
         if self.purchases_paid_by_other == self:
             raise ValidationError(
                 {"purchases_paid_by_other": "This field cannot be set to the same user"}
@@ -174,12 +200,20 @@ class User(AbstractBaseUser):
             if (
                 orig.purchases_paid_by_other_id is None
                 and self.purchases_paid_by_other_id is not None
+                # UserUpdateForm sets this while validating a confirmed balance
+                # transfer. The balance can only be moved once validation has passed,
+                # so these checks would otherwise block their own remedy. The view
+                # clears the flag again before saving, which re-runs them for real.
+                and not getattr(self, "_balance_moves_to_payer", False)
             ):
-                # change from self-paying to dependant
-                if self.account_balance() < 0:
+                # change from self-paying to dependant. Credit is refused just like
+                # debt: a dependant can never be invoiced again (`create_for_user`
+                # rejects them), so anything left on their account would be stuck there
+                # for good.
+                if self.account_balance() != 0:
                     raise ValidationError(
                         {
-                            "purchases_paid_by_other": "Cannot make user a dependant if they have a negative account balance."
+                            "purchases_paid_by_other": "Cannot make user a dependant while their account balance is not 0."
                         }
                     )
                 if self.payments().unbilled().exists():
@@ -188,6 +222,9 @@ class User(AbstractBaseUser):
                             "purchases_paid_by_other": "Cannot make user a dependant if they have unbilled payments"
                         }
                     )
+                # Unbilled purchases need no such check: `Purchase.objects.to_pay_by()`
+                # hands them to the payer, whose next invoice bills them. Nothing is
+                # stranded - that is precisely what "the payer pays for them" means.
 
     def save(self, *args, **kwargs):
         self.clean()  # do not call full_clean b/c password may be empty
@@ -256,6 +293,10 @@ class User(AbstractBaseUser):
     def pays_themselves(self):
         return self.purchases_paid_by_other_id is None
 
+    def purchases_to_pay(self):
+        """Unbilled purchases this user has to pay for, their dependants' included."""
+        return Purchase.objects.to_pay_by(self)
+
     def account_balance(self):
         # rounding should NOT be necessary (and really is not), but there is
         #   a problem with SQLite not handling Decimal objects quite as it
@@ -263,6 +304,20 @@ class User(AbstractBaseUser):
         #   This currently is mainly used so that a pybarsys unit test
         #   does not fail, which is... somewhat suboptimal
         return -round(self.invoices().sum_amount(), 2)
+
+    def open_balance(self) -> Decimal:
+        """`account_balance()` plus everything that is not invoiced yet.
+
+        Same sign convention as `account_balance()` (negative = owes the bar), but it
+        also folds in the purchases this user has to pay for and their payments that are
+        still unbilled. In other words: what their balance becomes once they are
+        invoiced, and therefore what a settlement has to cover.
+        """
+        return (
+            self.account_balance()
+            - self.purchases_to_pay().sum_cost()
+            + self.payments().unbilled().sum_amount()
+        )
 
 
 class Category(models.Model):
@@ -394,6 +449,41 @@ class InvoiceManager(models.Manager):
 
         return invoice
 
+    def create_settled_for_user(
+        self,
+        user: "User",
+        payment_comment: str,
+        is_virtual_payment: bool = False,
+        invoice_comment: str = "",
+    ) -> tuple["Invoice", "Payment"]:
+        """Invoice a user's open items and book a payment that zeroes their balance.
+
+        Bills everything `create_for_user` picks up, then attaches a settlement payment
+        over exactly the remaining balance, so `user.account_balance()` is 0 afterwards.
+        That payment is not real - the EasyVerein flow uses it to hand the debt over to
+        EasyVerein, a manual correction to write it off - so the caller decides how it
+        is labelled and whether it is owned by its invoice (`is_virtual_payment`).
+
+        Returns the invoice and the settlement payment.
+        """
+        with transaction.atomic():
+            invoice = self.create_for_user(user, invoice_comment)
+            # Read after invoicing: create_for_user has folded the unbilled purchases and
+            # payments into the balance, so what is left is exactly what must be settled.
+            amount = -user.account_balance()
+            payment = Payment.objects.create(
+                user=user,
+                amount=amount,
+                invoice=invoice,
+                payment_method=Payment.PAYMENT_METHOD_OTHER,
+                comment=payment_comment,
+                is_virtual_payment=is_virtual_payment,
+            )
+            invoice.amount_payments += amount
+            invoice.save()
+
+        return invoice, payment
+
 
 class Invoice(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -437,6 +527,18 @@ class Invoice(models.Model):
         )
 
     def cannot_be_deleted(self):
+        """Returns False or an explanation why this invoice cannot be deleted"""
+        if not self.recipient.pays_themselves():
+            # Deleting un-bills the purchases and payments on this invoice, but a
+            # dependant can never be invoiced again (`create_for_user` refuses them):
+            # their payments would strand for good, and their purchases would be billed
+            # to their payer a second time.
+            return (
+                "{} does not pay for their own purchases anymore, so the items on "
+                "this invoice could never be billed to them again.".format(
+                    self.recipient
+                )
+            )
         return False
 
     def own_purchases(self):
@@ -474,6 +576,15 @@ class Invoice(models.Model):
 
     def get_absolute_url(self):
         return reverse("admin_invoice_detail", kwargs={"pk": self.pk})
+
+
+@receiver(pre_delete, sender=Invoice)
+def _delete_invoice_virtual_payments(sender, instance, **kwargs):
+    # Delete an invoice's virtual payments before the invoice itself, so they don't
+    # become orphaned unbilled payments (Payment.invoice is SET_NULL). Using a signal
+    # (rather than overriding delete()) preserves the (count, dict) return contract and
+    # also fires for bulk QuerySet deletes and cascades.
+    instance.payments().filter(is_virtual_payment=True).delete()
 
 
 class PurchaseQuerySet(models.QuerySet):
@@ -720,6 +831,11 @@ class Payment(models.Model):
         Invoice, on_delete=models.SET_NULL, blank=True, null=True
     )
 
+    is_virtual_payment = models.BooleanField(
+        default=False,
+        help_text="Automatically created payments (e.g. by EasyVerein invoicing) that should be deleted together with their invoice.",
+    )
+
     # Dates
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
@@ -768,6 +884,38 @@ class Payment(models.Model):
                         # some attribute has changed, although there was already an invoice
                         raise IntegrityError("Invoiced payments may not be changed")
         super(Payment, self).save(*args, **kw)
+
+
+def transfer_balance(
+    from_user: "User", to_user: "User"
+) -> tuple["Invoice", "Payment", "Payment"]:
+    """Move everything `from_user` still owes onto `to_user`, netting out to zero.
+
+    A sum-neutral double entry: `from_user` gets a settlement payment that is invoiced
+    right away (so their balance is 0 and `User.clean()` allows making them a dependant),
+    and `to_user` gets the opposite amount as an unbilled payment, which their next
+    invoice bills to them. The two cancel out, so no money appears or disappears.
+
+    Must run while `from_user` still pays for themselves, and before the dependant link
+    is saved - `Payment.save()` refuses payments for users who do not pay themselves.
+
+    Returns the settlement invoice and the two payments. `payment_from.amount` is the
+    amount moved: positive means `from_user` owed money, negative that they had credit,
+    in which case the two bookings simply swap roles.
+    """
+    with transaction.atomic():
+        invoice, payment_from = Invoice.objects.create_settled_for_user(
+            from_user,
+            "Balance transferred to {}".format(to_user.display_name),
+            invoice_comment="Balance transferred to {}".format(to_user.display_name),
+        )
+        payment_to = Payment.objects.create(
+            user=to_user,
+            amount=-payment_from.amount,
+            payment_method=Payment.PAYMENT_METHOD_OTHER,
+            comment="Balance transferred from {}".format(from_user.display_name),
+        )
+    return invoice, payment_from, payment_to
 
 
 class StatsDisplay(models.Model):
@@ -1119,3 +1267,26 @@ class FreeItem(models.Model):
 
     def get_absolute_url(self):
         return reverse("admin_freeitem_list")
+
+
+class SiteSettings(models.Model):
+    """Singleton model for runtime-mutable site configuration."""
+
+    easyverein_api_token = models.CharField(max_length=512, blank=True, default="")
+    easyverein_bank_account_id = models.IntegerField(default=0)
+    easyverein_finalize_invoices = models.BooleanField(
+        default=False,
+        help_text="If enabled, invoices are finalized (draft state removed, PDF generated). If disabled, they are kept as drafts. Note: does not send email to members.",
+    )
+
+    class Meta:
+        verbose_name = "Site settings"
+
+    def save(self, *args, **kwargs) -> None:
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get(cls) -> "SiteSettings":
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

@@ -10,9 +10,15 @@
             <a href="{% url 'admin_invoice_resend' invoice.pk %}" class="btn btn-primary">
                 {% bootstrap_icon 'send' %} Resend
             </a>
-            <a href="{% url 'admin_invoice_delete' invoice.pk %}" class="btn btn-danger">
-                {% bootstrap_icon 'remove-sign' %} Delete
-            </a>
+            {% if invoice.cannot_be_deleted %}
+                <button class="btn btn-danger" disabled title="{{ invoice.cannot_be_deleted }}">
+                    {% bootstrap_icon 'remove-sign' %} Delete
+                </button>
+            {% else %}
+                <a href="{% url 'admin_invoice_delete' invoice.pk %}" class="btn btn-danger">
+                    {% bootstrap_icon 'remove-sign' %} Delete
+                </a>
+            {% endif %}
         </div>
     </div>
     <div class="table-responsive" style="overflow-x: inherit;">

@@ -1,0 +1,8 @@
+{% load barsys_helpers %}
+{% load tz %}
+<ul>
+    {% for p in purchases %}
+        <li>{{ p.created_date|localtime|sdate }} – {{ p.quantity }}x {{ p.product_name }} ({{ p.product_amount }}) à {{ p.product_price|currency }} = {{ p.cost|currency }}{% if p.comment %} [{{ p.comment }}]{% endif %}</li>
+    {% endfor %}
+</ul>
+<strong>Totaal: {{ purchases.sum_cost|currency }}</strong>
