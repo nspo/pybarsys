@@ -1,0 +1,107 @@
+{% extends 'barsys/admin/base.html' %}
+
+{% load bootstrap3 %}
+{% block content %}
+
+    <h1>Creating EasyVerein invoices</h1>
+
+    {% if job_missing %}
+        <div class="alert alert-warning">
+            This invoice job was not found. It may have already finished, or the server
+            was restarted. <a href="{% url 'admin_easyverein_invoice_new' %}">Start again</a>.
+        </div>
+    {% else %}
+        <div id="progress-area">
+            <p id="progress-label">Starting&hellip;</p>
+            <div class="progress">
+                <div id="progress-bar" class="progress-bar" role="progressbar"
+                     style="width: 0%;">0%</div>
+            </div>
+        </div>
+
+        <div id="status-message-area" class="text-muted" style="display: none; margin-bottom: 0.5em;"></div>
+        <div id="error-area" class="alert alert-danger" style="display: none;"></div>
+
+        <div id="summary-area" style="display: none; margin-top: 1.5em;">
+            <h3>Summary (<span id="summary-count">0</span> users)</h3>
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 1em;">
+                <table class="table table-condensed table-striped" style="margin-bottom: 0;">
+                    <thead>
+                        <tr><th>User</th><th>Result</th></tr>
+                    </thead>
+                    <tbody id="summary-rows"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                var statusUrl = "{% url 'admin_easyverein_invoice_status' job_id=job_id %}";
+                var bar = document.getElementById('progress-bar');
+                var label = document.getElementById('progress-label');
+
+                function beforeUnloadHandler(e) { e.preventDefault(); }
+                window.addEventListener('beforeunload', beforeUnloadHandler);
+
+                function renderSummary(results) {
+                    var tbody = document.getElementById('summary-rows');
+                    tbody.innerHTML = '';
+                    (results || []).forEach(function (row) {
+                        var tr = document.createElement('tr');
+                        var tdUser = document.createElement('td');
+                        tdUser.textContent = row.user;
+                        var tdResult = document.createElement('td');
+                        tdResult.textContent = (row.ok ? 'OK' : 'Error')
+                            + (row.detail ? ' — ' + row.detail : '');
+                        if (!row.ok) { tdResult.className = 'text-danger'; }
+                        tr.appendChild(tdUser);
+                        tr.appendChild(tdResult);
+                        tbody.appendChild(tr);
+                    });
+                    document.getElementById('summary-count').textContent = (results || []).length;
+                    document.getElementById('summary-area').style.display = '';
+                }
+
+                function poll() {
+                    fetch(statusUrl, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+                        .then(function (resp) { return resp.json(); })
+                        .then(function (data) {
+                            if (data.status === 'missing') {
+                                label.textContent = 'Job not found.';
+                                return;
+                            }
+                            var pct = data.total ? Math.round(100 * data.done / data.total) : 0;
+                            bar.style.width = pct + '%';
+                            bar.textContent = pct + '%';
+                            label.textContent = data.done + '/' + data.total + ' users done…';
+                            var msgArea = document.getElementById('status-message-area');
+                            if (data.status_message) {
+                                msgArea.textContent = data.status_message;
+                                msgArea.style.display = '';
+                            } else {
+                                msgArea.style.display = 'none';
+                            }
+
+                            renderSummary(data.results.slice().reverse());
+                            if (data.status === 'finished') {
+                                window.removeEventListener('beforeunload', beforeUnloadHandler);
+                                label.textContent = 'Done: ' + data.done + '/' + data.total + ' users processed.';
+                                bar.classList.add('progress-bar-success');
+                            } else if (data.status === 'error') {
+                                window.removeEventListener('beforeunload', beforeUnloadHandler);
+                                bar.classList.add('progress-bar-danger');
+                                var err = document.getElementById('error-area');
+                                err.textContent = 'The invoice run failed before finishing.' + (data.error ? ' Error: ' + data.error : '');
+                                err.style.display = '';
+                            } else {
+                                setTimeout(poll, 1000);
+                            }
+                        })
+                        .catch(function () { setTimeout(poll, 2000); });
+                }
+
+                poll();
+            })();
+        </script>
+    {% endif %}
+{% endblock %}

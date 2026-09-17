@@ -63,6 +63,9 @@ WSGI_APPLICATION = "pybarsys.wsgi.application"
 
 DATABASES = {"default": env.db()}
 
+# Swaps in a cheap password hasher while tests run; see the runner for why
+TEST_RUNNER = "pybarsys.test_runner.FastPasswordHasherRunner"
+
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"  # keep 32-bit PKs; avoids migrations on existing tables
 
 AUTH_USER_MODEL = "barsys.User"  # custom Barsys user model
@@ -222,3 +225,8 @@ class PybarsysPreferences:
         BALANCE_BELOW_AUTOLOCK = Decimal(
             env("PYBARSYS_MISC_BALANCE_BELOW_AUTOLOCK", default="-100")
         )
+
+    class EasyVerein:
+        ACTIVE = env.bool("PYBARSYS_EASYVEREIN_ACTIVE", default=False)
+        # Other EasyVerein settings like the API token are part of the dynamic site
+        # settings (SiteSettings DB singleton), configured via the admin Settings page.

@@ -8,3 +8,4 @@ djangorestframework~=3.17
 django-environ~=0.13
 babel~=2.18
 gunicorn~=26.0
+python-easyverein~=2.4.0
