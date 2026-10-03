@@ -40,6 +40,22 @@
                         <li>
                             <a href="{% url 'admin_invoice_list' %}">Invoices</a>
                         </li>
+                        {% if pybarsys_preferences.EasyVerein.ACTIVE %}
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                               aria-expanded="false">EasyVerein
+                                <span class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu" role="menu">
+                                <li>
+                                    <a href="{% url 'admin_easyverein_sync_users' %}">Sync users</a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'admin_easyverein_invoice_new' %}">Create invoices</a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
                                aria-expanded="false">Misc
@@ -69,6 +85,9 @@
                                     <a href="{% url 'admin_user_statistics_by_account_balance' %}">Users by balance</a>
                                 </li>
                             </ul>
+                        </li>
+                        <li>
+                            <a href="{% url 'admin_site_settings' %}">Settings</a>
                         </li>
                         <li>
                             <a href="{% url 'user_logout' %}">Logout</a>

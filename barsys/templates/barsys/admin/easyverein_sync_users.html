@@ -1,0 +1,192 @@
+{% extends 'barsys/admin/base.html' %}
+
+{% load bootstrap3 %}
+{% block content %}
+    <h1>Import EasyVerein users (contact details)</h1>
+    <p class="text-muted">
+        Pull contact details from EasyVerein to connect Pybarsys accounts to EasyVerein.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <button name="action" value="pull" class="btn btn-default">
+            {% bootstrap_icon 'refresh' %} Pull from EasyVerein
+        </button>
+        <br><small class="text-muted">Does not save anything - safe to use as a test.</small>
+
+        {% if contact_details %}
+            <h3 style="margin-top: 1.5em;">
+                EasyVerein contact details ({{ contact_details|length }})
+            </h3>
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 1em;">
+                <table class="table table-condensed table-striped" style="margin-bottom: 0;">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;"></th>
+                            <th>Name</th>
+                            <th>ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contact in contact_details %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="selected_contacts" value="{{ contact.id }}">
+                            </td>
+                            <td>{{ contact.firstName }} {{ contact.familyName }}</td>
+                            <td><small class="text-muted">{{ contact.id }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="radio" name="match_scope" value="all_unconnected" checked
+                           onchange="document.querySelectorAll('[name=selected_contacts]').forEach(el => { el.disabled = true; el.checked = true; })">
+                    Match ALL EasyVerein entries with Pybarsys users who have no EasyVerein connection yet
+                </label><br>
+                <label>
+                    <input type="radio" name="match_scope" value="selected_only"
+                           onchange="document.querySelectorAll('[name=selected_contacts]').forEach(el => { el.disabled = false; el.checked = false; })">
+                    Match only the selected EasyVerein entries
+                </label>
+            </div>
+
+            <button name="action" value="match" class="btn btn-primary">
+                {% bootstrap_icon 'link' %} Match users
+            </button>
+            <br><small class="text-muted">Does not save anything - safe to use as a test.</small>
+
+            <script>
+                document.querySelectorAll('[name=selected_contacts]').forEach(el => { el.disabled = true; el.checked = true; });
+            </script>
+        {% endif %}
+
+        {% if high_confidence_suggestions or low_confidence_suggestions %}
+            <h3 style="margin-top: 1.5em;">Suggested matches</h3>
+            <div class="row">
+                <div class="col-sm-6">
+                    <h4>High confidence ({{ high_confidence_suggestions|length }})</h4>
+                    <div style="max-height: 350px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 1em;">
+                        <table class="table table-condensed table-striped" style="margin-bottom: 0;">
+                            <thead><tr>
+                            <th style="width: 30px;">
+                                <input type="checkbox" id="select-all-high" checked
+                                       onchange="document.querySelectorAll('#high-confidence-table [name=confirm_match]').forEach(el => el.checked = this.checked)">
+                            </th>
+                            <th>EasyVerein</th><th>Pybarsys</th>
+                        </tr></thead>
+                            <tbody id="high-confidence-table">
+                                {% for s in high_confidence_suggestions %}
+                                <tr>
+                                    <td><input type="checkbox" name="confirm_match"
+                                               value="{{ s.user.pk }}|{{ s.contact.id }}|{{ s.contact.firstName }} {{ s.contact.familyName }}"
+                                               checked></td>
+                                    <td>{{ s.contact.firstName }} {{ s.contact.familyName }}</td>
+                                    <td>{{ s.user.display_name }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <h4>No confidence ({{ low_confidence_suggestions|length }})</h4>
+                    <div style="max-height: 350px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 1em;">
+                        <table class="table table-condensed table-striped" style="margin-bottom: 0;">
+                            <thead><tr><th style="width: 30px;"></th><th>EasyVerein</th><th>Pybarsys</th></tr></thead>
+                            <tbody>
+                                {% for s in low_confidence_suggestions %}
+                                <tr>
+                                    <td><input type="checkbox" name="confirm_match"
+                                               value="{{ s.user.pk }}|{{ s.contact.id }}|{{ s.contact.firstName }} {{ s.contact.familyName }}"></td>
+                                    <td>{{ s.contact.firstName }} {{ s.contact.familyName }}
+                                        {% if s.contact.id in high_confidence_contact_ids %}
+                                            <span class="text-warning" title="This EasyVerein contact already has a high-confidence match">{% bootstrap_icon "warning-sign" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ s.user.display_name }}
+                                        {% if s.user.pk in high_confidence_user_pks %}
+                                            <span class="text-warning" title="This Pybarsys user already has a high-confidence match">{% bootstrap_icon "warning-sign" %}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <button name="action" value="save_matches" class="btn btn-success">
+                {% bootstrap_icon 'save' %} Confirm and save matches
+            </button>
+            <br><small class="text-muted">This will save the selected matches to the database.</small>
+        {% endif %}
+    </form>
+
+    {% if saved_matches %}
+        <h3 style="margin-top: 1.5em;">Saved matches ({{ saved_matches|length }})</h3>
+        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 1em;">
+            <table class="table table-condensed table-striped" style="margin-bottom: 0;">
+                <thead>
+                    <tr>
+                        <th>EasyVerein name</th>
+                        <th>Pybarsys name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in saved_matches %}
+                    <tr>
+                        <td>{{ s.contact_name }}</td>
+                        <td>{{ s.user_name }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    {% if candidates %}
+        <h3 style="margin-top: 1.5em;">
+            Matching candidates
+        </h3>
+        <div class="row">
+            <div class="col-sm-6">
+                <h4>EasyVerein contacts in scope ({{ candidates|length }})</h4>
+                <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd;">
+                    <table class="table table-condensed table-striped" style="margin-bottom: 0;">
+                        <thead><tr><th>Name</th><th>ID</th></tr></thead>
+                        <tbody>
+                            {% for c in candidates %}
+                            <tr>
+                                <td>{{ c.firstName }} {{ c.familyName }}</td>
+                                <td><small class="text-muted">{{ c.id }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <h4>Unconnected Pybarsys users in scope ({{ unconnected_users|length }})</h4>
+                <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd;">
+                    <table class="table table-condensed table-striped" style="margin-bottom: 0;">
+                        <thead><tr><th>Name</th><th>Email</th></tr></thead>
+                        <tbody>
+                            {% for user in unconnected_users %}
+                            <tr>
+                                <td>{{ user.display_name }}</td>
+                                <td>{{ user.email }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
