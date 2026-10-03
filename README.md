@@ -4,7 +4,7 @@ A beverage shopping system for bars of small private organizations - based on Dj
 Main developer: Nicolai Spohrer (nicolai[at]xeve.de)
 
 # Features
-* Easy installation with Docker and `docker-compose`
+* Easy installation with Docker and `docker compose`
 * Users can purchase products on their phone, tablet, or PC
 * Responsive main and admin interface
 * Handling of invoices and payments
@@ -51,12 +51,12 @@ Main interface on phone|Invoice mail|Invoice mail: purchases of a dependant
    * Don't make this available to the internet...
 
 # Installation with Docker (recommended)
-Pybarsys can be easily set up with Docker and `docker-compose`.
+Pybarsys can be easily set up with Docker and `docker compose`.
 This is the recommended installation method.
 
 ## Initial installation
 
-0. Install [Docker](https://docs.docker.com/engine/install/#server) and a current version of [`docker-compose`](https://docs.docker.com/compose/install/) on your server.
+0. Install [Docker](https://docs.docker.com/engine/install/#server) and the [Docker Compose plugin](https://docs.docker.com/compose/install/) on your server.
 0. Choose where you want to put the database and configuration files of pybarsys. 
    Create an empty folder with an appropriate name:
    
@@ -70,18 +70,18 @@ This is the recommended installation method.
    ```
    Of course you can also download the script manually and review it before executing. 
    Root permissions are not needed for this step if your user has write permissions in the current folder.
-0. Your system is ready to run pybarsys! Simply execute `sudo docker-compose up` to start pybarsys for the first time. 
+0. Your system is ready to run pybarsys! Simply execute `sudo docker compose up` to start pybarsys for the first time. 
 0. You should be able to access the main page on `http://server_address` (e.g. `http://localhost` if you are running it locally).
    The admin interface can be accessed at `http://server_address/admin` with the default admin account `admin@example.com` (password: `example`).
    You should of course immediately change the password of the default admin account - alternatively you can create a new account with admin rights and delete the default account.
-0. If everything seems fine so far, you can cancel the `docker-compose` command from the previous step with `CTRL+C` and start it again with the `-d` option to keep it running in the background:
+0. If everything seems fine so far, you can cancel the `docker compose` command from the previous step with `CTRL+C` and start it again with the `-d` option to keep it running in the background:
    ```bash
-   sudo docker-compose up -d
+   sudo docker compose up -d
    ```
    This also makes sure that everything will be restarted automatically when you reboot the system.
 0. [Configure pybarsys](docs/settings.md)! 
    There are some options which you will surely want to set if you use pybarsys in production, e.g. the mail server settings and language.
-   To change a setting, simply edit the `.env` file as described in the link and restart pybarsys with `sudo docker-compose restart`.
+   To change a setting, simply edit the `.env` file as described in the link and restart pybarsys with `sudo docker compose restart`.
    If you want to change the `nginx` configuration or adapt the `docker-compose.yml`, everything is available to be edited in the pybarsys folder.
    
 ## Apply pybarsys updates
@@ -97,9 +97,9 @@ Check the pybarsys github page to see if any changes to your settings file may b
 `cd` to the folder where you set up pybarsys and update the pybarsys and nginx images:
 
 ```bash
-sudo docker-compose stop
-sudo docker-compose pull
-sudo docker-compose up -d
+sudo docker compose stop
+sudo docker compose pull
+sudo docker compose up -d
 ```
 
 Then check if everything still works fine! If you want to revert to your old state, stop the server, copy over your database backup, and revert to the older pybarsys image with `sudo docker tag nspohrer/pybarsys:pre-update nspohrer/pybarsys:latest`.
