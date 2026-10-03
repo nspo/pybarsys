@@ -60,6 +60,18 @@ jobs:
       - name: Check for missing migrations
         run: python3 manage.py makemigrations --check --dry-run
 
+      - name: Smoke test run_test_server.sh
+        run: |
+          scripts/run_test_server.sh > "$RUNNER_TEMP/test_server.log" 2>&1 &
+          scripts/try_for_60s.sh bash -c 'curl -sSf localhost:8000 | grep "There are no active users"' \
+            || (cat "$RUNNER_TEMP/test_server.log"; exit 1)
+          curl -sSf localhost:8000/static/barsys/style.css | grep media
+          # prepare_pybarsys.sh has no set -e, so check admin creation explicitly
+          python3 manage.py shell -c "from barsys.models import User; assert User.objects.filter(email='admin@example.com').exists()"
+          pkill -f "[m]anage.py runserver" || true  # [m]: don't match own command line
+          # Fresh DB so the Docker smoke test below also runs migrate + admin creation itself
+          rm db.sqlite3 && touch db.sqlite3 && chmod 666 db.sqlite3
+
       - name: Build Docker images
         run: docker compose -f docker-compose.yml -f docker-compose.build.yml build
 
@@ -70,6 +82,18 @@ jobs:
         run: |
           scripts/try_for_60s.sh bash -c 'curl -sSL localhost | grep "There are no active users"'
           curl -sSL localhost/static/barsys/style.css | grep media
+
+      - name: Test installer script (download from GitHub at this commit)
+        run: |
+          docker compose down  # free port 80 from the previous smoke test
+          BASE="https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
+          mkdir "$RUNNER_TEMP/install" && cd "$RUNNER_TEMP/install"
+          echo y | PYBARSYS_BASE_URL="$BASE" bash -c "$(curl -sSfL "${BASE}scripts/download_pybarsys_docker.sh" -o-)"
+          # Container user (uid 1000) can't write a 644 file owned by runner (uid 1001).
+          # Same workaround as above; real fix tracked separately.
+          chmod 666 db.sqlite3
+          docker compose up -d
+          "$GITHUB_WORKSPACE/scripts/try_for_60s.sh" bash -c 'curl -sSL localhost | grep "There are no active users"'
 
       - name: Login to DockerHub
         if: github.event_name == 'push'

@@ -30,13 +30,15 @@ version_string_lt() {
 
 ### Variables
 DIRECTORY="$(pwd)/"
-BASE_URL="https://raw.githubusercontent.com/nspo/pybarsys/master/"
+# PYBARSYS_BASE_URL can be set to download from another branch/commit (used by CI)
+BASE_URL="${PYBARSYS_BASE_URL:-https://raw.githubusercontent.com/nspo/pybarsys/master/}"
 DOCKER_COMPOSE_VERSION_MIN="1.27.1"
 DOCKER_COMPOSE_INSTALL_URL="https://docs.docker.com/compose/install/"
 ###
 
 echo "[Pybarsys installer]"
 echo "[INFO] This script will set up pybarsys for usage with Docker Compose in the current folder: $DIRECTORY"
+echo "[INFO] Files will be downloaded from: $BASE_URL"
 
 # check whether current dir is empty
 if [ "$(ls -A "$DIRECTORY")" ]; then
